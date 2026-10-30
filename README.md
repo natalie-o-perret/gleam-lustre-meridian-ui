@@ -44,21 +44,30 @@ disabled controls and form submission work as usual. Buttons default to
 
 ## Components
 
-| Module                 | Exports                                                       |
-| ---------------------- | ------------------------------------------------------------- |
-| `meridian_ui/button`   | `view`, `primary`, `text`, `icon`                             |
-| `meridian_ui/card`     | `section`, `article`                                          |
-| `meridian_ui/badge`    | `view` with `Success`, `Warning`, `Danger`, `Accent`          |
-| `meridian_ui/field`    | `input`, `search`, `select` with native options               |
-| `meridian_ui/checkbox` | `view` with an accessible label and optional hint text        |
-| `meridian_ui/tooltip`  | `hint` attribute, activated by `meridian_ui.mount`            |
-| `meridian_ui/theme`    | Light/Dark/System cycle, OS preference and keyed persistence  |
-| `meridian_ui/shell`    | Responsive shell, menu/close buttons and scoped focus helpers |
+| Module                 | Exports                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| `meridian_ui/button`   | `view`, `primary`, `text`, `icon`                              |
+| `meridian_ui/card`     | `section`, `article`                                           |
+| `meridian_ui/badge`    | `view` with `Success`, `Warning`, `Danger`, `Accent`           |
+| `meridian_ui/field`    | `input`, `search`, `select`, `option` with rich option content |
+| `meridian_ui/checkbox` | `view` with an accessible label and optional hint text         |
+| `meridian_ui/tooltip`  | `hint` attribute, activated by `meridian_ui.mount`             |
+| `meridian_ui/theme`    | Light/Dark/System cycle, OS preference and keyed persistence   |
+| `meridian_ui/shell`    | Responsive shell, menu/close buttons and scoped focus helpers  |
 
 Give icon-only buttons an `aria-label`. Give inputs and selects a visible or
 accessible label. Tooltips are supplementary descriptions, not accessible names.
 Checkboxes stay native, including the `indeterminate` property and forced-colour
 fallback. Selects use native keyboard behaviour, with styled pickers where supported.
+
+`field.option` accepts elements such as a badge. Supporting browsers display that
+content in both the picker and selected value. Older browsers keep native text
+labels. Keep option content non-interactive and avoid IDs because it is cloned
+into the selected value.
+
+Tooltips open after 100ms of hover, or immediately on keyboard focus. Moving
+within the same control doesn't restart the hover delay. A short fade respects
+reduced-motion preferences, and the hide grace period lets you move onto the hint.
 
 ## Themes and scope
 

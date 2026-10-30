@@ -11,7 +11,21 @@ pub fn select(
   attrs: List(Attribute(msg)),
   options: List(Element(msg)),
 ) -> Element(msg) {
-  h.select(attrs, options)
+  h.select(attrs, [
+    h.button([a.type_("button"), a.class("select-button"), a.tabindex(-1)], [
+      element.element("selectedcontent", [], []),
+    ]),
+    ..options
+  ])
+}
+
+/// Rich option content should be non-interactive and contain no IDs.
+/// Browsers clone it into the selected value where supported.
+pub fn option(
+  attrs: List(Attribute(msg)),
+  children: List(Element(msg)),
+) -> Element(msg) {
+  element.element("option", attrs, children)
 }
 
 pub fn search(

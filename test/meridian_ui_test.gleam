@@ -128,3 +128,20 @@ pub fn shell_ids_are_per_instance_and_the_drawer_is_modal_test() {
     |> should.be_true
   })
 }
+
+pub fn rich_select_options_preserve_values_and_badges_test() {
+  let html =
+    field.select([a.aria_label("Status")], [
+      field.option([a.value("blocked"), a.selected(True)], [
+        badge.view(badge.Danger, [], [h.text("Blocked")]),
+      ]),
+    ])
+    |> element.to_string
+  html
+  |> string.contains("<selectedcontent></selectedcontent>")
+  |> should.be_true
+  html |> string.contains("tabindex=\"-1\"") |> should.be_true
+  html |> string.contains("value=\"blocked\"") |> should.be_true
+  html |> string.contains("badge-danger") |> should.be_true
+  html |> string.contains(">Blocked</span></option>") |> should.be_true
+}

@@ -70,6 +70,7 @@ export function setupTooltips(root, signal) {
     }
     const next = target.closest?.("[data-tooltip]");
     if (!next || next.closest(".meridian-ui") !== root) return;
+    if (next === pendingTarget && delay > 0) return;
     if (next === trigger) {
       clearTimeout(timer);
       return;
@@ -77,9 +78,9 @@ export function setupTooltips(root, signal) {
     hide();
     pendingTarget = next;
     timer = setTimeout(() => {
+      pendingTarget = undefined;
       if (signal.aborted || !next.isConnected || !root.contains(next)) return;
       trigger = next;
-      pendingTarget = undefined;
       tip.textContent = next.dataset.tooltip;
       tip.hidden = false;
       tip.showPopover?.();
@@ -96,7 +97,7 @@ export function setupTooltips(root, signal) {
   const options = { signal };
   root.addEventListener(
     "pointerover",
-    (event) => show(event.target, 300),
+    (event) => show(event.target, 100),
     options,
   );
   root.addEventListener("focusin", (event) => show(event.target, 0), options);
@@ -105,11 +106,12 @@ export function setupTooltips(root, signal) {
     (event) => {
       if (
         hasFocus() ||
-        trigger?.contains(event.relatedTarget) ||
+        (trigger ?? pendingTarget)?.contains(event.relatedTarget) ||
         event.relatedTarget === tip
       )
         return;
       clearTimeout(timer);
+      pendingTarget = undefined;
       timer = setTimeout(hide, 100);
     },
     options,

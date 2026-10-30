@@ -131,10 +131,10 @@ function fixture(t) {
       root.isConnected = false;
       for (const observer of [...observers]) observer.callback();
     },
-    hint(root, target) {
+    hint(root, target, type = "focusin") {
       target.dataset.tooltip = "Hint";
       root.dispatchEvent(
-        Object.defineProperty(new Event("focusin"), "target", {
+        Object.defineProperty(new Event(type), "target", {
           value: target,
         }),
       );
@@ -243,4 +243,60 @@ test("tooltips have independent IDs and cleanup preserves existing descriptions 
   await setTimeout(10);
   assert.equal(one.children.length, 0);
   assert.equal(trigger.getAttribute("aria-describedby"), "existing-help");
+});
+
+test("hover hints open in 100ms without restarting inside the control", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const f = fixture(t);
+  const root = f.root("one");
+  f.mount(root);
+  const trigger = root.controls[0];
+  const tip = root.children[0];
+  f.hint(root, trigger, "pointerover");
+  t.mock.timers.tick(50);
+  root.dispatchEvent(
+    Object.assign(new Event("pointerout"), { relatedTarget: trigger }),
+  );
+  f.hint(root, trigger, "pointerover");
+  t.mock.timers.tick(49);
+  assert.equal(tip.hidden, true);
+  t.mock.timers.tick(1);
+  assert.equal(tip.hidden, false);
+  root.dispatchEvent(new Event("pointerout"));
+  t.mock.timers.tick(99);
+  assert.equal(tip.hidden, false);
+  t.mock.timers.tick(1);
+  assert.equal(tip.hidden, true);
+  f.hint(root, trigger, "pointerover");
+  t.mock.timers.tick(50);
+  root.dispatchEvent(new Event("pointerout"));
+  t.mock.timers.tick(25);
+  f.hint(root, trigger, "pointerover");
+  t.mock.timers.tick(99);
+  assert.equal(tip.hidden, true);
+  t.mock.timers.tick(1);
+  assert.equal(tip.hidden, false);
+});
+
+test("keyboard hints preempt hover and disconnected hover targets can retry", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const f = fixture(t);
+  const root = f.root("one");
+  f.mount(root);
+  const trigger = root.controls[0];
+  const tip = root.children[0];
+  f.hint(root, trigger, "pointerover");
+  t.mock.timers.tick(50);
+  f.hint(root, trigger);
+  t.mock.timers.tick(0);
+  assert.equal(tip.hidden, false);
+  root.dispatchEvent(new Event("focusout"));
+  trigger.isConnected = false;
+  f.hint(root, trigger, "pointerover");
+  t.mock.timers.tick(100);
+  assert.equal(tip.hidden, true);
+  trigger.isConnected = true;
+  f.hint(root, trigger, "pointerover");
+  t.mock.timers.tick(100);
+  assert.equal(tip.hidden, false);
 });
