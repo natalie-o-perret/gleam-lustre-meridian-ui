@@ -433,7 +433,8 @@ duotone icons. These are CSS tokens, not separate component implementations.
 Override `--radius`, `--radius-small` or the `--icon-*` tokens for your own style.
 The catalogue's primary/accent and secondary colour controls derive readable
 foreground/background shades and sync them across previews, notices and themes.
-They show a compact colour swatch and its hex value. Icon-choice menus include
+They show a compact colour swatch and its hex value. Open the palette button
+beside the theme toggle for colour and style settings. Icon-choice menus include
 the corresponding SVG in the options and selected value where customisable native
 selects are supported.
 

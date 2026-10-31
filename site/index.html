@@ -58,6 +58,50 @@
           type="button"
           aria-label="Theme: System. Switch to light theme"
         ></button>
+        <div id="palette-tools" class="docs-palette-tools">
+          <div id="palette-controls" hidden>
+            <label class="docs-style" for="style"
+              >Library style
+              <select id="style" class="input">
+                <option value="rounded">Rounded</option>
+                <option value="square">Squared</option>
+                <option value="playful">Playful</option>
+                <option value="fantasy">Fantasy</option>
+              </select>
+            </label>
+            <div class="docs-colours">
+              <label for="primary-colour"
+                >Primary / accent<span class="docs-colour-control"
+                  ><input
+                    id="primary-colour"
+                    aria-label="Primary / accent"
+                    class="input meridian-colour"
+                    type="color"
+                    value="#b41472"
+                  /><code id="primary-colour-value" aria-hidden="true"
+                    >#b41472</code
+                  ></span
+                ></label
+              >
+              <label for="secondary-colour"
+                >Secondary<span class="docs-colour-control"
+                  ><input
+                    id="secondary-colour"
+                    aria-label="Secondary"
+                    class="input meridian-colour"
+                    type="color"
+                    value="#316a91"
+                  /><code id="secondary-colour-value" aria-hidden="true"
+                    >#316a91</code
+                  ></span
+                ></label
+              >
+              <button id="reset-colours" class="button" type="button">
+                Reset colours
+              </button>
+            </div>
+          </div>
+        </div>
         <a
           class="docs-github"
           href="https://github.com/natalie-o-perret/gleam-lustre-meridian-ui"
@@ -92,46 +136,6 @@
         <p id="search-status" class="docs-count muted" role="status">
           Loading catalogue...
         </p>
-        <label class="docs-style" for="style"
-          >Library style
-          <select id="style" class="input">
-            <option value="rounded">Rounded</option>
-            <option value="square">Squared</option>
-            <option value="playful">Playful</option>
-            <option value="fantasy">Fantasy</option>
-          </select>
-        </label>
-        <div class="docs-colours">
-          <label for="primary-colour"
-            >Primary / accent<span class="docs-colour-control"
-              ><input
-                id="primary-colour"
-                aria-label="Primary / accent"
-                class="input meridian-colour"
-                type="color"
-                value="#b41472"
-              /><code id="primary-colour-value" aria-hidden="true"
-                >#b41472</code
-              ></span
-            ></label
-          >
-          <label for="secondary-colour"
-            >Secondary<span class="docs-colour-control"
-              ><input
-                id="secondary-colour"
-                aria-label="Secondary"
-                class="input meridian-colour"
-                type="color"
-                value="#316a91"
-              /><code id="secondary-colour-value" aria-hidden="true"
-                >#316a91</code
-              ></span
-            ></label
-          >
-          <button id="reset-colours" class="button" type="button">
-            Reset colours
-          </button>
-        </div>
         <nav
           id="component-navigation"
           aria-label="Components"

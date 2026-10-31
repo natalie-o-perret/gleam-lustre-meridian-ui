@@ -177,3 +177,33 @@ test("overlays respect the visible part of scaled frames and visual viewports", 
   assert.equal(style.left, "142px");
   assert.equal(style.top, "142px");
 });
+
+test("CSS zoom keeps popup dimensions and positions in layout coordinates", () => {
+  const popup = {
+    offsetWidth: 200,
+    offsetHeight: 100,
+    getBoundingClientRect: () => ({ width: 400 }),
+    style: {
+      setProperty(name, value) {
+        this[name] = value;
+      },
+    },
+  };
+  const anchor = {
+    getBoundingClientRect: () => ({
+      left: 600,
+      right: 640,
+      top: 40,
+      bottom: 80,
+    }),
+  };
+  positionOverlay(popup, anchor, {
+    innerWidth: 800,
+    innerHeight: 600,
+    getComputedStyle: () => ({ direction: "ltr" }),
+  });
+  assert.equal(popup.style["--meridian-overlay-width"], "384px");
+  assert.equal(popup.style["--meridian-overlay-height"], "284px");
+  assert.equal(popup.style.left, "192px");
+  assert.equal(popup.style.top, "46px");
+});

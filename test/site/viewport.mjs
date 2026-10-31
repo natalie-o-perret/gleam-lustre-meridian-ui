@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
+import { appearanceMobileChecks } from "./appearance-mobile.mjs";
 
 export function catalogueScenarios(width = "") {
   const scenarios = [
@@ -11,6 +12,7 @@ export function catalogueScenarios(width = "") {
 }
 
 export async function viewportChecks(browser, name, base) {
+  await appearanceMobileChecks(browser, name, base);
   await layoutChecks(browser, name, base);
   const sizes = [
     [1280, 720],
@@ -192,6 +194,32 @@ async function layoutChecks(browser, name, base) {
           layout.tools,
           `${name} ${width}px ${zoom}x: header controls remain reachable`,
         );
+        await page.locator("#palette").click();
+        const palette = page.getByRole("dialog", {
+          name: "Appearance",
+          exact: true,
+        });
+        await expect(
+          palette,
+          `${name} ${width}px ${zoom}x: palette stays inside the viewport`,
+        ).toBeInViewport({ ratio: 1 });
+        assert.ok(
+          await palette
+            .locator(".docs-colour-control")
+            .evaluateAll((controls) =>
+              controls.every((control) => {
+                const range = document.createRange();
+                range.selectNodeContents(control.querySelector("code"));
+                return (
+                  range.getClientRects().length === 1 &&
+                  control.scrollWidth <= control.clientWidth + 1
+                );
+              }),
+            ),
+          `${name} ${width}px ${zoom}x: readable palette hex values`,
+        );
+        await palette.press("Escape");
+        await expect(palette).toBeHidden();
         if (width === 390 && zoom === 1.75)
           await page.screenshot({
             path: `test-results/responsive-${name}-${width}-${zoom}.png`,

@@ -77,13 +77,11 @@ export async function feedbackChecks(page, open) {
     ["playful", "22px", "round"],
     ["fantasy", "18px 4px", "round"],
   ]) {
-    if (page.viewportSize().width <= 900)
-      await page.locator("#open-navigation").click();
+    await page.locator("#palette").click();
     await page
       .getByRole("combobox", { name: "Library style", exact: true })
       .selectOption(style);
-    if (page.viewportSize().width <= 900)
-      await page.locator("#close-navigation").click();
+    await page.locator("#palette").click();
     await expect(page.locator("body")).toHaveAttribute("data-style", style);
     await expect(frame.locator("#demo-root")).toHaveAttribute(
       "data-style",
@@ -104,13 +102,11 @@ export async function feedbackChecks(page, open) {
         .evaluate((node) => getComputedStyle(node).color),
     );
   }
-  if (page.viewportSize().width <= 900)
-    await page.locator("#open-navigation").click();
+  await page.locator("#palette").click();
   await page
     .getByRole("combobox", { name: "Library style", exact: true })
     .selectOption("rounded");
-  if (page.viewportSize().width <= 900)
-    await page.locator("#close-navigation").click();
+  await page.locator("#palette").click();
 
   frame = await open("listbox");
   for (const selector of [

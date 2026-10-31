@@ -241,7 +241,7 @@ export function setupColourPickers(root, signal) {
     popup.append(header, content, actions);
     draw();
     input.setAttribute("aria-controls", popup.id);
-    (input.closest("dialog") ?? root).append(popup);
+    (input.closest("dialog, [popover]") ?? root).append(popup);
     preserveScroll(view, () => popup.showModal());
     state.position();
     hex.focus({ preventScroll: true });
@@ -258,7 +258,9 @@ export function setupColourPickers(root, signal) {
   root.addEventListener(
     "pointerdown",
     (event) => {
-      if (event.button === 0 && target(event)) event.preventDefault();
+      // WebKit suppresses the touch click when pointerdown is cancelled.
+      if (event.button === 0 && event.pointerType !== "touch" && target(event))
+        event.preventDefault();
     },
     { signal, capture: true },
   );
