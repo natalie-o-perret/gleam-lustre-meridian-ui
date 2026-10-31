@@ -12,6 +12,9 @@ const types = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".woff2": "font/woff2",
+  ".json": "application/json",
+  ".gleam": "text/plain",
+  ".txt": "text/plain",
 };
 
 export async function serve(directory = defaultRoot, prefix = "/") {

@@ -1,0 +1,9 @@
+name = "meridian_catalogue"
+version = "0.1.0"
+target = "javascript"
+gleam = ">= 1.19.2"
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+lustre = ">= 5.7.1 and < 6.0.0"
+meridian_ui = { path = "../.." }

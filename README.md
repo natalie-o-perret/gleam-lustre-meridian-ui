@@ -2,7 +2,8 @@
 
 A small styled UI package for Lustre 5.7, extracted from the
 [Meridian dashboard](https://github.com/natalie-o-perret/spa-dashboards/tree/main/gleam-lustre).
-[See the design in action](https://natalie-o-perret.github.io/spa-dashboards/gleam-lustre/).
+[Explore the component catalogue](https://natalie-o-perret.github.io/gleam-lustre-meridian-ui/)
+or [see the original dashboard](https://natalie-o-perret.github.io/spa-dashboards/gleam-lustre/).
 The API is experimental and the package is not published to Hex.
 
 The library covers the 93 PrimeNG core catalogue entries and four released PRO
@@ -385,6 +386,32 @@ Browser hooks target the JavaScript browser runtime, not SSR or Shadow DOM.
 
 ## Check it
 
+### Component catalogue
+
+The GitHub Pages catalogue includes live examples and copyable Gleam source for
+all 93 core entries, four advanced widgets and the FilterService utility. Search
+the grouped navigation, open a component's deep link, or switch between light,
+dark and RTL previews. Examples use Meridian's existing styles and native controls.
+
+To build and browse it locally:
+
+```sh
+npm ci --ignore-scripts
+npm run build:site
+npm run serve:site
+```
+
+Open the local URL printed by the server. It uses the same repository subdirectory
+as GitHub Pages. The static output is in `dist/`. The inventory comes from
+`COMPONENTS.md`, and the displayed snippets come from the compiled
+`examples/catalogue/` project. Chart, calendar and editor engines load with their
+examples, not with the documentation shell.
+
+The Pages workflow publishes `main` through GitHub Actions. Set the repository's
+Pages source to **GitHub Actions** before its first deployment.
+
+### Library and site checks
+
 With Gleam 1.19.2 and Node.js 24 installed:
 
 ```sh
@@ -395,9 +422,10 @@ make browser-check
 ```
 
 Checks include Gleam formatting/compilation, component and state tests, pinned
-Prettier, listener lifecycle tests, reproducible engine bundles and browser
-fixtures with WCAG checks. Browser tests serve only a local fixture server.
+Prettier, listener lifecycle tests, reproducible engine bundles, catalogue coverage
+and browser fixtures with WCAG checks. Browser tests serve only local static files.
 Use `BROWSER=chromium` or `SUITE=selection,data` to focus a local run.
+Use `npm run test:site:browser` after a site build to check the catalogue alone.
 
 Business data, authorisation and persistence belong to the consuming application.
 The catalogue uses Meridian APIs, not Angular compatibility or PrimeNG API parity.

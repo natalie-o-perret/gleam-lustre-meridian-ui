@@ -86,15 +86,21 @@ pub fn view(
           a.autocomplete("off"),
           a.spellcheck(False),
           event.on_input(fn(value) { on_action(Edit(value)) }),
-          event.on("keydown", {
+          event.advanced("keydown", {
             use key <- decode.field("key", decode.string)
-            case key {
-              "ArrowUp" -> decode.success(on_action(Previous))
-              "ArrowDown" -> decode.success(on_action(Next))
-              _ -> decode.failure(on_action(Next), "history key")
+            use composing <- decode.field("isComposing", decode.bool)
+            case key, composing {
+              "ArrowUp", False ->
+                decode.success(event.handler(on_action(Previous), True, False))
+              "ArrowDown", False ->
+                decode.success(event.handler(on_action(Next), True, False))
+              _, _ ->
+                decode.failure(
+                  event.handler(on_action(Next), False, False),
+                  "history key",
+                )
             }
-          })
-            |> event.prevent_default,
+          }),
         ]),
       ]),
       button.view([a.type_("submit")], [h.text("Run")]),

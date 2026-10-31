@@ -85,13 +85,28 @@ export async function utilities(page, scenario) {
     await expect(page.locator(".meridian-ripple-effect")).toHaveCount(0);
   else await expect(page.locator(".meridian-ripple-effect")).toHaveCount(1);
   const terminal = page.getByRole("textbox", { name: "Command", exact: true });
-  await terminal.fill("<script>literal</script>");
-  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await terminal.pressSequentially("<script>literal</script>");
+  await terminal.press("Enter");
   await expect(page.getByRole("log")).toContainText(
     "Received: <script>literal</script>",
   );
   await terminal.press("ArrowUp");
   await expect(terminal).toHaveValue("<script>literal</script>");
+  await terminal.fill("Composing text");
+  assert.equal(
+    await terminal.evaluate((input) =>
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowUp",
+          isComposing: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    ),
+    true,
+  );
+  await expect(terminal).toHaveValue("Composing text");
   const carousel = page.getByRole("region", {
     name: "Highlights",
     exact: true,
