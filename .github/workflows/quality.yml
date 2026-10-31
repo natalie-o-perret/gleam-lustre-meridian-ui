@@ -37,14 +37,21 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
         suite:
-          - name: Library
+          - name: Library core
             build: gleam test
             script: test:browser
+            suites: feedback,forms,panels,keyboard,overlays,selection,data
+          - name: Library advanced + utilities
+            build: gleam test
+            script: test:browser
+            suites: utilities,pro
           - name: Catalogue
             build: npm run build:site
             script: test:site:browser
+            suites: ""
     env:
       BROWSER: ${{ matrix.browser }}
+      SUITE: ${{ matrix.suite.suites }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
