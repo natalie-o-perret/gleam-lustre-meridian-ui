@@ -1,5 +1,6 @@
 import { setupTooltips } from "./tooltip_ffi.mjs";
 import { watchSystemTheme } from "./theme_ffi.mjs";
+import { setupWidgets } from "./widgets_ffi.mjs";
 
 const mounted = new WeakMap();
 const controls = (root) =>
@@ -43,6 +44,7 @@ export function mount(id, onSystemTheme, onDesktop) {
   const { signal } = controller;
   const removeTooltips = setupTooltips(root, signal);
   const stopTheme = watchSystemTheme(onSystemTheme, view);
+  const syncWidgets = setupWidgets(root, signal);
   const mobile = view.matchMedia?.("(max-width: 800px)");
   mobile?.addEventListener(
     "change",
@@ -79,10 +81,35 @@ export function mount(id, onSystemTheme, onDesktop) {
     { signal },
   );
   // Lustre applications have no unmount effect, so also dispose removed roots.
-  const observer = new view.MutationObserver(() => {
+  const observer = new view.MutationObserver((records) => {
     if (!root.isConnected) dispose();
+    else if (records?.some((record) => root.contains(record.target)))
+      syncWidgets();
   });
-  observer.observe(root.ownerDocument, { childList: true, subtree: true });
+  observer.observe(root.ownerDocument, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: [
+      "aria-selected",
+      "hidden",
+      "disabled",
+      "data-meridian-keys",
+      "data-open",
+      "data-meridian-trap",
+      "data-meridian-block",
+      "data-meridian-inplace",
+      "data-value",
+      "data-context-x",
+      "data-context-y",
+      "data-timeout",
+      "min",
+      "max",
+      "step",
+      "required",
+      "open",
+    ],
+  });
   function dispose() {
     if (signal.aborted) return;
     controller.abort();

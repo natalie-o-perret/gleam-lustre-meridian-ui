@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meridian form component fixture</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../priv/meridian-ui.css" />
+    <link rel="stylesheet" href="./fixture.css" />
+  </head>
+  <body>
+    <div id="forms-fixture"></div>
+    <label id="outside"
+      >Outside the theme root <input class="meridian-slider" type="range"
+    /></label>
+    <script type="module">
+      import { main } from "../build/dev/javascript/meridian_ui/forms_fixture.mjs";
+      main();
+    </script>
+  </body>
+</html>

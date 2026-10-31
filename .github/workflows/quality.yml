@@ -11,7 +11,7 @@ permissions:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -25,4 +25,7 @@ jobs:
           gleam-version: "1.19.2"
           otp-version: "29.1.2"
           rebar3-version: "3.28.0"
+      - run: npm ci --ignore-scripts
       - run: make check
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: make browser-check

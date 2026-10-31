@@ -1,0 +1,103 @@
+import gleam/dynamic/decode
+import gleam/list
+import gleam/string
+import lustre/attribute.{type Attribute} as a
+import lustre/element.{type Element}
+import lustre/element/html as h
+import lustre/event
+import meridian_ui/button
+import meridian_ui/field
+
+pub type Entry {
+  Entry(command: String, output: String)
+}
+
+pub type Model {
+  Model(draft: String, entries: List(Entry), history: List(String), cursor: Int)
+}
+
+pub type Action {
+  Edit(String)
+  Submit
+  Previous
+  Next
+  Output(String, String)
+  Clear
+}
+
+/// Commands are text sent to an application handler, never evaluated as code.
+pub fn update(model: Model, action: Action) -> Model {
+  case action {
+    Edit(value) -> Model(..model, draft: value, cursor: -1)
+    Submit ->
+      case string.trim(model.draft) {
+        "" -> model
+        command ->
+          Model(
+            "",
+            list.append(model.entries, [Entry(command, "")]),
+            [command, ..model.history],
+            -1,
+          )
+      }
+    Previous -> recall(model, model.cursor + 1)
+    Next ->
+      case model.cursor <= 0 {
+        True -> Model(..model, draft: "", cursor: -1)
+        False -> recall(model, model.cursor - 1)
+      }
+    Output(command, output) ->
+      Model(
+        ..model,
+        entries: list.append(model.entries, [Entry(command, output)]),
+      )
+    Clear -> Model(..model, entries: [])
+  }
+}
+
+fn recall(model: Model, index: Int) -> Model {
+  case model.history |> list.drop(index) |> list.first {
+    Ok(command) -> Model(..model, draft: command, cursor: index)
+    Error(_) -> model
+  }
+}
+
+pub fn view(
+  label: String,
+  model: Model,
+  on_action: fn(Action) -> msg,
+  attrs: List(Attribute(msg)),
+) -> Element(msg) {
+  h.section([a.class("meridian-terminal"), a.aria_label(label), ..attrs], [
+    h.div(
+      [a.role("log"), a.aria_label(label <> " output"), a.tabindex(0)],
+      list.map(model.entries, fn(entry) {
+        h.div([], [
+          h.p([], [h.text("> " <> entry.command)]),
+          h.pre([], [h.text(entry.output)]),
+        ])
+      }),
+    ),
+    h.form([event.on_submit(fn(_) { on_action(Submit) })], [
+      h.label([], [
+        h.span([], [h.text("Command")]),
+        field.input([
+          a.value(model.draft),
+          a.autocomplete("off"),
+          a.spellcheck(False),
+          event.on_input(fn(value) { on_action(Edit(value)) }),
+          event.on("keydown", {
+            use key <- decode.field("key", decode.string)
+            case key {
+              "ArrowUp" -> decode.success(on_action(Previous))
+              "ArrowDown" -> decode.success(on_action(Next))
+              _ -> decode.failure(on_action(Next), "history key")
+            }
+          })
+            |> event.prevent_default,
+        ]),
+      ]),
+      button.view([a.type_("submit")], [h.text("Run")]),
+    ]),
+  ])
+}

@@ -74,6 +74,7 @@ function fixture(t) {
     innerWidth: 800,
     innerHeight: 600,
     AbortController,
+    queueMicrotask,
     MutationObserver: class {
       constructor(callback) {
         this.callback = callback;
@@ -111,7 +112,8 @@ function fixture(t) {
       root.classList = { contains: () => root.open };
       root.controls = [new Element(root), new Element(root), new Element(root)];
       root.opener = new Element(root);
-      root.querySelectorAll = () => root.controls;
+      root.querySelectorAll = (selector) =>
+        selector.startsWith(".sidebar ") ? root.controls : [];
       root.querySelector = (selector) =>
         selector === ".menu-button" ? root.opener : root.controls[1];
       roots.set(id, root);

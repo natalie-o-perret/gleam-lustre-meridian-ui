@@ -1,0 +1,38 @@
+{
+  "name": "meridian-ui-browser-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:browser": "node test/browser/run.mjs",
+    "build:engines": "node scripts/build-engines.mjs",
+    "check:engines": "node scripts/build-engines.mjs --check"
+  },
+  "devDependencies": {
+    "@fullcalendar/core": "6.1.22",
+    "@fullcalendar/daygrid": "6.1.22",
+    "@fullcalendar/interaction": "6.1.22",
+    "@fullcalendar/list": "6.1.22",
+    "@fullcalendar/luxon3": "6.1.22",
+    "@fullcalendar/rrule": "6.1.22",
+    "@fullcalendar/timegrid": "6.1.22",
+    "axe-core": "4.14.0",
+    "echarts": "6.1.0",
+    "esbuild": "0.28.2",
+    "imask": "7.6.1",
+    "luxon": "3.7.2",
+    "playwright": "1.64.1",
+    "prettier": "3.9.10",
+    "prosemirror-commands": "1.7.2",
+    "prosemirror-dropcursor": "1.8.4",
+    "prosemirror-gapcursor": "1.4.1",
+    "prosemirror-history": "1.5.1",
+    "prosemirror-keymap": "1.2.3",
+    "prosemirror-model": "1.25.12",
+    "prosemirror-schema-basic": "1.2.5",
+    "prosemirror-schema-list": "1.6.0",
+    "prosemirror-state": "1.4.4",
+    "prosemirror-tables": "1.8.5",
+    "prosemirror-view": "1.42.8",
+    "rrule": "2.8.1"
+  }
+}
