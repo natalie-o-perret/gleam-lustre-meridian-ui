@@ -1,5 +1,8 @@
 # Working on Meridian UI
 
+Follow the [agent workflow](docs/agent-practices/agent-workflow.md) to keep work
+focused, efficient and safe to coordinate.
+
 ## File boundaries
 
 - Keep handwritten source and test files below 100 physical lines per file.
