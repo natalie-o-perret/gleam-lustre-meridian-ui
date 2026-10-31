@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" class="meridian-page">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Explore all Meridian UI components with live Gleam and Lustre examples, source code, light and dark themes and RTL previews."
+    />
+    <meta name="theme-color" content="#b41472" />
+    <title>Meridian UI - Component catalogue</title>
+    <link rel="icon" href="./assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./meridian-ui.css" />
+    <link rel="stylesheet" href="./catalogue.css" />
+  </head>
+  <body class="meridian-ui docs" data-theme="light">
+    <a class="docs-skip" href="#main">Skip to content</a>
+    <header class="docs-header">
+      <a class="docs-brand" href="#/" aria-label="Meridian UI home">
+        <img src="./assets/mark.svg" width="32" height="32" alt="" />
+        <span>Meridian <span class="muted">UI</span></span>
+      </a>
+      <span class="docs-header-note muted">Gleam + Lustre</span>
+      <div class="docs-tools">
+        <button id="direction" type="button" aria-pressed="false">RTL</button>
+        <button id="theme" type="button" aria-pressed="false">Dark mode</button>
+        <a
+          class="docs-github"
+          href="https://github.com/natalie-o-perret/gleam-lustre-meridian-ui"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+        <button
+          id="open-navigation"
+          class="docs-mobile"
+          type="button"
+          aria-haspopup="dialog"
+          aria-controls="navigation-dialog"
+        >
+          Components
+        </button>
+      </div>
+    </header>
+    <aside id="navigation-panel" class="docs-sidebar" aria-label="Catalogue">
+      <div id="navigation-content">
+        <label class="docs-search" for="component-search">
+          <span class="sr-only">Search components</span>
+          <input
+            id="component-search"
+            class="input"
+            type="search"
+            placeholder="Find a component..."
+            autocomplete="off"
+            aria-controls="component-navigation"
+          />
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+        <p id="search-status" class="docs-count muted" role="status">
+          Loading catalogue...
+        </p>
+        <nav id="component-navigation" aria-label="Components"></nav>
+      </div>
+    </aside>
+    <dialog id="navigation-dialog" aria-label="Component navigation">
+      <div class="docs-dialog-heading">
+        <strong>Components</strong
+        ><button id="close-navigation" type="button">Close</button>
+      </div>
+    </dialog>
+    <main id="main" class="docs-main" tabindex="-1" aria-busy="true">
+      <p>Loading catalogue...</p>
+    </main>
+    <footer class="docs-footer muted">
+      Independent components. Native foundations. No remote fonts or CDN
+      engines.
+      <a href="./licences.txt">Open-source notices</a>
+    </footer>
+    <noscript
+      ><p>
+        This interactive catalogue needs JavaScript.
+        <a
+          href="https://github.com/natalie-o-perret/gleam-lustre-meridian-ui/blob/main/COMPONENTS.md"
+          >Read the component coverage and source on GitHub.</a
+        >
+      </p></noscript
+    >
+    <script type="module" src="./assets/catalogue.js"></script>
+  </body>
+</html>

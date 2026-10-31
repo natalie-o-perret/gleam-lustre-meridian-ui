@@ -4,6 +4,10 @@
   "type": "module",
   "scripts": {
     "test:browser": "node test/browser/run.mjs",
+    "build:site": "node scripts/build-site.mjs",
+    "serve:site": "node scripts/serve-site.mjs",
+    "test:site": "node --test test/site/build.mjs",
+    "test:site:browser": "node test/site/browser.mjs",
     "build:engines": "node scripts/build-engines.mjs",
     "check:engines": "node scripts/build-engines.mjs --check"
   },
