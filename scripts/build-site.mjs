@@ -33,44 +33,44 @@ for (const file of (await readdir(`${project}/src/catalogue`)).sort()) {
 
 const entries = [];
 let group;
+let section;
 const ledger = await readFile("COMPONENTS.md", "utf8");
 for (const line of ledger.split("\n")) {
-  if (line === "## PRO") group = "Advanced";
+  const category = /^## (.+)$/.exec(line);
+  if (category) section = group = category[1];
   const heading = /^### (.+) \(\d+\)$/.exec(line);
   if (heading) group = heading[1];
-  if (line.startsWith("### Announced")) break;
   const row =
-    /^\| \[([^\]]+)\]\(https:\/\/(?:primeng\.dev|angular\.primeuipro\.dev)\/([^/)]+)\)\s*\| (Base|Platform)\s*\| (.+?)\s*\|$/.exec(
+    /^\| \[([^\]]+)\]\(([^)]+)\)\s*\| (Base|Platform)\s*\| (.+?)\s*\|$/.exec(
       line,
     );
   if (!row) continue;
-  const [, name, id, status, coverage] = row;
+  const [, name, , status, coverage] = row;
+  const id =
+    name === "OrgChart"
+      ? "organizationchart"
+      : name.toLowerCase().replaceAll(" ", "");
   const module = /`(meridian_ui\/[^`]+)`/.exec(coverage)?.[1];
   entries.push({
     id,
     name,
     group,
+    section,
     status,
     module,
     description: coverage.replace(/^`[^`]+`, /, "").replaceAll("`", ""),
   });
 }
-assert.equal(entries.filter((entry) => entry.group !== "Advanced").length, 93);
+assert.equal(entries.filter((entry) => entry.section === "Core").length, 93);
 assert.equal(entries.filter((entry) => entry.group === "Advanced").length, 4);
-const utility =
-  /The separate \[([^\]]+) utility\]\(https:\/\/primeng\.dev\/([^)]+)\) is covered\nby `([^`]+)`: ([\s\S]+?)\. It is not/.exec(
-    ledger,
-  );
-assert.ok(utility, "Missing utility coverage");
-entries.push({
-  id: utility[2],
-  name: utility[1],
-  group: "Utilities",
-  status: "Base",
-  module: utility[3],
-  description:
-    utility[4].replaceAll("\n", " ") + ". A utility, not a visual component.",
-});
+assert.equal(
+  entries.filter((entry) => entry.section === "Additional controls").length,
+  3,
+);
+assert.equal(
+  entries.filter((entry) => entry.section === "Utilities").length,
+  1,
+);
 assert.equal(
   examples.size,
   entries.length,
@@ -89,6 +89,7 @@ await cp("site", output, {
   filter: (path) => !path.endsWith(".mjs"),
 });
 await cp("priv/meridian-ui.css", `${output}/meridian-ui.css`);
+await cp("priv/fonts", `${output}/fonts`, { recursive: true });
 await writeFile(`${output}/catalogue.json`, JSON.stringify(entries));
 for (const [file, source] of sources)
   await writeFile(`${output}/source/${file}`, source);
@@ -111,6 +112,7 @@ let notices = await readFile(
   "src/meridian_ui/internal/vendor/LICENCES.md",
   "utf8",
 );
+notices += `\n\n# Manrope\n\n${await readFile("priv/fonts/OFL.txt", "utf8")}`;
 for (const item of await readdir(`${project}/build/packages`, {
   withFileTypes: true,
 })) {

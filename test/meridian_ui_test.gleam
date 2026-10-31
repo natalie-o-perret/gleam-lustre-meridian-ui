@@ -57,6 +57,10 @@ pub fn cards_keep_their_semantic_elements_test() {
   |> should.be_true
   card.article([], [])
   |> element.to_string
+  |> string.contains("panel meridian-card")
+  |> should.be_true
+  card.article([], [])
+  |> element.to_string
   |> string.starts_with("<article")
   |> should.be_true
 }

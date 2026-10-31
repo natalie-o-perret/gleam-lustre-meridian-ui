@@ -1,3 +1,13 @@
+import {
+  start_source,
+  toggle_markup,
+} from "../examples/catalogue/build/dev/javascript/meridian_catalogue/catalogue_docs.mjs";
+import { mount } from "../examples/catalogue/build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
+import {
+  next,
+  is_dark,
+} from "../examples/catalogue/build/dev/javascript/meridian_ui/meridian_ui/theme.mjs";
+
 const repository =
   "https://github.com/natalie-o-perret/gleam-lustre-meridian-ui";
 const root = document.body;
@@ -12,15 +22,18 @@ const directionButton = document.getElementById("direction");
 const mobile = matchMedia("(max-width: 900px)");
 let entries = [];
 let current;
-let theme = matchMedia("(prefers-color-scheme: dark)").matches
-  ? "dark"
-  : "light";
+let systemDark = matchMedia("(prefers-color-scheme: dark)").matches;
+let preference = "system";
+let theme = systemDark ? "dark" : "light";
 let direction = "ltr";
+let stopSource = () => {};
+const collapsedNavigation = new Set();
 try {
   const saved = JSON.parse(
     localStorage.getItem("meridian-catalogue") ?? "null",
   );
-  if (["light", "dark"].includes(saved?.theme)) theme = saved.theme;
+  if (["light", "dark", "system"].includes(saved?.theme))
+    preference = saved.theme;
   if (["ltr", "rtl"].includes(saved?.direction)) direction = saved.direction;
 } catch {
   // Preferences are optional when browser storage is unavailable.
@@ -47,9 +60,22 @@ function previewURL(entry) {
 }
 
 function settings() {
+  theme = is_dark(preference, systemDark) ? "dark" : "light";
   root.dataset.theme = theme;
   document.documentElement.dir = direction;
-  themeButton.setAttribute("aria-pressed", String(theme === "dark"));
+  const label = preference[0].toUpperCase() + preference.slice(1);
+  const hint = `Theme: ${label}. Switch to ${next(preference)} theme`;
+  themeButton.setAttribute("aria-label", hint);
+  themeButton.dataset.tooltip = hint;
+  themeButton.dataset.preference = preference;
+  const glyph = {
+    light:
+      '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
+    dark: '<path d="M21 12.8A9 9 0 0 1 11.2 3 9 9 0 1 0 21 12.8Z"/>',
+    system:
+      '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>',
+  }[preference];
+  themeButton.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${glyph}</svg>`;
   directionButton.setAttribute("aria-pressed", String(direction === "rtl"));
   const frame = main.querySelector("iframe");
   frame?.contentWindow.postMessage(
@@ -65,7 +91,7 @@ function saveSettings() {
   try {
     localStorage.setItem(
       "meridian-catalogue",
-      JSON.stringify({ theme, direction }),
+      JSON.stringify({ theme: preference, direction }),
     );
   } catch {
     // The current page still works without persistent preferences.
@@ -95,8 +121,23 @@ document
 dialog.addEventListener("close", closeNavigation);
 mobile.addEventListener("change", closeNavigation);
 themeButton.addEventListener("click", () => {
-  theme = theme === "dark" ? "light" : "dark";
+  preference = next(preference);
   saveSettings();
+});
+
+root.addEventListener("click", (event) => {
+  const toggle = event.target.closest(".docs-toggle");
+  if (!toggle) return;
+  const content = document.getElementById(toggle.getAttribute("aria-controls"));
+  if (!content) return;
+  const expanded = toggle.getAttribute("aria-expanded") !== "true";
+  toggle.setAttribute("aria-expanded", String(expanded));
+  content.hidden = !expanded;
+  const group = toggle.closest(".docs-nav-group")?.dataset.group;
+  if (group && !search.value) {
+    if (expanded) collapsedNavigation.delete(group);
+    else collapsedNavigation.add(group);
+  }
 });
 directionButton.addEventListener("click", () => {
   direction = direction === "rtl" ? "ltr" : "rtl";
@@ -133,8 +174,18 @@ function renderNavigation() {
     const members = matches.filter((entry) => entry.group === group);
     if (!members.length) continue;
     const section = node("section", "docs-nav-group");
-    section.append(node("h2", "docs-nav-heading", group));
+    section.dataset.group = group;
+    const expanded =
+      Boolean(query) ||
+      current?.group === group ||
+      !collapsedNavigation.has(group);
+    const id = `navigation-${normalise(group)}`;
+    const heading = node("h2", "docs-nav-heading");
+    heading.innerHTML = toggle_markup(id, group, expanded);
+    section.append(heading);
     const list = node("ul");
+    list.id = `${id}-content`;
+    list.hidden = !expanded;
     for (const entry of members) {
       const link = node("a", "docs-nav-link", entry.name);
       link.href = route(entry);
@@ -167,25 +218,29 @@ function overview() {
       <h1>Small components.<br />Room for ideas.</h1>
       <p class="docs-lead">Native foundations, Gleam types and a considered design. Explore every building block, try it live and take the source with you.</p>
       <div class="docs-hero-actions"><a class="button primary-button" href="#/components/button">Explore the components <span aria-hidden="true">→</span></a><a class="button" href="${repository}#use-it">Get started with Gleam</a></div>
-      <div class="docs-stats"><span><strong>93</strong> core entries</span><span><strong>4</strong> advanced widgets</span><span><strong>1</strong> filter utility</span></div>
+      <div class="docs-stats"><span><strong>93</strong> core entries</span><span><strong>4</strong> advanced widgets</span><span><strong>4</strong> utilities and additions</span></div>
     </section>
     <section class="docs-intro" aria-labelledby="catalogue-heading">
       <div><p class="eyebrow">A place for everything</p><h2 id="catalogue-heading">Find your building block</h2></div>
       <p class="muted">Every entry includes a live preview and the Gleam code that renders it. Switch the theme or direction at any time.</p>
     </section>
     <div id="category-grid" class="docs-category-grid"></div>
-    <section class="panel docs-note"><h2>Meridian, not a PrimeNG port</h2><p>These are independent Gleam and Lustre equivalents, not Angular compatibility or a claim of feature parity. Native pickers follow your browser and OS. Optional engines are bundled locally and loaded with their examples.</p><a href="${repository}/blob/main/COMPONENTS.md">Read the coverage and limits <span aria-hidden="true">↗</span></a></section>`;
+    <section class="panel docs-note"><h2>Native by design</h2><p>Meridian builds on browser semantics, with shared styling, keyboard access and application-owned state. Native popup interiors follow your browser and OS. Optional engines are bundled locally and loaded with their examples.</p><a href="${repository}/blob/main/COMPONENTS.md">Read the component guide <span aria-hidden="true">↗</span></a></section>`;
   const grid = document.getElementById("category-grid");
   for (const group of groups()) {
     const members = entries.filter((entry) => entry.group === group);
     const section = node("section", "panel docs-category");
     const heading = node("div", "docs-category-heading");
+    const title = node("h3");
+    const id = `category-${normalise(group)}`;
+    title.innerHTML = toggle_markup(id, group, true);
     heading.append(
-      node("h3", "", group),
+      title,
       node("span", "docs-category-count", String(members.length)),
     );
     section.append(heading);
     const list = node("ul", "docs-category-links");
+    list.id = `${id}-content`;
     for (const entry of members) {
       const item = node("li");
       const link = node("a", "", entry.name);
@@ -206,16 +261,13 @@ function component(entry) {
       <div class="docs-component-links"><span id="component-status" class="docs-status"></span><a id="api-source">Component source <span aria-hidden="true">↗</span></a><a id="example-source">Full example on GitHub <span aria-hidden="true">↗</span></a></div>
     </header>
     <section class="panel docs-example" aria-labelledby="preview-heading">
-      <div class="docs-section-bar"><div><span class="docs-live-dot" aria-hidden="true"></span><h2 id="preview-heading">Live example</h2></div><a id="standalone-preview" target="_blank" rel="noopener">Open preview <span aria-hidden="true">↗</span><span class="sr-only"> (new tab)</span></a></div>
+      <div class="docs-section-bar"><h2 id="preview-heading">${toggle_markup("preview-section", "Live example", true)}</h2><a id="standalone-preview" target="_blank" rel="noopener">Open preview <span aria-hidden="true">↗</span><span class="sr-only"> (new tab)</span></a></div>
+      <div id="preview-section-content" role="region" aria-labelledby="preview-section-toggle">
       <p id="preview-status" class="sr-only" role="status">Loading preview...</p>
       <div id="preview-container"></div>
+      </div>
     </section>
-    <section class="panel docs-source" aria-labelledby="source-heading">
-      <div class="docs-section-bar"><h2 id="source-heading">Gleam example</h2><button id="copy-source" type="button">Copy code</button></div>
-      <p class="docs-source-note muted">The view below uses the example's model, messages and shared helpers. Open the full module for its state and update function.</p>
-      <pre tabindex="0" aria-label="Gleam example source" dir="ltr"><code id="example-code"></code></pre>
-      <div class="docs-source-actions"><button id="toggle-source" type="button" aria-pressed="false">Show full module</button><a href="./source/common.gleam">Shared example helpers</a><span id="copy-status" role="status"></span></div>
-    </section>
+    <div id="source-demo"></div>
     <p class="docs-native-note muted">Examples run locally in your browser. Reload the preview to reset its state. Business data, persistence and server validation belong to your application.</p>`;
   document.getElementById("component-group").textContent = entry.group;
   document.getElementById("component-name").textContent = entry.name;
@@ -238,43 +290,12 @@ function component(entry) {
   frame.src = previewURL(entry);
   frame.style.height = "360px";
   document.getElementById("preview-container").append(frame);
-  const code = document.getElementById("example-code");
-  code.textContent = entry.snippet;
-  const copyStatus = document.getElementById("copy-status");
-  document.getElementById("copy-source").addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(code.textContent);
-      copyStatus.textContent = "Copied.";
-    } catch {
-      copyStatus.textContent =
-        "Copy unavailable. Select the code to copy it manually.";
-    }
-  });
-  const toggle = document.getElementById("toggle-source");
-  let fullSource;
-  toggle.addEventListener("click", async () => {
-    toggle.disabled = true;
-    try {
-      if (!fullSource) {
-        const response = await fetch(`./source/${entry.family}.gleam`);
-        if (!response.ok) throw new Error("Source unavailable");
-        fullSource = await response.text();
-      }
-      const full = toggle.getAttribute("aria-pressed") !== "true";
-      code.textContent = full ? fullSource : entry.snippet;
-      toggle.setAttribute("aria-pressed", String(full));
-      toggle.textContent = full ? "Show view only" : "Show full module";
-      copyStatus.textContent = "";
-    } catch {
-      copyStatus.textContent =
-        "The full source could not be loaded. Use the GitHub link above.";
-    } finally {
-      toggle.disabled = false;
-    }
-  });
+  stopSource = start_source("source-demo", entry.snippet, entry.family);
 }
 
 function render(focus = false) {
+  stopSource();
+  stopSource = () => {};
   const hash = location.hash;
   current = entries.find((entry) => route(entry) === hash);
   if (current) component(current);
@@ -317,6 +338,20 @@ addEventListener("message", (event) => {
       "The preview could not be loaded. Try opening it in a new tab.";
 });
 settings();
+const stopInteractions = mount(
+  "docs-root",
+  (dark) => {
+    systemDark = dark;
+    settings();
+  },
+  () => {},
+);
+addEventListener("pagehide", (event) => {
+  if (!event.persisted) {
+    stopSource();
+    stopInteractions();
+  }
+});
 try {
   const response = await fetch("./catalogue.json");
   if (!response.ok) throw new Error("Catalogue unavailable");

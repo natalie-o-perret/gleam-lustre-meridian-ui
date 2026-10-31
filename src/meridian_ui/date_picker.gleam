@@ -19,20 +19,24 @@ pub fn update(value: #(String, String), action: Action) -> #(String, String) {
 
 /// Values stay native ISO date strings. The browser owns locale display and its calendar.
 pub fn view(attrs: List(Attribute(msg))) -> Element(msg) {
-  field.input([a.type_("date"), ..attrs])
+  field.input([a.type_("date"), a.class("meridian-date-input"), ..attrs])
 }
 
 /// Zone-less local date/time, not an instant. The application chooses the time zone.
 pub fn date_time(attrs: List(Attribute(msg))) -> Element(msg) {
-  field.input([a.type_("datetime-local"), ..attrs])
+  field.input([
+    a.type_("datetime-local"),
+    a.class("meridian-date-input"),
+    ..attrs
+  ])
 }
 
 pub fn time(attrs: List(Attribute(msg))) -> Element(msg) {
-  field.input([a.type_("time"), ..attrs])
+  field.input([a.type_("time"), a.class("meridian-date-input"), ..attrs])
 }
 
 pub fn month(attrs: List(Attribute(msg))) -> Element(msg) {
-  field.input([a.type_("month"), ..attrs])
+  field.input([a.type_("month"), a.class("meridian-date-input"), ..attrs])
 }
 
 pub fn range(

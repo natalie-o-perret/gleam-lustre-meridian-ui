@@ -8,7 +8,7 @@ const document = await readFile(
 );
 
 test("the coverage ledger accounts for all 93 core entries without duplicate routes", async () => {
-  const core = document.split("## Core\n")[1].split("## PRO\n")[0];
+  const core = document.split("## Core\n")[1].split("## Advanced\n")[0];
   const sections = [
     ...core.matchAll(/^### (.+) \((\d+)\)\n([\s\S]*?)(?=^### |$(?![\s\S]))/gm),
   ];
@@ -17,12 +17,13 @@ test("the coverage ledger accounts for all 93 core entries without duplicate rou
   for (const [, name, count, body] of sections) {
     const entries = [
       ...body.matchAll(
-        /^\|\s+\[([^\]]+)\]\(https:\/\/primeng\.dev\/([^)]+)\)\s+\|\s+(Base|Partial|Platform|Pending)\s+\|\s+(.+?)\s+\|$/gm,
+        /^\|\s+\[([^\]]+)\]\(([^)]+)\)\s+\|\s+(Base|Platform)\s+\|\s+(.+?)\s+\|$/gm,
       ),
     ];
     assert.equal(entries.length, Number(count), name);
-    for (const [, , route, status, coverage] of entries) {
-      routes.push(route);
+    for (const [, name, source, status, coverage] of entries) {
+      routes.push(name);
+      await access(new URL(`../${source}`, import.meta.url));
       if (status === "Base") {
         const module = coverage.match(/`(meridian_ui\/[a-z_]+)`/)[1];
         await access(new URL(`../src/${module}.gleam`, import.meta.url));
@@ -35,18 +36,23 @@ test("the coverage ledger accounts for all 93 core entries without duplicate rou
   assert.equal([...core.matchAll(/\| Platform\s+\|/g)].length, 5);
 });
 
-test("all released PRO products have modules and future products remain separate", async () => {
-  const pro = document.split("## PRO\n")[1];
+test("advanced widgets and additional controls have their own modules and examples", async () => {
+  const advanced = document
+    .split("## Advanced\n")[1]
+    .split("## Utilities\n")[0];
   const products = [
-    ...pro.matchAll(
-      /^\|\s+\[[^\]]+\]\(https:\/\/angular\.primeuipro\.dev\/[^)]+\)\s+\|\s+Base\s+\|\s+`(meridian_ui\/[a-z_]+)`/gm,
+    ...advanced.matchAll(
+      /^\|\s+\[[^\]]+\]\([^)]+\)\s+\|\s+Base\s+\|\s+`(meridian_ui\/[a-z_]+)`/gm,
     ),
   ];
   assert.equal(products.length, 4);
   for (const [, module] of products)
     await access(new URL(`../src/${module}.gleam`, import.meta.url));
-  assert.equal(
-    [...pro.matchAll(/^\|\s+[^|]+\s+\|\s+Planned\s+\|/gm)].length,
-    5,
-  );
+  const additions = document
+    .split("## Additional controls\n")[1]
+    .split("## Verification")[0];
+  const sources = [...additions.matchAll(/^\|\s+\[[^\]]+\]\(([^)]+)\)/gm)];
+  assert.equal(sources.length, 3);
+  for (const [, source] of sources)
+    await access(new URL(`../${source}`, import.meta.url));
 });

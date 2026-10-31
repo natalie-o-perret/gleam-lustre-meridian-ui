@@ -6,11 +6,10 @@ A small styled UI package for Lustre 5.7, extracted from the
 or [see the original dashboard](https://natalie-o-perret.github.io/spa-dashboards/gleam-lustre/).
 The API is experimental and the package is not published to Hex.
 
-The library covers the 93 PrimeNG core catalogue entries and four released PRO
-products through independent Gleam/Lustre components, platform features and
-optional open-source engines, keeping Meridian's existing design.
-[Component coverage](COMPONENTS.md) lists each equivalent and its limits.
-This is not a claim of PrimeNG feature or API parity.
+The library includes 93 core entries, four advanced widgets, FilterService,
+CodeBlock, TimePicker and DateTimePicker. Components share Meridian's design and
+native browser semantics, with optional open-source engines for richer widgets.
+[Component catalogue](COMPONENTS.md) lists their APIs and limits.
 
 No Tailwind, remote fonts or icon assets are required. Applications use Lustre and
 Gleam's standard library. Optional masks, charts, calendars and rich-text editing
@@ -353,8 +352,24 @@ Each root has its own tokens, so siblings can use different themes.
 
 Styles and resets stay inside `.meridian-ui`. Set CSS variables on the root to
 customise it, for example `--accent`, `--accent-soft`, `--bg`, `--panel`, `--ink`,
-`--muted`, `--border` and `--font`. The default font is the system sans-serif.
-Branding, font files and icons belong to the consuming application.
+`--muted`, `--border` and `--font`. The default font is locally bundled Manrope,
+with a system sans-serif fallback. Keep `priv/fonts/` beside the stylesheet when
+copying it. Its [OFL licence](priv/fonts/OFL.txt) ships with the font.
+Branding, additional fonts and icons belong to the consuming application.
+
+Cards have 24px padding by default. Panels with their own headers manage their
+content spacing separately. Applications can override these defaults with CSS.
+
+`code_block.view(label, source, attrs)` renders escaped, selectable Gleam source
+with syntax colours, a left-to-right code layout and keyboard scrolling. It does
+not evaluate HTML or source code. Compose it with `tabs.view` and ordinary buttons
+to build a multi-file example, as the catalogue does.
+
+`date_picker.view`, `date_picker.month`, `date_picker.time` and
+`date_picker.date_time` share styled controls and native min/max, step, required
+and form behaviour. `date_picker.range` keeps independently named start/end
+fields and cross-bounds. Time values are local times, not time-zone conversions.
+Calendar and clock popup interiors follow the browser and OS.
 
 For a full-page application, optionally put `class="meridian-page"` on `<html>`.
 This opts the page's native scrollbar into the same theme and 8px grab area.
@@ -389,9 +404,10 @@ Browser hooks target the JavaScript browser runtime, not SSR or Shadow DOM.
 ### Component catalogue
 
 The GitHub Pages catalogue includes live examples and copyable Gleam source for
-all 93 core entries, four advanced widgets and the FilterService utility. Search
-the grouped navigation, open a component's deep link, or switch between light,
-dark and RTL previews. Examples use Meridian's existing styles and native controls.
+all 101 entries. Search the collapsible navigation, open a component's deep link,
+or cycle Light, Dark and System themes with the dashboard's icon control. RTL
+previews work independently. Preview and source sections collapse without losing
+state. Source tabs use Meridian's own Tabs and CodeBlock components.
 
 To build and browse it locally:
 
@@ -428,4 +444,3 @@ Use `BROWSER=chromium` or `SUITE=selection,data` to focus a local run.
 Use `npm run test:site:browser` after a site build to check the catalogue alone.
 
 Business data, authorisation and persistence belong to the consuming application.
-The catalogue uses Meridian APIs, not Angular compatibility or PrimeNG API parity.

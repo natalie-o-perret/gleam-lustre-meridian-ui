@@ -89,6 +89,15 @@ body.docs {
   letter-spacing: 0.08em !important;
   color: var(--muted);
 }
+.docs-nav-heading .docs-toggle {
+  gap: 10px;
+  padding: 6px 0;
+  border-radius: 6px;
+}
+.docs-nav-heading .meridian-disclosure-icon {
+  inline-size: 6px;
+  block-size: 6px;
+}
 .docs-nav-link,
 .docs-overview-link {
   display: block;
@@ -194,6 +203,9 @@ body.docs {
   font-size: 17px;
   letter-spacing: -0.02em;
 }
+.docs-category-heading h3 {
+  flex: 1;
+}
 .docs-category-count {
   padding: 2px 8px;
   border-radius: 6px;
@@ -224,7 +236,6 @@ body.docs {
 .docs-note a,
 .docs-component-links a,
 .docs-section-bar a,
-.docs-source-actions a,
 .docs-footer a,
 .docs-main > p a {
   color: var(--accent);
@@ -289,24 +300,38 @@ body.docs {
   padding: 20px 24px 0;
   font-size: 12px;
 }
-.docs-source pre {
-  max-block-size: 560px;
-  margin: 0;
-  padding: 24px;
-  overflow: auto;
-  color: var(--ink);
-  font-size: 12px;
-  line-height: 1.9;
-  tab-size: 2;
+.docs-source > .meridian-panel-content {
+  padding: 0;
 }
-.docs-source-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
+.docs-source > .meridian-panel-header {
   padding: 16px 24px;
-  border-block-start: 1px solid var(--border);
+}
+.docs-source .meridian-panel-heading {
+  flex-basis: auto;
+  font-size: 14px;
+}
+.docs-source .meridian-tabs {
+  margin: 20px 24px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.docs-source .meridian-tab-list {
+  border-radius: 0;
+  background: transparent;
+}
+.docs-source .meridian-tab-panel {
+  padding: 16px 0 0;
+}
+.docs-copy-status {
+  padding: 0 24px 16px;
   font-size: 12px;
+  color: var(--muted);
+}
+.docs-tools .theme-toggle {
+  min-block-size: 38px;
+  padding: 8px;
+  font-size: inherit;
 }
 .docs-native-note {
   font-size: 12px;
@@ -425,9 +450,11 @@ body.docs {
     gap: 16px;
   }
   .docs-section-bar,
-  .docs-source pre,
-  .docs-source-actions {
+  .docs-source > .meridian-panel-header {
     padding: 16px;
+  }
+  .docs-source .meridian-tabs {
+    margin: 16px;
   }
   .docs-source-note {
     padding: 16px 16px 0;

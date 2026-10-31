@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="./meridian-ui.css" />
     <link rel="stylesheet" href="./catalogue.css" />
   </head>
-  <body class="meridian-ui docs" data-theme="light">
+  <body id="docs-root" class="meridian-ui docs" data-theme="light">
     <a class="docs-skip" href="#main">Skip to content</a>
     <header class="docs-header">
       <a class="docs-brand" href="#/" aria-label="Meridian UI home">
@@ -23,7 +23,12 @@
       <span class="docs-header-note muted">Gleam + Lustre</span>
       <div class="docs-tools">
         <button id="direction" type="button" aria-pressed="false">RTL</button>
-        <button id="theme" type="button" aria-pressed="false">Dark mode</button>
+        <button
+          id="theme"
+          class="icon-button theme-toggle"
+          type="button"
+          aria-label="Theme: System. Switch to light theme"
+        ></button>
         <a
           class="docs-github"
           href="https://github.com/natalie-o-perret/gleam-lustre-meridian-ui"
@@ -57,7 +62,12 @@
         <p id="search-status" class="docs-count muted" role="status">
           Loading catalogue...
         </p>
-        <nav id="component-navigation" aria-label="Components"></nav>
+        <nav
+          id="component-navigation"
+          aria-label="Components"
+          data-meridian-keys="accordion"
+          data-orientation="vertical"
+        ></nav>
       </div>
     </aside>
     <dialog id="navigation-dialog" aria-label="Component navigation">

@@ -24,6 +24,17 @@ const base = `${server.url}/gleam-lustre-meridian-ui/`;
 async function accessible(frame, label) {
   await frame.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
   const violations = await frame.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.allSettled(
+      document
+        .getAnimations()
+        .filter(
+          (animation) =>
+            animation.playState === "running" &&
+            Number.isFinite(animation.effect.getComputedTiming().endTime),
+        )
+        .map((animation) => animation.finished),
+    );
     const result = await axe.run(document, {
       runOnly: {
         type: "tag",
@@ -49,6 +60,32 @@ async function open(page, id) {
   return (await page.locator("iframe").elementHandle()).contentFrame();
 }
 
+async function setTheme(page, preference) {
+  const control = page.locator("#theme");
+  for (
+    let attempt = 0;
+    attempt < 3 &&
+    (await control.getAttribute("data-preference")) !== preference;
+    attempt++
+  )
+    await control.click();
+  await expect(control).toHaveAttribute("data-preference", preference);
+}
+
+async function pasteCode(page, source) {
+  await page.getByRole("button", { name: "Copy code", exact: true }).click();
+  await expect(page.locator("#copy-status")).toHaveText("Copied.");
+  await page.evaluate(() => {
+    const input = document.createElement("textarea");
+    input.id = "clipboard-probe";
+    document.body.append(input);
+    input.focus();
+  });
+  await page.locator("#clipboard-probe").press("ControlOrMeta+v");
+  await expect(page.locator("#clipboard-probe")).toHaveValue(source);
+  await page.locator("#clipboard-probe").evaluate((input) => input.remove());
+}
+
 async function interactions(page) {
   let frame = await open(page, "button");
   await frame
@@ -65,29 +102,44 @@ async function interactions(page) {
     "Ordinary previews must not load advanced engines",
   );
 
-  await page.getByRole("button", { name: "Copy code", exact: true }).click();
-  await expect(page.locator("#copy-status")).toHaveText("Copied.");
-  await page.evaluate(() => {
-    const input = document.createElement("textarea");
-    input.id = "clipboard-probe";
-    document.body.append(input);
-    input.focus();
-  });
-  await page.locator("#clipboard-probe").press("ControlOrMeta+v");
-  await expect(page.locator("#clipboard-probe")).toHaveValue(
-    entries.find((entry) => entry.id === "button").snippet,
+  await pasteCode(page, entries.find((entry) => entry.id === "button").snippet);
+  await page.getByRole("tab", { name: "Full module", exact: true }).click();
+  await expect(page.locator("#module-code")).toContainText("fn update(");
+  await pasteCode(page, await readFile("dist/source/feedback.gleam", "utf8"));
+  await page.getByRole("tab", { name: "Helpers", exact: true }).click();
+  await expect(page.locator("#helpers-code")).toContainText("pub fn start(");
+  await pasteCode(page, await readFile("dist/source/common.gleam", "utf8"));
+  const exampleTab = page.getByRole("tab", { name: "Example", exact: true });
+  await exampleTab.click();
+  await exampleTab.focus();
+  await exampleTab.press(
+    (await page.locator("html").getAttribute("dir")) === "rtl"
+      ? "ArrowLeft"
+      : "ArrowRight",
   );
-  await page.locator("#clipboard-probe").evaluate((input) => input.remove());
-  await page
-    .getByRole("button", { name: "Show full module", exact: true })
-    .click();
-  await expect(page.locator("#example-code")).toContainText("fn update(");
-  await page
-    .getByRole("button", { name: "Show view only", exact: true })
-    .click();
+  await expect(
+    page.getByRole("tab", { name: "Full module", exact: true }),
+  ).toBeFocused();
+  await expect(
+    page.getByRole("tab", { name: "Full module", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  await exampleTab.click();
   await expect(page.locator("#example-code")).toHaveText(
     entries.find((entry) => entry.id === "button").snippet,
   );
+  assert.ok(await page.locator("#example-code .meridian-code-keyword").count());
+  await page
+    .getByRole("button", { name: "Gleam example", exact: true })
+    .click();
+  await expect(page.locator("#source-section-content")).toBeHidden();
+  await page
+    .getByRole("button", { name: "Gleam example", exact: true })
+    .click();
+  await expect(exampleTab).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Live example", exact: true }).click();
+  await expect(page.locator("iframe")).toBeHidden();
+  await page.getByRole("button", { name: "Live example", exact: true }).click();
+  await expect(frame.getByRole("status")).toHaveText("Actions: 1");
   await page.evaluate(() => {
     navigator.clipboard.writeText = async () => {
       throw new Error("Clipboard denied");
@@ -104,7 +156,10 @@ async function interactions(page) {
   const previousTheme = await frame
     .locator("#demo-root")
     .getAttribute("data-theme");
-  await page.getByRole("button", { name: "Dark mode", exact: true }).click();
+  const previousPreference = await page
+    .locator("#theme")
+    .getAttribute("data-preference");
+  await setTheme(page, previousTheme === "light" ? "dark" : "light");
   await expect(frame.locator("#demo-root")).not.toHaveAttribute(
     "data-theme",
     previousTheme,
@@ -112,7 +167,25 @@ async function interactions(page) {
   await expect(
     frame.getByRole("textbox", { name: "Your name", exact: true }),
   ).toHaveValue("Alex");
-  await page.getByRole("button", { name: "Dark mode", exact: true }).click();
+  await setTheme(page, "system");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(frame.locator("#demo-root")).toHaveAttribute(
+    "data-theme",
+    "dark",
+  );
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(frame.locator("#demo-root")).toHaveAttribute(
+    "data-theme",
+    "light",
+  );
+  await setTheme(page, "light");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(frame.locator("#demo-root")).toHaveAttribute(
+    "data-theme",
+    "light",
+  );
+  await page.emulateMedia({ colorScheme: "light" });
+  await setTheme(page, previousPreference);
   await expect(frame.locator("#demo-root")).toHaveAttribute(
     "data-theme",
     previousTheme,
@@ -122,6 +195,83 @@ async function interactions(page) {
   await frame.getByLabel("Accent colour", { exact: true }).fill("#316a91");
   await expect(frame.getByLabel("Accent colour", { exact: true })).toHaveValue(
     "#316a91",
+  );
+
+  frame = await open(page, "datepicker");
+  await frame.getByLabel("Single date", { exact: true }).fill("2026-11-07");
+  await frame.getByLabel("Start date", { exact: true }).fill("2026-11-08");
+  await frame.getByLabel("End date", { exact: true }).fill("2026-11-12");
+  await expect(frame.getByLabel("Start date", { exact: true })).toHaveAttribute(
+    "max",
+    "2026-11-12",
+  );
+  await expect(frame.getByLabel("End date", { exact: true })).toHaveAttribute(
+    "min",
+    "2026-11-08",
+  );
+  const values = await frame
+    .locator("form")
+    .evaluate((form) => Object.fromEntries(new FormData(form)));
+  assert.equal(values.date, "2026-11-07");
+  assert.equal(values["travel-start"], "2026-11-08");
+  assert.equal(values["travel-end"], "2026-11-12");
+  await frame.getByLabel("End date", { exact: true }).fill("2026-11-06");
+  assert.equal(
+    await frame.locator("form").evaluate((form) => form.checkValidity()),
+    false,
+  );
+  await frame.getByLabel("End date", { exact: true }).fill("2026-11-12");
+  await frame
+    .getByRole("button", { name: "Validate dates", exact: true })
+    .click();
+  await expect(frame.locator(".demo-status")).toContainText(
+    "The native form is valid.",
+  );
+  await frame.evaluate(() => {
+    document.querySelector('link[href="./preview.css"]').disabled = true;
+  });
+  assert.ok(
+    await frame
+      .getByLabel("Start date", { exact: true })
+      .evaluate(
+        (input) =>
+          getComputedStyle(input).borderRadius === "9px" &&
+          getComputedStyle(input).fontFamily.includes("Manrope"),
+      ),
+  );
+
+  frame = await open(page, "timepicker");
+  await frame
+    .getByLabel("Meeting time (09:00-17:00)", { exact: true })
+    .fill("10:15");
+  assert.equal(
+    await frame
+      .locator("form")
+      .evaluate((form) => new FormData(form).get("time")),
+    "10:15",
+  );
+  await frame
+    .getByRole("button", { name: "Validate time", exact: true })
+    .click();
+  await expect(frame.locator(".demo-status")).toContainText(
+    "The native form is valid.",
+  );
+
+  frame = await open(page, "datetimepicker");
+  await frame
+    .getByLabel("Meeting date and time", { exact: true })
+    .fill("2026-11-06T10:15");
+  assert.equal(
+    await frame
+      .locator("form")
+      .evaluate((form) => new FormData(form).get("date-time")),
+    "2026-11-06T10:15",
+  );
+  await frame
+    .getByRole("button", { name: "Validate date and time", exact: true })
+    .click();
+  await expect(frame.locator(".demo-status")).toContainText(
+    "The native form is valid.",
   );
 
   frame = await open(page, "accordion");
@@ -235,6 +385,88 @@ async function interactions(page) {
   await expect(editor).toHaveAttribute("contenteditable", "false");
 }
 
+async function fallbackChecks(browser, name) {
+  const context = await browser.newContext();
+  const errors = [];
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(error.message));
+  let release;
+  const pending = new Promise((resolve) => {
+    release = resolve;
+  });
+  await context.route("**/source/feedback.gleam", async (route) => {
+    await pending;
+    await route.continue();
+  });
+  try {
+    await page.goto(base);
+    await open(page, "button");
+    await page.getByRole("tab", { name: "Full module", exact: true }).click();
+    await expect(
+      page.getByRole("tabpanel", { name: "Full module", exact: true }),
+    ).toContainText("Loading source...");
+    await expect(
+      page.getByRole("button", { name: "Copy code", exact: true }),
+    ).toBeDisabled();
+    await open(page, "inputtext");
+    release();
+    await open(page, "button");
+    await page.getByRole("tab", { name: "Full module", exact: true }).click();
+    await expect(page.locator("#module-code")).toContainText("fn update(");
+    await context.route("**/source/forms.gleam", (route) =>
+      route.fulfill({ status: 503, body: "Unavailable" }),
+    );
+    await open(page, "datepicker");
+    await page.getByRole("tab", { name: "Full module", exact: true }).click();
+    await expect(page.getByRole("alert")).toHaveText(
+      "Source could not be loaded. Use the GitHub link above.",
+    );
+    await expect(
+      page.getByRole("button", { name: "Copy code", exact: true }),
+    ).toBeDisabled();
+    await page.getByRole("tab", { name: "Example", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Copy code", exact: true }),
+    ).toBeEnabled();
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem(
+          "meridian-catalogue",
+          JSON.stringify({ theme: "invalid", direction: "invalid" }),
+        );
+      } catch {}
+    });
+    await page.reload();
+    await expect(page.locator("#theme")).toHaveAttribute(
+      "data-preference",
+      "system",
+    );
+    await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+    await page.addInitScript(() => {
+      Storage.prototype.getItem = () => {
+        throw new Error("Storage denied");
+      };
+      Storage.prototype.setItem = () => {
+        throw new Error("Storage denied");
+      };
+    });
+    await page.reload();
+    await expect(page.locator("#theme")).toHaveAttribute(
+      "data-preference",
+      "system",
+    );
+    await setTheme(page, "dark");
+    await expect(page.locator("body")).toHaveAttribute("data-theme", "dark");
+    assert.deepEqual(errors, []);
+    console.log(
+      `${name}: source failure, pending-source disposal and blocked-storage checks PASS`,
+    );
+  } finally {
+    release();
+    await context.close();
+  }
+}
+
 try {
   for (const name of browsers) {
     const browser = await engines[name].launch();
@@ -268,11 +500,14 @@ try {
           await expect(page.getByRole("heading", { level: 1 })).toContainText(
             "Small components.",
           );
-          await expect(page.locator(".docs-nav-link")).toHaveCount(98);
-          if (scenario.theme === "dark")
-            await page
-              .getByRole("button", { name: "Dark mode", exact: true })
-              .click();
+          await expect(page.locator(".docs-nav-link")).toHaveCount(
+            entries.length,
+          );
+          await expect(page.locator("#theme")).toHaveAttribute(
+            "data-preference",
+            "system",
+          );
+          await setTheme(page, scenario.theme);
           if (scenario.direction === "rtl")
             await page
               .getByRole("button", { name: "RTL", exact: true })
@@ -283,10 +518,26 @@ try {
             fullPage: true,
             animations: "disabled",
           });
+          const overviewGroup = page.locator("#category-form-toggle");
+          await overviewGroup.focus();
+          await overviewGroup.press("Enter");
+          await expect(page.locator("#category-form-content")).toBeHidden();
+          await overviewGroup.press("Space");
+          await expect(page.locator("#category-form-content")).toBeVisible();
           if (scenario.width < 900)
             await page
               .getByRole("button", { name: "Components", exact: true })
               .click();
+          const navigation = page.getByRole("navigation", {
+            name: "Components",
+            exact: true,
+          });
+          const formGroup = navigation.getByRole("button", {
+            name: "Form",
+            exact: true,
+          });
+          await formGroup.click();
+          await expect(page.locator("#navigation-form-content")).toBeHidden();
           await page
             .getByRole("searchbox", { name: "Search components", exact: true })
             .fill("text editor");
@@ -312,7 +563,9 @@ try {
           await page
             .getByRole("searchbox", { name: "Search components", exact: true })
             .fill("nothing-matches-this");
-          await expect(page.locator("#search-status")).toContainText("0 of 98");
+          await expect(page.locator("#search-status")).toContainText(
+            `0 of ${entries.length}`,
+          );
           await page
             .getByRole("searchbox", { name: "Search components", exact: true })
             .fill("");
@@ -327,6 +580,10 @@ try {
               page.getByRole("button", { name: "Components", exact: true }),
             ).toBeFocused();
           }
+          if (scenario.width >= 900) {
+            await expect(page.locator("#navigation-form-content")).toBeHidden();
+            await formGroup.click();
+          }
           await interactions(page);
           for (const entry of entries) {
             active = entry.id;
@@ -336,6 +593,12 @@ try {
             );
             await expect(page.locator("#example-code")).toHaveText(
               entry.snippet,
+            );
+            assert.ok(
+              await page
+                .locator("#example-code .meridian-code-keyword")
+                .count(),
+              `${entry.name}: highlighted source`,
             );
             assert.equal(
               await frame.locator("#demo-root").getAttribute("data-theme"),
@@ -364,7 +627,17 @@ try {
                 "1",
               );
             await accessible(frame, `${label} ${entry.name}`);
-            if (["button", "table", "scheduler"].includes(entry.id))
+            if (
+              [
+                "button",
+                "table",
+                "scheduler",
+                "datepicker",
+                "timepicker",
+                "datetimepicker",
+                "codeblock",
+              ].includes(entry.id)
+            )
               await page.screenshot({
                 path: `test-results/site-${name}-${scenario.width}-${entry.id}.png`,
                 fullPage: true,
@@ -412,7 +685,7 @@ try {
           );
           assert.deepEqual(errors, [], label);
           console.log(
-            `${label}: 98 routes, source, interactions, clipboard and WCAG checks PASS`,
+            `${label}: ${entries.length} routes, source, interactions, clipboard and WCAG checks PASS`,
           );
         } catch (error) {
           await page.screenshot({
@@ -426,6 +699,7 @@ try {
           await context.close();
         }
       }
+      await fallbackChecks(browser, name);
     } finally {
       await browser.close();
     }
