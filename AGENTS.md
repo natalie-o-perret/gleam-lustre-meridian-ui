@@ -1,5 +1,14 @@
 # Working on Meridian UI
 
+## File boundaries
+
+- Keep handwritten source and test files below 100 physical lines per file.
+- At 100 lines, split by the relevant subdomain or responsibility. Use names such
+  as appearance, overlay positioning or table selection, not generic helpers.
+- Don't minify code, join statements or create catch-all files to satisfy the cap.
+- Generated bundles, lockfiles and third-party sources are exempt. Don't hide
+  handwritten logic in them.
+
 ## Keep changes small and shared
 
 - Read the component, its callers, examples and tests before editing it.
@@ -15,6 +24,8 @@
 
 ## Keep the catalogue useful
 
+- Style every component, state and overlay consistently. Follow the
+  [component capability rules](docs/agent-practices/components.md).
 - Give each entry meaningful editable properties, distinct working presets and a
   public API or native-platform reference. Presets must change the real component.
 - Use compiler-derived API types rather than hand-maintained copies. Update
@@ -27,6 +38,9 @@
   colours and reduced motion. Don't trade accessibility for appearance.
 
 ## Verify locally before pushing
+
+For UI work, also follow the mandatory
+[interaction benchmark practices](docs/agent-practices/performance.md).
 
 Use the Node version in `.nvmrc` and toolchain versions in
 `.github/workflows/quality.yml`. Use the formatter version pinned by `Makefile`.
