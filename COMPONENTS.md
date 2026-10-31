@@ -1,210 +1,205 @@
-# Component coverage
+# Component catalogue
 
-Target: independent Gleam/Lustre equivalents of the current PrimeNG component
-catalogue and released PrimeUI PRO products, keeping Meridian's existing design.
-This is a coverage ledger, not a claim of PrimeNG API or feature parity.
+Meridian UI provides styled Gleam and Lustre components built on native browser
+semantics. Load `priv/meridian-ui.css` once inside a `.meridian-ui` root. The same
+defaults apply in an application and in the [live catalogue](https://natalie-o-perret.github.io/gleam-lustre-meridian-ui/).
 
-Snapshot: 2026-10-30, PrimeNG 22.1.4. The [core catalogue](https://primeng.dev/components)
-contains 93 entries. The [PRO announcement](https://primeui.dev/nextchapter) lists
-four released products and five future products. Blocks, application templates,
-Figma tooling and Angular compatibility are not component implementations.
+- **Base**: a Meridian component with the behaviour described below.
+- **Platform**: an existing HTML or Lustre feature, demonstrated without a wrapper.
 
-No PrimeNG packages, commercial source, styles or assets are bundled. PrimeNG 22+
-uses [Community/Commercial licensing](https://primeui.dev/nextchapter), unlike
-earlier MIT releases. Its [commercial licence](https://primeui.dev/licenses/commercial)
-does not permit publishing the software as another component library.
-
-- **Base**: usable Meridian implementation of the behaviour listed below.
-  This does not imply every PrimeNG variant, option or API is reproduced.
-- **Platform**: the underlying feature already belongs to HTML or Lustre.
-
-Coverage: **88 Base + 5 Platform = 93 core entries**, the separate FilterService
-utility and **4 Base released PRO equivalents**. The five announced products stay
-separate. Their future scope is not included in these totals.
+The catalogue contains **93 core entries**, **four advanced widgets**, FilterService
+and **three additional controls**. The examples are compiled against the library.
+Applications own business data, persistence, authorisation, formatting policies and
+server-side validation. Optional engines are bundled locally, not loaded from a CDN.
 
 ## Core
 
 ### Form (28)
 
-| Component                                          | Status   | Meridian coverage                                                                                                            |
-| -------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [AutoComplete](https://primeng.dev/autocomplete)   | Base     | `meridian_ui/autocomplete`, native suggestions, keyboard behaviour and caller-updated async results                          |
-| [CascadeSelect](https://primeng.dev/cascadeselect) | Base     | `meridian_ui/cascade_select`, validated hierarchies, independent level actions and enabled-leaf form values                  |
-| [Checkbox](https://primeng.dev/checkbox)           | Base     | `meridian_ui/checkbox`, native checked/indeterminate/disabled state                                                          |
-| [DatePicker](https://primeng.dev/datepicker)       | Base     | `meridian_ui/date_picker`, native date/time/month inputs, locale display and constrained ranges                              |
-| [FloatLabel](https://primeng.dev/floatlabel)       | Base     | `meridian_ui/field`, floating native labels with explicit control IDs                                                        |
-| [IconField](https://primeng.dev/iconfield)         | Base     | `meridian_ui/field`, leading/trailing decorative icons                                                                       |
-| [IftaLabel](https://primeng.dev/iftalabel)         | Base     | `meridian_ui/field`, permanent inset labels                                                                                  |
-| [InputColor](https://primeng.dev/inputcolor)       | Base     | `meridian_ui/field`, native colour picker and form values                                                                    |
-| [InputGroup](https://primeng.dev/inputgroup)       | Base     | `meridian_ui/field`, joined inputs, addons and native action buttons                                                         |
-| [InputMask](https://primeng.dev/inputmask)         | Base     | `meridian_ui/input_mask`, optional IMask editing engine, masked/raw values, paste and composition                            |
-| [InputNumber](https://primeng.dev/inputnumber)     | Base     | `meridian_ui/field`, native numeric strings, bounds, steps and validity. Application-owned currency formatting               |
-| [InputOtp](https://primeng.dev/inputotp)           | Base     | `meridian_ui/input_otp`, native string entry, leading zeroes, exact constraints, paste and autofill                          |
-| [InputPassword](https://primeng.dev/inputpassword) | Base     | `meridian_ui/password`, controlled reveal, retained input, constraints and disabled state. Application-owned strength policy |
-| [InputTags](https://primeng.dev/inputtags)         | Base     | `meridian_ui/input_tags`, deduplicated tokens, draft submission, keyboard removal and latest-model actions                   |
-| [InputText](https://primeng.dev/inputtext)         | Base     | `meridian_ui/field`, native labelled input attributes                                                                        |
-| [KeyFilter](https://primeng.dev/keyfilter)         | Base     | `meridian_ui/key_filter`, Unicode-aware native validation without deleting paste or composition                              |
-| [Knob](https://primeng.dev/knob)                   | Base     | `meridian_ui/knob`, pointer dial, native range keyboard/form behaviour and forced-colour fallback                            |
-| [Label](https://primeng.dev/label)                 | Platform | Native Lustre HTML labels and `for` attributes                                                                               |
-| [Listbox](https://primeng.dev/listbox)             | Base     | `meridian_ui/listbox`, native single/multiple selection, disabled options, constraints and repeated form values              |
-| [RadioButton](https://primeng.dev/radiobutton)     | Base     | `meridian_ui/radio`, labelled native groups, values and keyboard behaviour                                                   |
-| [Rating](https://primeng.dev/rating)               | Base     | `meridian_ui/rating`, named native radios, RTL keyboard navigation, optional clear and read-only display                     |
-| [Select](https://primeng.dev/select)               | Base     | `meridian_ui/select`, searchable enhanced native picker with keyed options and retained filtered selection                   |
-| [SelectButton](https://primeng.dev/selectbutton)   | Base     | `meridian_ui/select_button`, native radio/checkbox groups, required selection and latest-model actions                       |
-| [Slider](https://primeng.dev/slider)               | Base     | `meridian_ui/slider`, scalar ranges and separately named dual native thumbs that cannot cross                                |
-| [Textarea](https://primeng.dev/textarea)           | Base     | `meridian_ui/field`, multiline input, native CSS autosizing and manual-resize fallback                                       |
-| [ToggleButton](https://primeng.dev/togglebutton)   | Base     | `meridian_ui/toggle_button`, controlled native button with pressed state                                                     |
-| [ToggleSwitch](https://primeng.dev/toggleswitch)   | Base     | `meridian_ui/toggle_switch`, labelled native checkbox, keyboard and form values                                              |
-| [TreeSelect](https://primeng.dev/treeselect)       | Base     | `meridian_ui/tree_select`, inline hierarchical single/multiple selection, summary and hidden form values                     |
+| Component                                             | Status   | Meridian coverage                                                                                                             |
+| ----------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [AutoComplete](src/meridian_ui/autocomplete.gleam)    | Base     | `meridian_ui/autocomplete`, native suggestions, keyboard behaviour and caller-updated async results                           |
+| [CascadeSelect](src/meridian_ui/cascade_select.gleam) | Base     | `meridian_ui/cascade_select`, validated hierarchies, independent level actions and enabled-leaf form values                   |
+| [Checkbox](src/meridian_ui/checkbox.gleam)            | Base     | `meridian_ui/checkbox`, native checked, indeterminate and disabled state                                                      |
+| [DatePicker](src/meridian_ui/date_picker.gleam)       | Base     | `meridian_ui/date_picker`, single dates, months and constrained start/end ranges, with native locale display and validation   |
+| [FloatLabel](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, floating native labels with explicit control IDs                                                         |
+| [IconField](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, leading and trailing decorative icons                                                                    |
+| [IftaLabel](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, permanent inset labels                                                                                   |
+| [InputColor](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, native colour picker and form values                                                                     |
+| [InputGroup](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, joined inputs, addons and native action buttons                                                          |
+| [InputMask](src/meridian_ui/input_mask.gleam)         | Base     | `meridian_ui/input_mask`, optional IMask editing engine, masked/raw values, paste and composition                             |
+| [InputNumber](src/meridian_ui/field.gleam)            | Base     | `meridian_ui/field`, native numeric strings, bounds, steps and validity. Applications own currency formatting                 |
+| [InputOtp](src/meridian_ui/input_otp.gleam)           | Base     | `meridian_ui/input_otp`, string entry, leading zeroes, exact constraints, paste and autofill                                  |
+| [InputPassword](src/meridian_ui/password.gleam)       | Base     | `meridian_ui/password`, controlled reveal, retained input, constraints and disabled state. Applications own strength policies |
+| [InputTags](src/meridian_ui/input_tags.gleam)         | Base     | `meridian_ui/input_tags`, deduplicated tokens, draft submission, keyboard removal and latest-model actions                    |
+| [InputText](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, native labelled input attributes                                                                         |
+| [KeyFilter](src/meridian_ui/key_filter.gleam)         | Base     | `meridian_ui/key_filter`, Unicode-aware native validation without deleting paste or composition                               |
+| [Knob](src/meridian_ui/knob.gleam)                    | Base     | `meridian_ui/knob`, pointer dial, native range keyboard/form behaviour and forced-colour fallback                             |
+| [Label](examples/catalogue/src/catalogue/forms.gleam) | Platform | Native Lustre HTML labels and for attributes                                                                                  |
+| [Listbox](src/meridian_ui/listbox.gleam)              | Base     | `meridian_ui/listbox`, native single/multiple selection, disabled options, constraints and repeated form values               |
+| [RadioButton](src/meridian_ui/radio.gleam)            | Base     | `meridian_ui/radio`, labelled native groups, values and keyboard behaviour                                                    |
+| [Rating](src/meridian_ui/rating.gleam)                | Base     | `meridian_ui/rating`, named native radios, RTL keyboard navigation, optional clear and read-only display                      |
+| [Select](src/meridian_ui/select.gleam)                | Base     | `meridian_ui/select`, searchable native picker with keyed options and retained filtered selection                             |
+| [SelectButton](src/meridian_ui/select_button.gleam)   | Base     | `meridian_ui/select_button`, native radio/checkbox groups, required selection and latest-model actions                        |
+| [Slider](src/meridian_ui/slider.gleam)                | Base     | `meridian_ui/slider`, scalar ranges and separately named dual native thumbs that cannot cross                                 |
+| [Textarea](src/meridian_ui/field.gleam)               | Base     | `meridian_ui/field`, multiline input, native CSS autosizing and manual-resize fallback                                        |
+| [ToggleButton](src/meridian_ui/toggle_button.gleam)   | Base     | `meridian_ui/toggle_button`, controlled native button with pressed state                                                      |
+| [ToggleSwitch](src/meridian_ui/toggle_switch.gleam)   | Base     | `meridian_ui/toggle_switch`, labelled native checkbox, keyboard and form values                                               |
+| [TreeSelect](src/meridian_ui/tree_select.gleam)       | Base     | `meridian_ui/tree_select`, inline hierarchical single/multiple selection, summary and hidden form values                      |
 
 ### Button (3)
 
-| Component                                      | Status | Meridian coverage                                                                |
-| ---------------------------------------------- | ------ | -------------------------------------------------------------------------------- |
-| [Button](https://primeng.dev/button)           | Base   | `meridian_ui/button`, native, primary, text and labelled icon controls           |
-| [SpeedDial](https://primeng.dev/speeddial)     | Base   | `meridian_ui/speed_dial`, top-layer action menu with caller-owned submenu state  |
-| [SplitButton](https://primeng.dev/splitbutton) | Base   | `meridian_ui/split_button`, independent primary action and keyboard command menu |
+| Component                                         | Status | Meridian coverage                                                                |
+| ------------------------------------------------- | ------ | -------------------------------------------------------------------------------- |
+| [Button](src/meridian_ui/button.gleam)            | Base   | `meridian_ui/button`, native, primary, text and labelled icon controls           |
+| [SpeedDial](src/meridian_ui/speed_dial.gleam)     | Base   | `meridian_ui/speed_dial`, top-layer action menu with caller-owned submenu state  |
+| [SplitButton](src/meridian_ui/split_button.gleam) | Base   | `meridian_ui/split_button`, independent primary action and keyboard command menu |
 
 ### Data (10)
 
-| Component                                              | Status | Meridian coverage                                                                                           |
-| ------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------- |
-| [DataView](https://primeng.dev/dataview)               | Base   | `meridian_ui/data_view`, typed list/grid rendering, empty state and pagination                              |
-| [OrderList](https://primeng.dev/orderlist)             | Base   | `meridian_ui/order_list`, stable item keys, native move buttons and drag/drop                               |
-| [OrgChart](https://primeng.dev/organizationchart)      | Base   | `meridian_ui/org_chart`, nested reporting hierarchy, caller-rendered nodes and native scrolling             |
-| [Paginator](https://primeng.dev/paginator)             | Base   | `meridian_ui/paginator`, controlled zero-based pages, navigation and shrinking-result clamping              |
-| [PickList](https://primeng.dev/picklist)               | Base   | `meridian_ui/pick_list`, individual/all transfers, reordering, disabled items and drag/drop                 |
-| [Table](https://primeng.dev/table)                     | Base   | `meridian_ui/table`, typed sorting, filtering, selection, keyed editor cells, local paging and remote pages |
-| [Timeline](https://primeng.dev/timeline)               | Base   | `meridian_ui/timeline`, labelled event history, native date/time markup and both orientations               |
-| [Tree](https://primeng.dev/tree)                       | Base   | `meridian_ui/tree`, validated hierarchy, expansion, single/multiple selection, roving focus and typeahead   |
-| [TreeTable](https://primeng.dev/treetable)             | Base   | `meridian_ui/tree_table`, hierarchical rows and native disclosure buttons, not a simulated treegrid         |
-| [VirtualScroller](https://primeng.dev/virtualscroller) | Base   | `meridian_ui/virtual_scroller`, fixed-height windowing, overscan, measured viewport and native scrolling    |
+| Component                                                 | Status | Meridian coverage                                                                                           |
+| --------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| [DataView](src/meridian_ui/data_view.gleam)               | Base   | `meridian_ui/data_view`, typed list/grid rendering, empty state and pagination                              |
+| [OrderList](src/meridian_ui/order_list.gleam)             | Base   | `meridian_ui/order_list`, stable item keys, native move buttons and drag/drop                               |
+| [OrgChart](src/meridian_ui/org_chart.gleam)               | Base   | `meridian_ui/org_chart`, nested reporting hierarchy, caller-rendered nodes and native scrolling             |
+| [Paginator](src/meridian_ui/paginator.gleam)              | Base   | `meridian_ui/paginator`, controlled zero-based pages, navigation and shrinking-result clamping              |
+| [PickList](src/meridian_ui/pick_list.gleam)               | Base   | `meridian_ui/pick_list`, individual/all transfers, reordering, disabled items and drag/drop                 |
+| [Table](src/meridian_ui/table.gleam)                      | Base   | `meridian_ui/table`, typed sorting, filtering, selection, keyed editor cells, local paging and remote pages |
+| [Timeline](src/meridian_ui/timeline.gleam)                | Base   | `meridian_ui/timeline`, labelled event history, native date/time markup and both orientations               |
+| [Tree](src/meridian_ui/tree.gleam)                        | Base   | `meridian_ui/tree`, validated hierarchy, expansion, single/multiple selection, roving focus and typeahead   |
+| [TreeTable](src/meridian_ui/tree_table.gleam)             | Base   | `meridian_ui/tree_table`, hierarchical rows and native disclosure buttons, not a simulated treegrid         |
+| [VirtualScroller](src/meridian_ui/virtual_scroller.gleam) | Base   | `meridian_ui/virtual_scroller`, fixed-height windowing, overscan, measured viewport and native scrolling    |
 
 ### Panel (10)
 
-| Component                                    | Status | Meridian coverage                                                                                           |
-| -------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
-| [Accordion](https://primeng.dev/accordion)   | Base   | `meridian_ui/accordion`, controlled single/multiple panels, disabled items and keyboard navigation          |
-| [Card](https://primeng.dev/card)             | Base   | `meridian_ui/card`, semantic content containers                                                             |
-| [Divider](https://primeng.dev/divider)       | Base   | `meridian_ui/divider`, horizontal, vertical and labelled separators                                         |
-| [Fieldset](https://primeng.dev/fieldset)     | Base   | `meridian_ui/fieldset`, native legend/disabled semantics and controlled disclosure                          |
-| [Panel](https://primeng.dev/panel)           | Base   | `meridian_ui/panel`, headings, independent actions and controlled disclosure                                |
-| [ScrollArea](https://primeng.dev/scrollarea) | Base   | `meridian_ui/scroll_area`, labelled native two-axis scrolling with keyboard access. OS scrollbar visibility |
-| [Splitter](https://primeng.dev/splitter)     | Base   | `meridian_ui/splitter`, pointer/keyboard resizing, clamped bounds, RTL and inert collapsed panes            |
-| [Stepper](https://primeng.dev/stepper)       | Base   | `meridian_ui/stepper`, controlled steps, completion state and linear prerequisites                          |
-| [Tabs](https://primeng.dev/tabs)             | Base   | `meridian_ui/tabs`, automatic/manual activation, both orientations, roving focus and retained panels        |
-| [Toolbar](https://primeng.dev/toolbar)       | Base   | `meridian_ui/toolbar`, labelled groups, disabled-item skipping and orientation-aware keyboard navigation    |
+| Component                                       | Status | Meridian coverage                                                                                                |
+| ----------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| [Accordion](src/meridian_ui/accordion.gleam)    | Base   | `meridian_ui/accordion`, controlled single/multiple panels, disabled items and keyboard navigation               |
+| [Card](src/meridian_ui/card.gleam)              | Base   | `meridian_ui/card`, semantic content containers                                                                  |
+| [Divider](src/meridian_ui/divider.gleam)        | Base   | `meridian_ui/divider`, horizontal, vertical and labelled separators                                              |
+| [Fieldset](src/meridian_ui/fieldset.gleam)      | Base   | `meridian_ui/fieldset`, native legend/disabled semantics and controlled disclosure                               |
+| [Panel](src/meridian_ui/panel.gleam)            | Base   | `meridian_ui/panel`, headings, independent actions and controlled disclosure                                     |
+| [ScrollArea](src/meridian_ui/scroll_area.gleam) | Base   | `meridian_ui/scroll_area`, labelled two-axis scrolling with keyboard access. Scrollbar visibility follows the OS |
+| [Splitter](src/meridian_ui/splitter.gleam)      | Base   | `meridian_ui/splitter`, pointer/keyboard resizing, clamped bounds, RTL and inert collapsed panes                 |
+| [Stepper](src/meridian_ui/stepper.gleam)        | Base   | `meridian_ui/stepper`, controlled steps, completion state and linear prerequisites                               |
+| [Tabs](src/meridian_ui/tabs.gleam)              | Base   | `meridian_ui/tabs`, automatic/manual activation, both orientations, roving focus and retained panels             |
+| [Toolbar](src/meridian_ui/toolbar.gleam)        | Base   | `meridian_ui/toolbar`, labelled groups, disabled-item skipping and orientation-aware keyboard navigation         |
 
 ### Overlay (7)
 
-| Component                                          | Status | Meridian coverage                                                                                         |
-| -------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
-| [ConfirmDialog](https://primeng.dev/confirmdialog) | Base   | `meridian_ui/confirm_dialog`, alert dialog, cancel-first focus, controlled approval and focus return      |
-| [ConfirmPopup](https://primeng.dev/confirmpopup)   | Base   | `meridian_ui/confirm_popup`, anchored confirmation with native dismissal and keyboard actions             |
-| [Dialog](https://primeng.dev/dialog)               | Base   | `meridian_ui/dialog`, native modal/non-modal lifecycle, nested dialogs, retained content and focus return |
-| [Drawer](https://primeng.dev/drawer)               | Base   | `meridian_ui/drawer`, generic modal drawers on logical start/end/top/bottom sides                         |
-| [DynamicDialog](https://primeng.dev/dynamicdialog) | Base   | `meridian_ui/dialog`, application-controlled titles and content through the ordinary dialog API           |
-| [Popover](https://primeng.dev/popover)             | Base   | `meridian_ui/popover`, native top layer, viewport-aware anchoring, Escape and outside dismissal           |
-| [Tooltip](https://primeng.dev/tooltip)             | Base   | `meridian_ui/tooltip`, scoped hover/focus hints and cleanup                                               |
+| Component                                             | Status | Meridian coverage                                                                                         |
+| ----------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| [ConfirmDialog](src/meridian_ui/confirm_dialog.gleam) | Base   | `meridian_ui/confirm_dialog`, alert dialog, cancel-first focus, controlled approval and focus return      |
+| [ConfirmPopup](src/meridian_ui/confirm_popup.gleam)   | Base   | `meridian_ui/confirm_popup`, anchored confirmation with native dismissal and keyboard actions             |
+| [Dialog](src/meridian_ui/dialog.gleam)                | Base   | `meridian_ui/dialog`, native modal/non-modal lifecycle, nested dialogs, retained content and focus return |
+| [Drawer](src/meridian_ui/drawer.gleam)                | Base   | `meridian_ui/drawer`, modal drawers on logical start, end, top and bottom sides                           |
+| [DynamicDialog](src/meridian_ui/dialog.gleam)         | Base   | `meridian_ui/dialog`, application-controlled titles and content through the ordinary dialog API           |
+| [Popover](src/meridian_ui/popover.gleam)              | Base   | `meridian_ui/popover`, native top layer, viewport-aware anchoring, Escape and outside dismissal           |
+| [Tooltip](src/meridian_ui/tooltip.gleam)              | Base   | `meridian_ui/tooltip`, scoped hover/focus hints and cleanup                                               |
 
 ### Menu (9)
 
-| Component                                      | Status | Meridian coverage                                                                                        |
-| ---------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| [Breadcrumb](https://primeng.dev/breadcrumb)   | Base   | `meridian_ui/breadcrumb`, validated links, hierarchy and current-page semantics                          |
-| [CommandMenu](https://primeng.dev/commandmenu) | Base   | `meridian_ui/command_menu`, modal command search, disabled commands and keyboard activation              |
-| [ContextMenu](https://primeng.dev/contextmenu) | Base   | `meridian_ui/context_menu`, pointer/ContextMenu/Shift+F10 opening and viewport positioning               |
-| [Dock](https://primeng.dev/dock)               | Base   | `meridian_ui/dock`, labelled icon/link navigation and current-page state without required animation      |
-| [MegaMenu](https://primeng.dev/megamenu)       | Base   | `meridian_ui/mega_menu`, responsive column groups, native details and ordinary navigation links          |
-| [Menu](https://primeng.dev/menu)               | Base   | `meridian_ui/menu`, inline/popup menus, nested state, typeahead and roving focus                         |
-| [Menubar](https://primeng.dev/menubar)         | Base   | `meridian_ui/menubar`, horizontal RTL-aware keyboard navigation and nested menus                         |
-| [Sidebar](https://primeng.dev/sidebar)         | Base   | `meridian_ui/sidebar`, generic collapsible aside with caller-owned navigation content                    |
-| [TieredMenu](https://primeng.dev/tieredmenu)   | Base   | `meridian_ui/tiered_menu`, nested overlay menus, keyboard focus return and viewport-aware side placement |
+| Component                                         | Status | Meridian coverage                                                                                        |
+| ------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| [Breadcrumb](src/meridian_ui/breadcrumb.gleam)    | Base   | `meridian_ui/breadcrumb`, validated links, hierarchy and current-page semantics                          |
+| [CommandMenu](src/meridian_ui/command_menu.gleam) | Base   | `meridian_ui/command_menu`, modal command search, disabled commands and keyboard activation              |
+| [ContextMenu](src/meridian_ui/context_menu.gleam) | Base   | `meridian_ui/context_menu`, pointer, ContextMenu and Shift+F10 opening with viewport positioning         |
+| [Dock](src/meridian_ui/dock.gleam)                | Base   | `meridian_ui/dock`, labelled icon/link navigation and current-page state without required animation      |
+| [MegaMenu](src/meridian_ui/mega_menu.gleam)       | Base   | `meridian_ui/mega_menu`, responsive column groups, native details and ordinary navigation links          |
+| [Menu](src/meridian_ui/menu.gleam)                | Base   | `meridian_ui/menu`, inline/popup menus, nested state, typeahead and roving focus                         |
+| [Menubar](src/meridian_ui/menubar.gleam)          | Base   | `meridian_ui/menubar`, horizontal RTL-aware keyboard navigation and nested menus                         |
+| [Sidebar](src/meridian_ui/sidebar.gleam)          | Base   | `meridian_ui/sidebar`, collapsible aside with caller-owned navigation content                            |
+| [TieredMenu](src/meridian_ui/tiered_menu.gleam)   | Base   | `meridian_ui/tiered_menu`, nested overlay menus, keyboard focus return and viewport-aware side placement |
 
 ### Messages (2)
 
-| Component                              | Status | Meridian coverage                                                                                        |
-| -------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| [Message](https://primeng.dev/message) | Base   | `meridian_ui/message`, tones, live-region semantics and controlled dismissal                             |
-| [Toast](https://primeng.dev/toast)     | Base   | `meridian_ui/toast`, caller-owned queues, persistent/timed notices, hover/focus pause and safe dismissal |
+| Component                                | Status | Meridian coverage                                                                                        |
+| ---------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| [Message](src/meridian_ui/message.gleam) | Base   | `meridian_ui/message`, tones, live-region semantics and controlled dismissal                             |
+| [Toast](src/meridian_ui/toast.gleam)     | Base   | `meridian_ui/toast`, caller-owned queues, persistent/timed notices, hover/focus pause and safe dismissal |
 
 ### Media (3)
 
-| Component                                | Status | Meridian coverage                                                                                   |
-| ---------------------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
-| [Carousel](https://primeng.dev/carousel) | Base   | `meridian_ui/carousel`, manual slide navigation, wrapping, announcements and retained hidden slides |
-| [Gallery](https://primeng.dev/gallery)   | Base   | `meridian_ui/gallery`, image alternatives, thumbnails, slide navigation and modal previews          |
-| [Compare](https://primeng.dev/compare)   | Base   | `meridian_ui/compare`, before/after images, descriptive text and a native keyboard range            |
+| Component                                  | Status | Meridian coverage                                                                                   |
+| ------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------- |
+| [Carousel](src/meridian_ui/carousel.gleam) | Base   | `meridian_ui/carousel`, manual slide navigation, wrapping, announcements and retained hidden slides |
+| [Gallery](src/meridian_ui/gallery.gleam)   | Base   | `meridian_ui/gallery`, image alternatives, thumbnails, slide navigation and modal previews          |
+| [Compare](src/meridian_ui/compare.gleam)   | Base   | `meridian_ui/compare`, before/after images, descriptive text and a native keyboard range            |
 
 ### File (1)
 
-| Component                                    | Status | Meridian coverage                                                                                                         |
-| -------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
-| [FileUpload](https://primeng.dev/fileupload) | Base   | `meridian_ui/file_upload`, selection/drop validation, normalised FileList, multipart transport, progress and cancellation |
+| Component                                       | Status | Meridian coverage                                                                                                         |
+| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| [FileUpload](src/meridian_ui/file_upload.gleam) | Base   | `meridian_ui/file_upload`, selection/drop validation, normalised FileList, multipart transport, progress and cancellation |
 
 ### Misc (20)
 
-| Component                                              | Status   | Meridian coverage                                                                                     |
-| ------------------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------- |
-| [AnimateOnScroll](https://primeng.dev/animateonscroll) | Base     | `meridian_ui/animate_on_scroll`, visibility-triggered reveal and reduced-motion fallback              |
-| [AutoFocus](https://primeng.dev/autofocus)             | Platform | Native autofocus and application-owned Lustre effects                                                 |
-| [Avatar](https://primeng.dev/avatar)                   | Base     | `meridian_ui/avatar`, accessible labels, images, custom content and groups                            |
-| [Badge](https://primeng.dev/badge)                     | Base     | `meridian_ui/badge`, exact accessible counts, capped visual counters and labelled notification dots   |
-| [Bind](https://primeng.dev/bind)                       | Platform | Ordinary Lustre attributes and event handlers                                                         |
-| [BlockUI](https://primeng.dev/blockui)                 | Base     | `meridian_ui/block_ui`, busy status, native inert content, focus transfer and restoration             |
-| [Chip](https://primeng.dev/chip)                       | Base     | `meridian_ui/chip`, custom content and controlled keyboard removal                                    |
-| [ClassNames](https://primeng.dev/classnames)           | Platform | Lustre merges class attributes                                                                        |
-| [Fluid](https://primeng.dev/fluid)                     | Base     | `meridian_ui/field`, scoped full-width field layout                                                   |
-| [FocusTrap](https://primeng.dev/focustrap)             | Base     | `meridian_ui/focus_trap`, generic nested traps, Tab wrapping, modal precedence and disposal           |
-| [Inplace](https://primeng.dev/inplace)                 | Base     | `meridian_ui/inplace`, retained editor nodes, display/edit focus transfer and Escape cancellation     |
-| [MeterGroup](https://primeng.dev/metergroup)           | Base     | `meridian_ui/meter_group`, bounded visual measurements and exact text labels/totals                   |
-| [ProgressBar](https://primeng.dev/progressbar)         | Base     | `meridian_ui/progress`, clamped percentages and unknown-duration state                                |
-| [ProgressSpinner](https://primeng.dev/progressspinner) | Base     | `meridian_ui/spinner`, determinate and indeterminate accessible rings                                 |
-| [Ripple](https://primeng.dev/ripple)                   | Base     | `meridian_ui/ripple`, pointer/keyboard feedback, reduced-motion/forced-colour suppression and cleanup |
-| [ScrollTop](https://primeng.dev/scrolltop)             | Base     | `meridian_ui/scroll_top`, page/container scrolling, reduced-motion behaviour and destination focus    |
-| [Skeleton](https://primeng.dev/skeleton)               | Base     | `meridian_ui/skeleton`, decorative shapes and reduced-motion loading state                            |
-| [StyleClass](https://primeng.dev/styleclass)           | Platform | Class attributes and controlled Lustre state. No DOM-mutation directive                               |
-| [Tag](https://primeng.dev/tag)                         | Base     | `meridian_ui/badge`, semantic status tones with custom content                                        |
-| [Terminal](https://primeng.dev/terminal)               | Base     | `meridian_ui/terminal`, plain-text command input, history, asynchronous output and native submission  |
+| Component                                                      | Status   | Meridian coverage                                                                                     |
+| -------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| [AnimateOnScroll](src/meridian_ui/animate_on_scroll.gleam)     | Base     | `meridian_ui/animate_on_scroll`, visibility-triggered reveal and reduced-motion fallback              |
+| [AutoFocus](examples/catalogue/src/catalogue/utilities.gleam)  | Platform | Native autofocus and application-owned Lustre effects                                                 |
+| [Avatar](src/meridian_ui/avatar.gleam)                         | Base     | `meridian_ui/avatar`, accessible labels, images, custom content and groups                            |
+| [Badge](src/meridian_ui/badge.gleam)                           | Base     | `meridian_ui/badge`, exact accessible counts, capped visual counters and labelled notification dots   |
+| [Bind](examples/catalogue/src/catalogue/utilities.gleam)       | Platform | Ordinary Lustre attributes and event handlers                                                         |
+| [BlockUI](src/meridian_ui/block_ui.gleam)                      | Base     | `meridian_ui/block_ui`, busy status, native inert content, focus transfer and restoration             |
+| [Chip](src/meridian_ui/chip.gleam)                             | Base     | `meridian_ui/chip`, custom content and controlled keyboard removal                                    |
+| [ClassNames](examples/catalogue/src/catalogue/utilities.gleam) | Platform | Lustre merges class attributes                                                                        |
+| [Fluid](src/meridian_ui/field.gleam)                           | Base     | `meridian_ui/field`, scoped full-width field layout                                                   |
+| [FocusTrap](src/meridian_ui/focus_trap.gleam)                  | Base     | `meridian_ui/focus_trap`, nested traps, Tab wrapping, modal precedence and disposal                   |
+| [Inplace](src/meridian_ui/inplace.gleam)                       | Base     | `meridian_ui/inplace`, retained editor nodes, display/edit focus transfer and Escape cancellation     |
+| [MeterGroup](src/meridian_ui/meter_group.gleam)                | Base     | `meridian_ui/meter_group`, bounded visual measurements and exact labels/totals                        |
+| [ProgressBar](src/meridian_ui/progress.gleam)                  | Base     | `meridian_ui/progress`, clamped percentages and unknown-duration state                                |
+| [ProgressSpinner](src/meridian_ui/spinner.gleam)               | Base     | `meridian_ui/spinner`, determinate and indeterminate accessible rings                                 |
+| [Ripple](src/meridian_ui/ripple.gleam)                         | Base     | `meridian_ui/ripple`, pointer/keyboard feedback, reduced-motion/forced-colour suppression and cleanup |
+| [ScrollTop](src/meridian_ui/scroll_top.gleam)                  | Base     | `meridian_ui/scroll_top`, page/container scrolling, reduced-motion behaviour and destination focus    |
+| [Skeleton](src/meridian_ui/skeleton.gleam)                     | Base     | `meridian_ui/skeleton`, decorative shapes and reduced-motion loading state                            |
+| [StyleClass](examples/catalogue/src/catalogue/utilities.gleam) | Platform | Class attributes and controlled Lustre state without DOM mutation                                     |
+| [Tag](src/meridian_ui/badge.gleam)                             | Base     | `meridian_ui/badge`, semantic status tones with custom content                                        |
+| [Terminal](src/meridian_ui/terminal.gleam)                     | Base     | `meridian_ui/terminal`, plain-text command input, history, asynchronous output and native submission  |
 
-The separate [FilterService utility](https://primeng.dev/filterservice) is covered
-by `meridian_ui/filter_service`: Unicode-normalised text matching, numeric
-comparisons and combined predicates. It is not one of the 93 component-index entries.
+## Advanced
 
-## PRO
+| Component                                        | Status | Meridian coverage                                                                                                                                                               |
+| ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Charts](src/meridian_ui/charts.gleam)           | Base   | `meridian_ui/charts`, 14 typed SVG chart families, responsive sizing, pointer/native-button selection and data tables. Optional ECharts engine                                  |
+| [Scheduler](src/meridian_ui/scheduler.gleam)     | Base   | `meridian_ui/scheduler`, month/week/day/agenda, named zones, recurrence, drag/resize and native date/event editing alternatives. Optional FullCalendar engine                   |
+| [Task Board](src/meridian_ui/task_board.gleam)   | Base   | `meridian_ui/task_board`, typed columns/cards, title/description editing, transfers, removal, drag/drop and native move controls                                                |
+| [Text Editor](src/meridian_ui/text_editor.gleam) | Base   | `meridian_ui/text_editor`, validated JSON documents, formatting, lists/tables, selection, history, filtered paste, HTML output and read-only state. Optional ProseMirror engine |
 
-| Product                                                  | Status | Main work                                                                                                                                                                              |
-| -------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Charts](https://angular.primeuipro.dev/charts)          | Base   | `meridian_ui/charts`, 14 typed SVG chart families, category/value scales, responsive sizing, pointer/native-button selection and data tables. Optional ECharts engine                  |
-| [Scheduler](https://angular.primeuipro.dev/scheduler)    | Base   | `meridian_ui/scheduler`, month/week/day/agenda, named zones, recurrence, drag/resize and native date/event editing alternatives. Optional FullCalendar engine                          |
-| [Task Board](https://angular.primeuipro.dev/taskboard)   | Base   | `meridian_ui/task_board`, typed columns/cards, title/description editing, transfers, removal, drag/drop and native move controls                                                       |
-| [Text Editor](https://angular.primeuipro.dev/texteditor) | Base   | `meridian_ui/text_editor`, validated JSON documents, formatting, lists/tables, selection, history, schema-filtered paste, HTML output and read-only state. Optional ProseMirror engine |
+## Utilities
 
-### Announced, not released
+| Component                                             | Status | Meridian coverage                                                                                           |
+| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| [FilterService](src/meridian_ui/filter_service.gleam) | Base   | `meridian_ui/filter_service`, Unicode-normalised text matching, numeric comparisons and combined predicates |
 
-| Product     | Status  | Note                                                  |
-| ----------- | ------- | ----------------------------------------------------- |
-| DataGrid    | Planned | Separate from the core Table component                |
-| Sheet       | Planned | Spreadsheet editing and calculation                   |
-| Gantt Chart | Planned | Project scheduling and dependencies                   |
-| Diagram     | Planned | Graph editing and layout                              |
-| PDF Viewer  | Planned | Viewing and navigation, no bundled proprietary viewer |
+## Additional controls
+
+### Code (1)
+
+| Component                                     | Status | Meridian coverage                                                                                                   |
+| --------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| [CodeBlock](src/meridian_ui/code_block.gleam) | Base   | `meridian_ui/code_block`, escaped Gleam source, lexical syntax colours, keyboard scrolling and exact text selection |
+
+### Date and time (2)
+
+| Component                                           | Status | Meridian coverage                                                                                                                                           |
+| --------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [TimePicker](src/meridian_ui/date_picker.gleam)     | Base   | `meridian_ui/date_picker`, time inputs with native keyboard editing, min/max, step and form values through date_picker.time                                 |
+| [DateTimePicker](src/meridian_ui/date_picker.gleam) | Base   | `meridian_ui/date_picker`, local date/time inputs with native bounds, step and form values through date_picker.date_time. Applications choose the time zone |
 
 ## Verification and limits
 
 `make check` runs formatting, compilation, state/markup/lifecycle tests and
-reproducible bundle/licence checks. `make browser-check` exercises nine fixtures
-in Chromium, Firefox and WebKit across six viewport/theme/direction/motion/colour
-scenarios, with WCAG checks. See `test/browser/` for the exact interactions.
+reproducible bundle/licence checks. `make browser-check` exercises the library and
+every catalogue route in Chromium, Firefox and WebKit, with WCAG checks.
 
 The fixtures cover native constraints and FormData, rapid selection actions,
 retained editors, overlays and focus return, menu/tree keyboard behaviour,
 virtualisation, uploads against a local fake endpoint, chart families, calendar
-views and pointer edits, task transfers, real clipboard paste and engine remounts.
-`scripts/check-consumer.mjs` checks a separately built Git consumer dashboard.
+views and pointer edits, task transfers, clipboard paste and engine remounts.
 
-Native date pickers, colour pickers, datalists and scrollbar presentation follow
-the browser and OS. Virtual rows have an explicit fixed height. Carousels are
-manual by default. Rich-text HTML export runs in the browser. Applications own
-business data, persistence, authorisation, formatting policies and server-side
-validation. These are independent Meridian APIs, not Angular compatibility.
+Native date, time and colour popup interiors follow the browser and OS. The
+library styles the controls themselves. Date/time values retain their native ISO
+strings. Virtual rows have an explicit fixed height. Carousels are manual by
+default. Rich-text HTML export runs in the browser. These limits are part of the
+components' documented behaviour, not hidden catalogue-only substitutions.

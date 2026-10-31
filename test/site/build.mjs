@@ -5,9 +5,9 @@ import { serve } from "../browser/server.mjs";
 
 const entries = JSON.parse(await readFile("dist/catalogue.json", "utf8"));
 
-test("the built catalogue has one compiled live example and exact source for all 98 entries", async () => {
-  assert.equal(entries.length, 98);
-  assert.equal(new Set(entries.map((entry) => entry.id)).size, 98);
+test("the built catalogue has one compiled live example and exact source for all 101 entries", async () => {
+  assert.equal(entries.length, 101);
+  assert.equal(new Set(entries.map((entry) => entry.id)).size, 101);
   assert.equal(
     entries.filter((entry) => entry.status === "Platform").length,
     5,
@@ -34,14 +34,8 @@ test("the built catalogue has one compiled live example and exact source for all
     entries.find((entry) => entry.id === "filterservice").group,
     "Utilities",
   );
-  for (const future of [
-    "datagrid",
-    "sheet",
-    "ganttchart",
-    "diagram",
-    "pdfviewer",
-  ])
-    assert.ok(!entries.some((entry) => entry.id === future));
+  for (const id of ["codeblock", "timepicker", "datetimepicker"])
+    assert.ok(entries.some((entry) => entry.id === id));
 });
 
 test("Pages output contains only distributable assets, local art and dependency notices", async () => {
@@ -63,6 +57,9 @@ test("Pages output contains only distributable assets, local art and dependency 
     assert.ok(notices.includes(name), `${name} notice`);
   for (const file of ["mark.svg", "landscape.svg", "before.svg"])
     await access(`dist/assets/${file}`);
+  await access("dist/fonts/manrope-latin-variable.woff2");
+  await access("dist/fonts/OFL.txt");
+  assert.ok(notices.includes("Manrope"));
 });
 
 test("the site and sources are served beneath a repository prefix with correct MIME types", async () => {

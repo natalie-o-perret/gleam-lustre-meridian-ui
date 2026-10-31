@@ -139,6 +139,13 @@ export async function data(page, scenario) {
   await expect(
     owners.getByRole("checkbox", { name: "Select Éire", exact: true }),
   ).toBeChecked();
+  const selectedRow = owners.locator('tbody tr[data-selected="true"]');
+  await page.mouse.move(0, 0);
+  const selectedBackground = await selectedRow.evaluate(
+    (row) => getComputedStyle(row).backgroundColor,
+  );
+  await selectedRow.hover();
+  await expect(selectedRow).toHaveCSS("background-color", selectedBackground);
   const priority = page.getByRole("list", { name: "Priority", exact: true });
   await priority
     .getByRole("button", { name: "Move one down", exact: true })

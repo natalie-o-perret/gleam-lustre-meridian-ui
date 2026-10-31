@@ -28,7 +28,7 @@ fn branches(
   render: fn(Node) -> Element(msg),
 ) -> Element(msg) {
   h.ul(
-    [],
+    [a.role("list")],
     list.map(nodes, fn(node) {
       h.li([], [
         h.div([a.class("meridian-org-node")], [render(node)]),

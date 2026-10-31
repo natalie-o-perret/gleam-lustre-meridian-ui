@@ -26,6 +26,9 @@ body {
   gap: 16px;
   align-items: center;
 }
+.demo-stack > button {
+  align-self: flex-start;
+}
 .demo-status {
   color: var(--muted);
 }
@@ -43,7 +46,7 @@ body {
   color: var(--accent);
   background: var(--accent-soft);
 }
-.demo-root pre {
+.demo-root pre:not(.meridian-code-block) {
   max-inline-size: 100%;
   overflow: auto;
   white-space: pre-wrap;

@@ -66,7 +66,12 @@ pub type Msg {
 pub fn start(component: String) {
   common.start(
     Model(
-      "",
+      case component {
+        "datepicker" -> "2026-11-05"
+        "timepicker" -> "09:30"
+        "datetimepicker" -> "2026-11-05T09:30"
+        _ -> ""
+      },
       "",
       "design",
       False,
@@ -88,6 +93,8 @@ pub fn start(component: String) {
           "cascadeselect" -> cascade_select_example(model)
           "checkbox" -> checkbox_example(model)
           "datepicker" -> date_picker_example(model)
+          "timepicker" -> time_picker_example(model)
+          "datetimepicker" -> date_time_picker_example(model)
           "floatlabel" -> float_label(model)
           "iconfield" -> icon_field(model)
           "iftalabel" -> ifta_label(model)
@@ -193,15 +200,76 @@ pub fn checkbox_example(model: Model) -> Element(Msg) {
 }
 
 pub fn date_picker_example(model: Model) -> Element(Msg) {
-  date_picker.range(
-    "Travel dates",
-    "travel",
-    model.dates.0,
-    model.dates.1,
-    True,
-    Dates,
-    [],
-  )
+  h.form([a.class("meridian-form"), e.on_submit(fn(_) { Submit })], [
+    common.field(
+      "Single date",
+      date_picker.view([
+        a.name("date"),
+        a.value(model.text),
+        a.required(True),
+        e.on_input(Text),
+      ]),
+    ),
+    date_picker.range(
+      "Travel dates",
+      "travel",
+      model.dates.0,
+      model.dates.1,
+      True,
+      Dates,
+      [],
+    ),
+    common.field(
+      "Month",
+      date_picker.month([
+        a.name("month"),
+        a.default_value("2026-11"),
+        e.on_input(Query),
+      ]),
+    ),
+    button.primary([a.type_("submit")], [h.text("Validate dates")]),
+  ])
+}
+
+pub fn time_picker_example(model: Model) -> Element(Msg) {
+  h.form([a.class("meridian-form"), e.on_submit(fn(_) { Submit })], [
+    common.field(
+      "Meeting time (09:00-17:00)",
+      date_picker.time([
+        a.name("time"),
+        a.value(model.text),
+        a.min("09:00"),
+        a.max("17:00"),
+        a.step("900"),
+        a.required(True),
+        e.on_input(Text),
+      ]),
+    ),
+    button.primary([a.type_("submit")], [h.text("Validate time")]),
+  ])
+}
+
+pub fn date_time_picker_example(model: Model) -> Element(Msg) {
+  h.form([a.class("meridian-form"), e.on_submit(fn(_) { Submit })], [
+    common.field(
+      "Meeting date and time",
+      date_picker.date_time([
+        a.name("date-time"),
+        a.value(model.text),
+        a.min("2026-11-01T09:00"),
+        a.max("2026-11-30T17:00"),
+        a.step("900"),
+        a.required(True),
+        e.on_input(Text),
+      ]),
+    ),
+    h.p([a.class("muted")], [
+      h.text(
+        "This is a local date and time. Your application chooses the time zone.",
+      ),
+    ]),
+    button.primary([a.type_("submit")], [h.text("Validate date and time")]),
+  ])
 }
 
 pub fn float_label(model: Model) -> Element(Msg) {

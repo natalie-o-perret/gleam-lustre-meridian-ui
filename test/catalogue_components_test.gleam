@@ -11,6 +11,7 @@ import meridian_ui/filter_service
 import meridian_ui/hierarchy.{Node}
 import meridian_ui/menu
 import meridian_ui/order_list
+import meridian_ui/org_chart
 import meridian_ui/paginator
 import meridian_ui/pick_list
 import meridian_ui/scheduler
@@ -28,6 +29,19 @@ pub fn paging_clamps_shrinking_sets_and_zero_sizes_without_losing_last_page_test
   paginator.pages(0, 0) |> should.equal(1)
   paginator.clamp(9, 3, 2) |> should.equal(1)
   paginator.slice([1, 2, 3], 9, 2) |> should.equal([3])
+}
+
+pub fn organisation_lists_keep_explicit_semantics_without_visual_bullets_test() {
+  let html =
+    org_chart.view(
+      "Teams",
+      [],
+      [Node("design", "Design", False, [Node("tokens", "Tokens", False, [])])],
+      fn(node) { h.text(node.label) },
+    )
+    |> element.to_string
+  html |> string.contains("role=\"region\"") |> should.be_true
+  html |> string.split("role=\"list\"") |> list.length |> should.equal(3)
 }
 
 pub fn filtering_preserves_unicode_and_combines_predicates_test() {

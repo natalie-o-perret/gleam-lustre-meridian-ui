@@ -6,12 +6,12 @@ pub fn section(
   attrs: List(Attribute(msg)),
   children: List(Element(msg)),
 ) -> Element(msg) {
-  h.section([a.class("panel"), ..attrs], children)
+  h.section([a.class("panel meridian-card"), ..attrs], children)
 }
 
 pub fn article(
   attrs: List(Attribute(msg)),
   children: List(Element(msg)),
 ) -> Element(msg) {
-  h.article([a.class("panel"), ..attrs], children)
+  h.article([a.class("panel meridian-card"), ..attrs], children)
 }

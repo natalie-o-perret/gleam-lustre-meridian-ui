@@ -1,3 +1,10 @@
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("./fonts/manrope-latin-variable.woff2") format("woff2");
+}
 /* The page class is optional. Omit it when embedding independently themed roots. */
 :where(.meridian-ui, .meridian-page) {
   --bg: #f6f4f8;
@@ -58,7 +65,7 @@
     display: none !important;
   }
   box-sizing: border-box;
-  font-family: var(--font, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font, "Manrope", ui-sans-serif, system-ui, sans-serif);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -69,7 +76,8 @@
   }
   button,
   input,
-  select {
+  select,
+  textarea {
     font: inherit;
   }
   input::placeholder {
@@ -102,6 +110,64 @@
       border-color 180ms,
       box-shadow 180ms,
       transform 180ms;
+  }
+  .input {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+  }
+  .input:hover:not(:disabled, :read-only) {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  }
+  .input:disabled,
+  select:disabled {
+    color: var(--muted);
+    background: var(--bg);
+    cursor: not-allowed;
+  }
+  label:has(
+    > :is(
+      .input,
+      select,
+      textarea,
+      .meridian-input-group,
+      .meridian-icon-field,
+      .meridian-slider
+    )
+  ) {
+    display: grid;
+    gap: 8px;
+    min-inline-size: 0;
+    align-content: start;
+  }
+  label:has(
+      > :is(
+        .input,
+        select,
+        textarea,
+        .meridian-input-group,
+        .meridian-icon-field,
+        .meridian-slider
+      )
+    )
+    > span:not(.sr-only) {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 650;
+  }
+  .meridian-form,
+  .meridian-search-select,
+  .meridian-fieldset-content {
+    display: grid;
+    gap: 16px;
+    min-inline-size: 0;
+  }
+  .meridian-form {
+    justify-items: start;
+  }
+  .meridian-form > :is(label, fieldset) {
+    inline-size: 100%;
   }
   button:hover:not(:disabled),
   .button:hover:not(:disabled),
@@ -230,6 +296,12 @@
       box-shadow 240ms,
       transform 280ms var(--ease-out);
   }
+  .meridian-card {
+    padding: 24px;
+  }
+  .meridian-card > :where(p) {
+    margin-block: 12px;
+  }
   .search-field {
     position: relative;
     flex: 1;
@@ -271,6 +343,36 @@
   .meridian-colour {
     inline-size: 3rem;
     padding: 4px;
+    cursor: pointer;
+  }
+  .meridian-date-input {
+    min-block-size: 44px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+  .meridian-date-input::-webkit-calendar-picker-indicator {
+    margin-inline-start: 10px;
+    padding: 6px;
+    border-radius: 6px;
+    background-color: var(--accent-soft);
+    cursor: pointer;
+  }
+  .meridian-date-input::-webkit-datetime-edit {
+    padding: 0;
+    font: inherit;
+  }
+  .meridian-date-range {
+    box-shadow: var(--shadow);
+  }
+  input[type="file"]::file-selector-button {
+    margin-inline-end: 12px;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    font: inherit;
+    font-weight: 650;
     cursor: pointer;
   }
   .meridian-fluid :is(.input, select, .meridian-slider, .meridian-password) {
@@ -521,6 +623,9 @@
     padding: 16px;
     border-block-end: 1px solid var(--border);
   }
+  .meridian-panel {
+    padding: 0;
+  }
   .meridian-panel-heading {
     flex: 1 1 12rem;
     min-inline-size: 0;
@@ -575,6 +680,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--panel);
+    box-shadow: var(--shadow);
   }
   .meridian-fieldset > legend {
     max-inline-size: 100%;
@@ -601,6 +707,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--panel);
+    box-shadow: var(--shadow);
   }
   .meridian-accordion-panel + .meridian-accordion-panel {
     border-block-start: 1px solid var(--border);
@@ -618,6 +725,10 @@
   .meridian-tabs {
     display: grid;
     min-inline-size: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
   }
   .meridian-tab-list {
     display: flex;
@@ -626,6 +737,9 @@
     overflow: auto;
     padding: 4px;
     border-block-end: 1px solid var(--border);
+    border-start-start-radius: 12px;
+    border-start-end-radius: 12px;
+    background: var(--bg);
   }
   .meridian-tab {
     flex: 0 0 auto;
@@ -1214,6 +1328,18 @@
     padding: 4px;
     list-style: none;
   }
+  .meridian-tree {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+  }
+  .meridian-tree-select .meridian-tree {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
   .meridian-tree [role="group"] {
     padding-inline-start: 24px;
   }
@@ -1225,6 +1351,10 @@
     display: flex;
     align-items: center;
     min-block-size: 40px;
+    border-radius: 8px;
+  }
+  .meridian-tree [aria-disabled="false"] > .meridian-tree-row:hover {
+    background: var(--accent-soft);
   }
   .meridian-tree-row [data-tree-select] {
     flex: 1;
@@ -1260,17 +1390,44 @@
     display: flex;
     justify-content: center;
     gap: 20px;
-    padding-inline-start: 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
   .meridian-org-chart li {
     flex: 1 0 10rem;
     text-align: center;
   }
   .meridian-org-node {
+    position: relative;
     padding: 12px;
     border: 1px solid var(--border);
     border-radius: 9px;
     background: var(--panel);
+    box-shadow: var(--shadow);
+    font-weight: 650;
+  }
+  .meridian-org-node + ul {
+    margin-block-start: 20px;
+    padding-block-start: 20px;
+    border-block-start: 1px solid var(--border);
+  }
+  .meridian-org-node::before,
+  .meridian-org-node:has(+ ul)::after {
+    position: absolute;
+    inset-inline-start: 50%;
+    block-size: 20px;
+    border-inline-start: 1px solid var(--border);
+    content: "";
+  }
+  .meridian-org-node::before {
+    inset-block-end: 100%;
+  }
+  .meridian-org-node:has(+ ul)::after {
+    inset-block-start: 100%;
+  }
+  .meridian-org-chart > ul > li > .meridian-org-node::before {
+    display: none;
   }
   .meridian-table-scroll {
     max-inline-size: 100%;
@@ -1300,6 +1457,12 @@
     border: 1px solid var(--border);
     border-radius: 9px;
     background: var(--panel);
+    box-shadow: var(--shadow);
+  }
+  .meridian-order-list > li::marker,
+  .meridian-timeline > li::marker {
+    color: var(--accent);
+    font-weight: 750;
   }
   .meridian-order-content {
     min-inline-size: 0;
@@ -1325,6 +1488,10 @@
     max-inline-size: 100%;
     overflow: auto;
     overflow-anchor: none;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
   }
   .meridian-virtual-scroller > ul {
     margin: 0;
@@ -1334,6 +1501,7 @@
   .meridian-virtual-scroller li {
     overflow: auto;
     border-block-end: 1px solid var(--border);
+    padding-inline: 16px;
   }
   .meridian-menu {
     display: grid;
@@ -1345,16 +1513,26 @@
     border-radius: 9px;
     background: var(--panel);
     list-style: none;
+    box-shadow: var(--shadow);
   }
   .meridian-menu [role="menuitem"] {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     inline-size: 100%;
     min-block-size: 40px;
     padding: 8px 12px;
     text-align: start;
     text-decoration: none;
     overflow-wrap: anywhere;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    font-weight: 550;
+  }
+  .meridian-menu [role="menuitem"]:hover:not(:disabled) {
+    color: var(--accent);
+    background: var(--accent-soft);
   }
   .meridian-menu [aria-haspopup="menu"]::after {
     margin-inline-start: auto;
@@ -1411,6 +1589,17 @@
   .meridian-breadcrumb [aria-current="page"] {
     font-weight: 650;
   }
+  .meridian-sidebar nav a {
+    display: block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 550;
+  }
+  .meridian-sidebar nav a:hover,
+  .meridian-sidebar nav a[aria-current="page"] {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
   .meridian-dock ul {
     display: flex;
     flex-wrap: wrap;
@@ -1439,6 +1628,9 @@
     padding: 12px;
     border: 1px solid var(--border);
     border-radius: 9px;
+    color: var(--ink);
+    background: var(--panel);
+    font-weight: 650;
   }
   .meridian-mega-columns {
     display: grid;
@@ -1447,6 +1639,8 @@
     padding: 16px;
     border: 1px solid var(--border);
     background: var(--panel);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
   }
   .meridian-mega-columns section {
     min-inline-size: 0;
@@ -1597,6 +1791,20 @@
     display: grid;
     gap: 6px;
     margin-block-end: 12px;
+  }
+  .meridian-table-scroll thead {
+    color: var(--muted);
+    background: var(--bg);
+  }
+  .meridian-table-scroll th {
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .meridian-table-scroll td {
+    font-variant-numeric: tabular-nums;
+  }
+  .meridian-table-scroll tbody tr:hover:not([data-selected="true"]) {
+    background: color-mix(in srgb, var(--accent-soft) 45%, var(--panel));
   }
   .meridian-data-table tr[data-selected="true"] {
     background: var(--accent-soft);
@@ -1759,6 +1967,44 @@
     position: absolute;
     display: none;
     border-block-start: 1px solid currentColor;
+  }
+  .meridian-code-block {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    max-block-size: 36rem;
+    margin: 0;
+    padding: 20px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--ink);
+    background: var(--bg);
+    font:
+      0.8rem/1.9 ui-monospace,
+      SFMono-Regular,
+      Consolas,
+      monospace;
+    tab-size: 2;
+    white-space: pre;
+    overflow-wrap: normal;
+  }
+  .meridian-code-keyword,
+  .meridian-code-annotation {
+    color: var(--accent);
+  }
+  .meridian-code-string {
+    color: var(--green);
+  }
+  .meridian-code-number {
+    color: var(--amber);
+  }
+  .meridian-code-type,
+  .meridian-code-function {
+    color: var(--blue);
+  }
+  .meridian-code-comment {
+    color: var(--muted);
+    font-style: italic;
   }
   .meridian-rich-text.ProseMirror-focused .ProseMirror-gapcursor {
     display: block;
