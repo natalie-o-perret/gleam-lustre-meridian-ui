@@ -1,11 +1,18 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { build } from "esbuild";
+import { gzipSync } from "node:zlib";
+import { moduleAPI } from "./catalogue-api.mjs";
+import { propertiesFor } from "../site/catalogue-properties.mjs";
 
 const project = "examples/catalogue";
 const output = "dist";
 execFileSync("gleam", ["build"], { cwd: project, stdio: "inherit" });
+const publicAPI = JSON.parse(
+  execFileSync("gleam", ["export", "package-interface"], { encoding: "utf8" }),
+);
 
 const examples = new Map();
 const entryPoints = {
@@ -19,8 +26,6 @@ for (const file of (await readdir(`${project}/src/catalogue`)).sort()) {
   const source = await readFile(`${project}/src/catalogue/${file}`, "utf8");
   sources.set(file, source);
   if (family === "common") continue;
-  entryPoints[`examples/${family}`] =
-    `${project}/build/dev/javascript/meridian_catalogue/catalogue/${family}.mjs`;
   for (const match of source.matchAll(/^pub fn (\w+)\(/gm)) {
     if (match[1] === "start") continue;
     const id = match[1].replace(/_example$/, "").replaceAll("_", "");
@@ -61,15 +66,15 @@ for (const line of ledger.split("\n")) {
     description: coverage.replace(/^`[^`]+`, /, "").replaceAll("`", ""),
   });
 }
-assert.equal(entries.filter((entry) => entry.section === "Core").length, 95);
+assert.equal(entries.filter((entry) => entry.section === "Core").length, 96);
 assert.equal(entries.filter((entry) => entry.group === "Advanced").length, 4);
 assert.equal(
   entries.filter((entry) => entry.section === "Additional controls").length,
-  1,
+  2,
 );
 assert.equal(
   entries.filter((entry) => entry.section === "Utilities").length,
-  1,
+  2,
 );
 assert.equal(
   examples.size,
@@ -80,6 +85,12 @@ assert.equal(new Set(entries.map((entry) => entry.id)).size, entries.length);
 for (const entry of entries) {
   assert.ok(examples.has(entry.id), `Missing example: ${entry.name}`);
   Object.assign(entry, examples.get(entry.id));
+  Object.assign(entry, propertiesFor(entry.id));
+  if (entry.module)
+    entry.api = moduleAPI(
+      await readFile(`src/${entry.module}.gleam`, "utf8"),
+      publicAPI.modules[entry.module],
+    );
 }
 
 await rm(output, { recursive: true, force: true });
@@ -94,25 +105,89 @@ await writeFile(`${output}/catalogue.json`, JSON.stringify(entries));
 for (const [file, source] of sources)
   await writeFile(`${output}/source/${file}`, source);
 await writeFile(`${output}/.nojekyll`, "");
-await build({
+const result = await build({
   entryPoints,
   bundle: true,
   splitting: true,
   format: "esm",
   platform: "browser",
   target: "es2022",
+  loader: { ".gleam": "text" },
   minify: true,
+  metafile: true,
   legalComments: "eof",
   outdir: `${output}/assets`,
-  entryNames: "[dir]/[name]",
+  entryNames: "[dir]/[name]-[hash]",
   chunkNames: "chunks/[name]-[hash]",
 });
+const styles = new Map(
+  await Promise.all(
+    ["meridian-ui.css", "catalogue.css", "preview.css"].map(async (file) => [
+      file,
+      createHash("sha256")
+        .update(await readFile(`${output}/${file}`))
+        .digest("hex")
+        .slice(0, 12),
+    ]),
+  ),
+);
+const version = createHash("sha256")
+  .update(Object.keys(result.metafile.outputs).sort().join("\n"))
+  .update([...styles.values()].join("\n"))
+  .digest("hex")
+  .slice(0, 12);
+for (const [name, entryPoint] of Object.entries(entryPoints)) {
+  const script = Object.entries(result.metafile.outputs).find(
+    ([, asset]) => asset.entryPoint === entryPoint,
+  )?.[0];
+  assert.ok(script, `Missing script: ${name}`);
+  const pending = [script];
+  const visited = new Set();
+  let bytes = 0;
+  while (pending.length) {
+    const path = pending.pop();
+    if (visited.has(path)) continue;
+    visited.add(path);
+    const asset = result.metafile.outputs[path];
+    assert.ok(asset, `Missing static dependency: ${path}`);
+    assert.ok(
+      !Object.keys(asset.inputs).some((input) =>
+        /\/internal\/vendor\/(?:charts|calendar|editor|mask)\.mjs$/.test(input),
+      ),
+      `${name} must not eagerly load an advanced engine`,
+    );
+    bytes += gzipSync(await readFile(path)).length;
+    pending.push(
+      ...asset.imports
+        .filter((item) => !item.external && item.kind !== "dynamic-import")
+        .map((item) => item.path),
+    );
+  }
+  assert.ok(
+    bytes < (name === "catalogue" ? 90_000 : 40_000),
+    `${name} static gzip budget exceeded: ${bytes}`,
+  );
+  console.log(
+    `${name}: ${visited.size} static modules, ${bytes} bytes gzip, advanced engines lazy`,
+  );
+  const page = `${output}/${name === "catalogue" ? "index" : "preview"}.html`;
+  let html = await readFile(page, "utf8");
+  for (const [file, hash] of styles)
+    html = html.replaceAll(`href="./${file}"`, `href="./${file}?v=${hash}"`);
+  await writeFile(
+    page,
+    html
+      .replace(`./assets/${name}.js`, script.replace(`${output}/`, "./"))
+      .replace('data-preview-version=""', `data-preview-version="${version}"`),
+  );
+}
 
 let notices = await readFile(
   "src/meridian_ui/internal/vendor/LICENCES.md",
   "utf8",
 );
 notices += `\n\n# Manrope\n\n${await readFile("priv/fonts/OFL.txt", "utf8")}`;
+notices += `\n\n${await readFile("priv/ICON-NOTICES.md", "utf8")}`;
 for (const item of await readdir(`${project}/build/packages`, {
   withFileTypes: true,
 })) {

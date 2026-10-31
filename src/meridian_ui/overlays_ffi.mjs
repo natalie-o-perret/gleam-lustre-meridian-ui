@@ -1,17 +1,148 @@
+export function viewportBounds(view) {
+  const visual = view.visualViewport;
+  const padding = view.document
+    ? view.getComputedStyle(view.document.documentElement)
+    : {};
+  const inset = (value, size) =>
+    value?.endsWith("%")
+      ? (parseFloat(value) * size) / 100
+      : parseFloat(value) || 0;
+  const width = visual?.width ?? view.innerWidth;
+  const height = visual?.height ?? view.innerHeight;
+  const layoutWidth =
+    view.document?.documentElement.getBoundingClientRect?.().width ??
+    view.innerWidth;
+  const area = {
+    left: (visual?.offsetLeft ?? 0) + inset(padding.scrollPaddingLeft, width),
+    top: (visual?.offsetTop ?? 0) + inset(padding.scrollPaddingTop, height),
+    right:
+      Math.min((visual?.offsetLeft ?? 0) + width, layoutWidth) -
+      inset(padding.scrollPaddingRight, width),
+    bottom:
+      (visual?.offsetTop ?? 0) +
+      height -
+      inset(padding.scrollPaddingBottom, height),
+  };
+  // Cross-origin hosts own their frame's visible area.
+  try {
+    const frame = view.frameElement;
+    if (frame) {
+      const parent = viewportBounds(frame.ownerDocument.defaultView);
+      const rect = frame.getBoundingClientRect();
+      const scaleX = rect.width / frame.offsetWidth || 1;
+      const scaleY = rect.height / frame.offsetHeight || 1;
+      const left = rect.left + frame.clientLeft * scaleX;
+      const top = rect.top + frame.clientTop * scaleY;
+      area.left = Math.max(area.left, (parent.left - left) / scaleX);
+      area.top = Math.max(area.top, (parent.top - top) / scaleY);
+      area.right = Math.min(area.right, (parent.right - left) / scaleX);
+      area.bottom = Math.min(area.bottom, (parent.bottom - top) / scaleY);
+    }
+  } catch {
+    // The frame's own viewport still constrains cross-origin embeds.
+  }
+  return area;
+}
+
+export function watchViewport(view, reposition, signal) {
+  while (view) {
+    view.addEventListener("resize", reposition, { signal });
+    view.document?.addEventListener("scroll", reposition, {
+      signal,
+      capture: true,
+      passive: true,
+    });
+    for (const type of ["resize", "scroll"])
+      view.visualViewport?.addEventListener(type, reposition, { signal });
+    try {
+      view = view.frameElement?.ownerDocument.defaultView;
+    } catch {
+      break;
+    }
+  }
+}
+
 export function positionOverlay(popup, anchor, view) {
-  if (!anchor) return;
-  const bounds = anchor.getBoundingClientRect();
+  const context = popup.dataset?.contextX !== undefined;
+  if (!anchor && !context) return;
+  const area = viewportBounds(view);
+  popup.style.setProperty(
+    "--meridian-overlay-width",
+    `${Math.max(0, area.right - area.left - 16)}px`,
+  );
+  popup.style.setProperty(
+    "--meridian-overlay-height",
+    `${Math.max(0, area.bottom - area.top - 16)}px`,
+  );
+  const bounds = context
+    ? {
+        left: Number(popup.dataset.contextX),
+        top: Number(popup.dataset.contextY),
+      }
+    : anchor.getBoundingClientRect();
   const width = popup.offsetWidth;
   const height = popup.offsetHeight;
-  const below = view.innerHeight - bounds.bottom;
-  const top =
-    below >= height + 8 || below >= bounds.top
+  const below = area.bottom - bounds.bottom;
+  const above = bounds.top - area.top;
+  const top = context
+    ? bounds.top
+    : below >= height + 14
       ? bounds.bottom + 6
-      : bounds.top - height - 6;
-  const rtl = view.getComputedStyle(anchor).direction === "rtl";
+      : above >= height + 14
+        ? bounds.top - height - 6
+        : area.top + (area.bottom - area.top - height) / 2;
+  const rtl = !context && view.getComputedStyle(anchor).direction === "rtl";
   const left = rtl ? bounds.right - width : bounds.left;
-  popup.style.left = `${Math.max(8, Math.min(left, view.innerWidth - width - 8))}px`;
-  popup.style.top = `${Math.max(8, Math.min(top, view.innerHeight - height - 8))}px`;
+  popup.style.left = `${Math.max(area.left + 8, Math.min(left, area.right - width - 8))}px`;
+  popup.style.top = `${Math.max(area.top + 8, Math.min(top, area.bottom - height - 8))}px`;
+}
+
+export function preserveScroll(view, action) {
+  const positions = [];
+  while (view) {
+    positions.push([view, view.scrollX, view.scrollY]);
+    try {
+      view = view.frameElement?.ownerDocument.defaultView;
+    } catch {
+      break;
+    }
+  }
+  try {
+    return action();
+  } finally {
+    for (const [page, left, top] of positions)
+      page.scrollTo({ left, top, behavior: "instant" });
+  }
+}
+
+function positionDialog(dialog, view) {
+  const area = viewportBounds(view);
+  const drawer = dialog.classList.contains("meridian-drawer");
+  const gap = drawer ? 0 : 16;
+  dialog.style.setProperty(
+    "--meridian-overlay-width",
+    `${Math.max(0, area.right - area.left - gap * 2)}px`,
+  );
+  dialog.style.setProperty(
+    "--meridian-overlay-height",
+    `${Math.max(0, area.bottom - area.top - gap * 2)}px`,
+  );
+  dialog.style.inset = "auto";
+  if (drawer) {
+    const side = dialog.dataset.side;
+    const rtl = view.getComputedStyle(dialog).direction === "rtl";
+    const left =
+      side === "left" ||
+      (side === "start" && !rtl) ||
+      (side === "end" && rtl) ||
+      side === "top" ||
+      side === "bottom";
+    dialog.style.left = `${left ? area.left : area.right - dialog.offsetWidth}px`;
+    dialog.style.top = `${side === "bottom" ? area.bottom - dialog.offsetHeight : area.top}px`;
+    return;
+  }
+  dialog.style.left = `${Math.max(area.left + 16, area.left + (area.right - area.left - dialog.offsetWidth) / 2)}px`;
+  dialog.style.top = `${Math.max(area.top + 16, area.top + (area.bottom - area.top - dialog.offsetHeight) / 2)}px`;
 }
 
 export function setupOverlays(root, signal) {
@@ -19,6 +150,15 @@ export function setupOverlays(root, signal) {
   const view = doc.defaultView;
   const states = new Map();
   const owned = (element) => element?.closest?.(".meridian-ui") === root;
+  let opener;
+  root.addEventListener(
+    "pointerdown",
+    (event) => {
+      const target = event.target.closest?.("[data-meridian-opener]");
+      opener = owned(target) ? target : undefined;
+    },
+    { signal, capture: true },
+  );
   const emitClose = (element) =>
     element.dispatchEvent(
       new view.CustomEvent("meridian-close", { bubbles: true }),
@@ -41,6 +181,9 @@ export function setupOverlays(root, signal) {
       !element.contains(doc.activeElement)
     )
       return;
+    const frame = view.frameElement;
+    // Firefox may need its embedded window reactivated after a modal closes.
+    if (frame && frame.ownerDocument.activeElement === frame) view.focus();
     const previous = state.previous;
     if (
       previous?.isConnected &&
@@ -119,20 +262,23 @@ export function setupOverlays(root, signal) {
     for (const [element, state] of states) {
       if (
         state.desired &&
+        element.open &&
+        element.classList.contains("meridian-dialog")
+      )
+        positionDialog(element, view);
+      if (
+        state.desired &&
         element.dataset.meridianOverlay === "popover" &&
         element.matches(":popover-open")
       ) {
         const anchor = [
           ...root.querySelectorAll("[data-meridian-opener]"),
         ].find((node) => node.dataset.meridianOpener === element.id);
-        if (element.dataset.contextX !== undefined) {
-          element.style.left = `${Math.max(8, Math.min(Number(element.dataset.contextX), view.innerWidth - element.offsetWidth - 8))}px`;
-          element.style.top = `${Math.max(8, Math.min(Number(element.dataset.contextY), view.innerHeight - element.offsetHeight - 8))}px`;
-        } else positionOverlay(element, anchor, view);
+        positionOverlay(element, anchor, view);
       }
     }
   };
-  view.addEventListener("resize", reposition, { signal });
+  watchViewport(view, reposition, signal);
   doc.addEventListener(
     "pointerdown",
     (event) => {
@@ -151,11 +297,6 @@ export function setupOverlays(root, signal) {
     },
     { signal, capture: true },
   );
-  doc.addEventListener("scroll", reposition, {
-    signal,
-    capture: true,
-    passive: true,
-  });
   const sync = () => {
     for (const [element] of states)
       if (!element.isConnected || !owned(element)) states.delete(element);
@@ -171,11 +312,18 @@ export function setupOverlays(root, signal) {
       const dialog = element.dataset.meridianOverlay === "dialog";
       const visible = dialog ? element.open : element.matches(":popover-open");
       if (desired && !visible) {
-        state.previous = doc.activeElement;
+        state.previous =
+          opener?.dataset.meridianOpener === element.id
+            ? opener
+            : doc.activeElement;
+        opener = undefined;
         state.desired = true;
         if (dialog) {
-          if (element.dataset.modal === "false") element.show();
-          else element.showModal();
+          preserveScroll(view, () => {
+            if (element.dataset.modal === "false") element.show();
+            else element.showModal();
+            reposition();
+          });
         } else {
           element.showPopover();
           reposition();

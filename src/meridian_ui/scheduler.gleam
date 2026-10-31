@@ -6,7 +6,8 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import meridian_ui/button
-import meridian_ui/field
+import meridian_ui/date_picker
+import meridian_ui/disclosure
 
 pub type View {
   Month
@@ -36,6 +37,24 @@ pub type Event {
 
 pub type Config {
   Config(view: View, date: String, time_zone: String, events: List(Event))
+}
+
+pub type Options {
+  Options(
+    first_day: Int,
+    weekends: Bool,
+    week_numbers: Bool,
+    now_indicator: Bool,
+    slot_duration: String,
+    day_start: String,
+    day_end: String,
+    event_limit: Int,
+    readonly: Bool,
+  )
+}
+
+pub fn default_options() -> Options {
+  Options(1, True, False, True, "00:30:00", "00:00:00", "24:00:00", 3, False)
 }
 
 pub type Change {
@@ -79,8 +98,23 @@ pub fn view(
   on_action: fn(Action) -> msg,
   attrs: List(Attribute(msg)),
 ) -> Element(msg) {
+  view_with(id, label, config, default_options(), on_action, attrs)
+}
+
+pub fn view_with(
+  id: String,
+  label: String,
+  config: Config,
+  options: Options,
+  on_action: fn(Action) -> msg,
+  attrs: List(Attribute(msg)),
+) -> Element(msg) {
   case validate(config) {
-    Ok(_) -> render(id, label, config, on_action, attrs)
+    Ok(_) ->
+      case options_error(options) {
+        "" -> render(id, label, config, options, on_action, attrs)
+        error -> h.p([a.role("alert")], [h.text(error)])
+      }
     Error(error) -> h.p([a.role("alert")], [h.text(error)])
   }
 }
@@ -89,6 +123,7 @@ fn render(
   id: String,
   label: String,
   config: Config,
+  options: Options,
   on_action: fn(Action) -> msg,
   attrs: List(Attribute(msg)),
 ) -> Element(msg) {
@@ -96,7 +131,7 @@ fn render(
     h.div(
       [
         a.id(id),
-        a.data("scheduler", encode(config)),
+        a.data("scheduler", encode_with(config, options)),
         event.on(
           "meridian-calendar-select",
           decode.at(["detail", "id"], decode.string)
@@ -127,14 +162,13 @@ fn render(
     ),
     h.label([], [
       h.span([], [h.text("Choose calendar date")]),
-      field.input([
-        a.type_("date"),
+      date_picker.view([
         a.value(string.slice(config.date, 0, 10)),
         event.on_input(fn(date) { on_action(Pick(date)) }),
       ]),
     ]),
     h.details([], [
-      h.summary([], [h.text("Event list")]),
+      disclosure.summary("Event list", []),
       h.ul(
         [],
         list.map(config.events, fn(item) {
@@ -149,8 +183,11 @@ fn render(
   ])
 }
 
-@external(javascript, "./scheduler_ffi.mjs", "encode")
-fn encode(config: Config) -> String
+@external(javascript, "./scheduler_ffi.mjs", "encodeWith")
+fn encode_with(config: Config, options: Options) -> String
+
+@external(javascript, "./scheduler_ffi.mjs", "optionsError")
+fn options_error(options: Options) -> String
 
 @external(javascript, "./scheduler_ffi.mjs", "error")
 fn config_error(config: Config) -> String

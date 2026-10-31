@@ -8,6 +8,7 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import meridian_ui/button
+import meridian_ui/disclosure
 import meridian_ui/field
 import meridian_ui/order_list
 
@@ -174,7 +175,7 @@ pub fn view(
               order_list.Item(card.id, card.title, card.disabled, [
                 h.p([], [h.text(card.description)]),
                 h.details([], [
-                  h.summary([], [h.text("Edit " <> card.title)]),
+                  disclosure.summary("Edit " <> card.title, []),
                   h.label([], [
                     h.span([], [h.text("Title")]),
                     field.input([

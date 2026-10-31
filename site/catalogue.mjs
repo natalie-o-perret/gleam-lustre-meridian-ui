@@ -1,7 +1,15 @@
 import {
   start_source,
   toggle_markup,
+  theme_markup,
+  code_markup,
+  snippet_markup,
+  github_markup,
 } from "../examples/catalogue/build/dev/javascript/meridian_catalogue/catalogue_docs.mjs";
+import starterSource from "../examples/catalogue/src/getting_started.gleam";
+import { componentDocs } from "./component-docs.mjs";
+import { previewToasts } from "./preview-toasts.mjs";
+import { applyPalette, validColour } from "./palette.mjs";
 import { mount } from "../examples/catalogue/build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
 import {
   next,
@@ -11,6 +19,7 @@ import {
 const repository =
   "https://github.com/natalie-o-perret/gleam-lustre-meridian-ui";
 const root = document.body;
+document.getElementById("github-icon").innerHTML = github_markup();
 const main = document.getElementById("main");
 const search = document.getElementById("component-search");
 const navigation = document.getElementById("component-navigation");
@@ -18,15 +27,34 @@ const dialog = document.getElementById("navigation-dialog");
 const navContent = document.getElementById("navigation-content");
 const menuButton = document.getElementById("open-navigation");
 const themeButton = document.getElementById("theme");
+const themeMotion = matchMedia("(prefers-reduced-motion: reduce)");
+themeMotion.addEventListener("change", () => {
+  if (themeMotion.matches)
+    for (const animation of themeButton.getAnimations({ subtree: true }))
+      animation.cancel();
+});
 const directionButton = document.getElementById("direction");
+const styleControl = document.getElementById("style");
+const primaryControl = document.getElementById("primary-colour");
+const secondaryControl = document.getElementById("secondary-colour");
 const mobile = matchMedia("(max-width: 900px)");
+const headerSize = new ResizeObserver(([entry]) => {
+  document.documentElement.style.scrollPaddingTop = `${Math.ceil(entry.target.getBoundingClientRect().height) + 8}px`;
+  const frame = main.querySelector("iframe");
+  if (frame) sizePreview(frame);
+});
+headerSize.observe(document.querySelector(".docs-header"));
 let entries = [];
 let current;
 let systemDark = matchMedia("(prefers-color-scheme: dark)").matches;
 let preference = "system";
 let theme = systemDark ? "dark" : "light";
 let direction = "ltr";
+let style = "rounded";
+let primary = "";
+let secondary = "";
 let stopSource = () => {};
+let stopToasts = () => {};
 const collapsedNavigation = new Set();
 try {
   const saved = JSON.parse(
@@ -35,6 +63,10 @@ try {
   if (["light", "dark", "system"].includes(saved?.theme))
     preference = saved.theme;
   if (["ltr", "rtl"].includes(saved?.direction)) direction = saved.direction;
+  if (["rounded", "square", "playful", "fantasy"].includes(saved?.style))
+    style = saved.style;
+  if (validColour(saved?.primary)) primary = saved.primary;
+  if (validColour(saved?.secondary)) secondary = saved.secondary;
 } catch {
   // Preferences are optional when browser storage is unavailable.
 }
@@ -56,30 +88,110 @@ const normalise = (value) =>
 const groups = () => [...new Set(entries.map((entry) => entry.group))];
 
 function previewURL(entry) {
-  return `./preview.html?${new URLSearchParams({ component: entry.id, theme, dir: direction })}`;
+  return `./preview.html?${new URLSearchParams({ component: entry.id, theme, dir: direction, style, primary, secondary, v: root.dataset.previewVersion })}`;
 }
+
+function sizePreview(frame) {
+  const content = Math.min(
+    1100,
+    Math.max(1, Number(frame.dataset.contentHeight) || 1),
+  );
+  const header = document
+    .querySelector(".docs-header")
+    .getBoundingClientRect().height;
+  const slot = frame.parentElement;
+  const preview = frame.contentDocument?.documentElement;
+  if (frame.dataset.overlayDialog === "true") {
+    const bounds = slot.getBoundingClientRect();
+    const scale = bounds.width / slot.offsetWidth || 1;
+    const top = (visualViewport?.offsetTop ?? 0) + header + 8;
+    const origin = document.documentElement.getBoundingClientRect().left;
+    slot.style.height = `${content}px`;
+    Object.assign(frame.style, {
+      position: "fixed",
+      zIndex: "20",
+      background: "transparent",
+      left: `${(bounds.left - origin) / scale}px`,
+      top: `${top / scale}px`,
+      width: `${bounds.width / scale}px`,
+      height: `${Math.max(0, (visualViewport?.height ?? innerHeight) - header - 16) / scale}px`,
+    });
+    preview?.style.setProperty(
+      "--meridian-preview-offset",
+      `${(bounds.top - top) / scale}px`,
+    );
+    preview?.style.setProperty("--meridian-preview-background", "transparent");
+  } else {
+    slot.style.removeProperty("height");
+    for (const property of [
+      "position",
+      "z-index",
+      "left",
+      "top",
+      "width",
+      "background",
+    ])
+      frame.style.removeProperty(property);
+    frame.style.height = `${frame.dataset.overlayOpen === "true" ? Math.max(content, (visualViewport?.height ?? innerHeight) - header - 16) : content}px`;
+    preview?.style.removeProperty("--meridian-preview-offset");
+    preview?.style.removeProperty("--meridian-preview-background");
+  }
+  frame.contentWindow?.postMessage(
+    { type: "meridian-viewport" },
+    location.origin,
+  );
+}
+const resizePreview = () => {
+  const frame = main.querySelector("iframe");
+  if (frame) sizePreview(frame);
+};
+addEventListener("resize", resizePreview);
+addEventListener(
+  "scroll",
+  () => {
+    const frame = main.querySelector('iframe[data-overlay-open="true"]');
+    if (frame) sizePreview(frame);
+  },
+  { passive: true },
+);
+visualViewport?.addEventListener("resize", resizePreview);
 
 function settings() {
   theme = is_dark(preference, systemDark) ? "dark" : "light";
   root.dataset.theme = theme;
+  root.dataset.style = style;
+  applyPalette(root, primary, secondary);
+  const colours = getComputedStyle(root);
+  primaryControl.value = primary || colours.getPropertyValue("--accent").trim();
+  secondaryControl.value =
+    secondary || colours.getPropertyValue("--secondary").trim();
+  document.getElementById("primary-colour-value").textContent =
+    primaryControl.value;
+  document.getElementById("secondary-colour-value").textContent =
+    secondaryControl.value;
+  styleControl.value = style;
   document.documentElement.dir = direction;
   const label = preference[0].toUpperCase() + preference.slice(1);
   const hint = `Theme: ${label}. Switch to ${next(preference)} theme`;
   themeButton.setAttribute("aria-label", hint);
   themeButton.dataset.tooltip = hint;
+  const previous = themeButton.dataset.preference;
   themeButton.dataset.preference = preference;
-  const glyph = {
-    light:
-      '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
-    dark: '<path d="M21 12.8A9 9 0 0 1 11.2 3 9 9 0 1 0 21 12.8Z"/>',
-    system:
-      '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>',
-  }[preference];
-  themeButton.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${glyph}</svg>`;
+  if (previous !== preference) {
+    themeButton.innerHTML = theme_markup(preference);
+    if (previous && !themeMotion.matches)
+      themeButton.firstElementChild.animate(
+        [
+          { opacity: 0, transform: "rotate(-30deg) scale(.65)" },
+          { opacity: 1, transform: "rotate(0) scale(1)" },
+        ],
+        { duration: 160, easing: "cubic-bezier(.2,.8,.2,1)" },
+      );
+  }
   directionButton.setAttribute("aria-pressed", String(direction === "rtl"));
   const frame = main.querySelector("iframe");
   frame?.contentWindow.postMessage(
-    { type: "meridian-settings", theme, direction },
+    { type: "meridian-settings", theme, direction, style, primary, secondary },
     location.origin,
   );
   const standalone = document.getElementById("standalone-preview");
@@ -91,7 +203,13 @@ function saveSettings() {
   try {
     localStorage.setItem(
       "meridian-catalogue",
-      JSON.stringify({ theme: preference, direction }),
+      JSON.stringify({
+        theme: preference,
+        direction,
+        style,
+        primary,
+        secondary,
+      }),
     );
   } catch {
     // The current page still works without persistent preferences.
@@ -143,6 +261,22 @@ directionButton.addEventListener("click", () => {
   direction = direction === "rtl" ? "ltr" : "rtl";
   saveSettings();
 });
+styleControl.addEventListener("change", () => {
+  style = styleControl.value;
+  saveSettings();
+});
+primaryControl.addEventListener("change", () => {
+  primary = primaryControl.value;
+  saveSettings();
+});
+secondaryControl.addEventListener("change", () => {
+  secondary = secondaryControl.value;
+  saveSettings();
+});
+document.getElementById("reset-colours").addEventListener("click", () => {
+  primary = secondary = "";
+  saveSettings();
+});
 document.addEventListener("keydown", (event) => {
   if (
     event.key === "/" &&
@@ -165,11 +299,11 @@ function renderNavigation() {
     ),
   );
   navigation.replaceChildren();
-  const overview = node("a", "docs-overview-link", "Overview");
-  overview.href = "#/";
+  const gettingStarted = node("a", "docs-start-link", "Getting started");
+  gettingStarted.href = "#/";
   if (!current && ["", "#/"].includes(location.hash))
-    overview.setAttribute("aria-current", "page");
-  navigation.append(overview);
+    gettingStarted.setAttribute("aria-current", "page");
+  navigation.append(gettingStarted);
   for (const group of groups()) {
     const members = matches.filter((entry) => entry.group === group);
     if (!members.length) continue;
@@ -211,46 +345,37 @@ navigation.addEventListener("click", (event) => {
   if (link.hash === location.hash) main.focus();
 });
 
-function overview() {
+function gettingStarted() {
   main.innerHTML = `
-    <section class="docs-hero">
-      <p class="eyebrow">The Meridian component catalogue</p>
-      <h1>Small components.<br />Room for ideas.</h1>
-      <p class="docs-lead">Native foundations, Gleam types and a considered design. Explore every building block, try it live and take the source with you.</p>
-      <div class="docs-hero-actions"><a class="button primary-button" href="#/components/button">Explore the components <span aria-hidden="true">→</span></a><a class="button" href="${repository}#use-it">Get started with Gleam</a></div>
-      <div class="docs-stats"><span><strong>95</strong> core entries</span><span><strong>4</strong> advanced widgets</span><span><strong>2</strong> utilities and additions</span></div>
-    </section>
-    <section class="docs-intro" aria-labelledby="catalogue-heading">
-      <div><p class="eyebrow">A place for everything</p><h2 id="catalogue-heading">Find your building block</h2></div>
-      <p class="muted">Every entry includes a live preview and the Gleam code that renders it. Switch the theme or direction at any time.</p>
-    </section>
-    <div id="category-grid" class="docs-category-grid"></div>
-    <section class="panel docs-note"><h2>Native by design</h2><p>Meridian builds on browser semantics, with shared styling, keyboard access and application-owned state. Date and time pickers pair native inputs with themed dialogs. Optional engines are bundled locally and loaded with their examples.</p><a href="${repository}/blob/main/COMPONENTS.md">Read the component guide <span aria-hidden="true">↗</span></a></section>`;
-  const grid = document.getElementById("category-grid");
-  for (const group of groups()) {
-    const members = entries.filter((entry) => entry.group === group);
-    const section = node("section", "panel docs-category");
-    const heading = node("div", "docs-category-heading");
-    const title = node("h3");
-    const id = `category-${normalise(group)}`;
-    title.innerHTML = toggle_markup(id, group, true);
-    heading.append(
-      title,
-      node("span", "docs-category-count", String(members.length)),
-    );
-    section.append(heading);
-    const list = node("ul", "docs-category-links");
-    list.id = `${id}-content`;
-    for (const entry of members) {
-      const item = node("li");
-      const link = node("a", "", entry.name);
-      link.href = route(entry);
-      item.append(link);
-      list.append(item);
-    }
-    section.append(list);
-    grid.append(section);
-  }
+    <header class="docs-component-heading">
+      <p class="eyebrow">Meridian UI</p><h1>Getting started</h1>
+      <p class="docs-lead">Add Meridian to your Lustre app, load the styles and render a component.</p>
+    </header>
+    <div class="docs-setup">
+      <section aria-labelledby="setup-dependency">
+        <h2 id="setup-dependency">1. Add the dependency</h2>
+        <p>Use Gleam 1.19.2 or newer, Lustre 5.7 and the JavaScript target. Meridian is experimental and not on Hex yet. Add this to your app's <code>gleam.toml</code>:</p>
+        ${snippet_markup("Git dependency", "toml", `[dependencies]\nmeridian_ui = { git = "${repository}.git", ref = "main" }`)}
+        <p>Pin a commit instead of <code>main</code> for reproducible builds, then run <code>gleam deps download</code>.</p>
+      </section>
+      <section aria-labelledby="setup-styles">
+        <h2 id="setup-styles">2. Load the styles</h2>
+        <p>Copy <code>build/packages/meridian_ui/priv/</code> into your public assets as <code>meridian-ui/</code>. Keep the <code>fonts/</code> directory and its licence beside the stylesheet. Load it before your app's styles:</p>
+        ${snippet_markup("Stylesheet link", "html", '<link rel="stylesheet" href="./meridian-ui/meridian-ui.css" />')}
+      </section>
+      <section aria-labelledby="setup-component">
+        <h2 id="setup-component">3. Render a component</h2>
+        <p>Use this view in your Lustre app. Pass your save message to <code>view</code>. The themed root keeps Meridian's styles scoped to your UI.</p>
+        ${code_markup("Component example", starterSource)}
+      </section>
+      <section aria-labelledby="setup-interactions">
+        <h2 id="setup-interactions">4. Mount interactions</h2>
+        <p>Import <code>meridian_ui</code> and call this once after <code>app-ui</code> has rendered, for example in a Lustre <code>before_paint</code> effect. It enables themed pickers, tooltips, drag gestures and shared keyboard controls.</p>
+        ${code_markup("Mount after rendering", 'let dispose = meridian_ui.mount("app-ui", fn(_) { Nil }, fn() { Nil })')}
+        <p>Call <code>dispose()</code> if you shut down the app without removing its root. The two callbacks let your app react to system theme and desktop layout changes.</p>
+      </section>
+      <p><a href="#/components/button">Try the Button example</a>, find a component in the navigation, or <a href="${repository}#shell-and-lifecycle">read the lifecycle guide</a>.</p>
+    </div>`;
 }
 
 function component(entry) {
@@ -267,6 +392,7 @@ function component(entry) {
       <div id="preview-container"></div>
       </div>
     </section>
+    <div id="component-docs"></div>
     <div id="source-demo"></div>
     <p class="docs-native-note muted">Examples run locally in your browser. Reload the preview to reset its state. Business data, persistence and server validation belong to your application.</p>`;
   document.getElementById("component-group").textContent = entry.group;
@@ -274,10 +400,10 @@ function component(entry) {
   const description =
     entry.description[0].toUpperCase() + entry.description.slice(1);
   document.getElementById("component-description").textContent = description;
-  document.getElementById("component-status").textContent =
-    entry.status === "Platform"
-      ? "Native platform feature"
-      : "Meridian component";
+  const status = document.getElementById("component-status");
+  if (entry.status === "Platform")
+    status.textContent = "Native platform example";
+  else status.remove();
   const api = document.getElementById("api-source");
   api.href = entry.module
     ? `${repository}/blob/main/src/${entry.module}.gleam`
@@ -288,24 +414,39 @@ function component(entry) {
   const frame = document.createElement("iframe");
   frame.title = `${entry.name} interactive example`;
   frame.src = previewURL(entry);
-  frame.style.height = "340px";
+  frame.style.height = "1px";
   frame.style.visibility = "hidden";
+  frame.addEventListener("load", () => {
+    if (!frame.isConnected) return;
+    stopToasts();
+    stopToasts = () => {};
+    if (
+      entry.id === "toast" &&
+      frame.contentDocument.getElementById("demo-root")
+    )
+      stopToasts = previewToasts(frame);
+  });
   document.getElementById("preview-container").append(frame);
+  document
+    .getElementById("component-docs")
+    .append(...componentDocs(entry, frame));
   stopSource = start_source("source-demo", entry.snippet, entry.family);
 }
 
 function render(focus = false) {
+  stopToasts();
+  stopToasts = () => {};
   stopSource();
   stopSource = () => {};
   const hash = location.hash;
   current = entries.find((entry) => route(entry) === hash);
   if (current) component(current);
-  else if (["", "#/", "#main"].includes(hash)) overview();
+  else if (["", "#/", "#main"].includes(hash)) gettingStarted();
   else {
     main.innerHTML =
-      '<h1>Component not found</h1><p>That link is not in this catalogue. <a href="#/">Browse all components</a> or try the search.</p>';
+      '<h1>Component not found</h1><p>That link is not in this catalogue. <a href="#/">Getting started</a> or try the search.</p>';
   }
-  document.title = `${current?.name ?? "Component catalogue"} - Meridian UI`;
+  document.title = `${current?.name ?? "Getting started"} - Meridian UI`;
   main.setAttribute("aria-busy", "false");
   renderNavigation();
   if (focus) {
@@ -327,17 +468,49 @@ addEventListener("message", (event) => {
   if (
     event.data.type === "meridian-height" &&
     Number.isFinite(event.data.height)
-  )
-    frame.style.height = `${Math.min(1100, Math.max(340, event.data.height))}px`;
+  ) {
+    frame.dataset.contentHeight = String(event.data.height);
+    sizePreview(frame);
+  }
+  if (
+    event.data.type === "meridian-overlay" &&
+    typeof event.data.open === "boolean"
+  ) {
+    frame.dataset.overlayOpen = String(event.data.open);
+    frame.dataset.overlayDialog = String(
+      event.data.open && event.data.dialog === true,
+    );
+    sizePreview(frame);
+  }
   if (event.data.type === "meridian-ready") {
-    if (event.data.theme !== theme || event.data.direction !== direction) {
+    if (
+      event.data.theme !== theme ||
+      event.data.direction !== direction ||
+      event.data.style !== style ||
+      event.data.primary !== primary ||
+      event.data.secondary !== secondary
+    ) {
       settings();
       return;
     }
     if (!Number.isFinite(event.data.height)) return;
-    frame.style.height = `${Math.min(1100, Math.max(340, event.data.height))}px`;
+    frame.dataset.contentHeight = String(event.data.height);
+    sizePreview(frame);
+    frame.dispatchEvent(new Event("meridian-preview-ready"));
+  }
+  if (
+    event.data.type === "meridian-configured" &&
+    Number.isFinite(event.data.height)
+  ) {
+    frame.dataset.contentHeight = String(event.data.height);
+    sizePreview(frame);
     frame.dataset.ready = current.id;
     frame.style.visibility = "visible";
+    if (
+      current.id === "toast" &&
+      !document.querySelector(".docs-preview-toasts")
+    )
+      stopToasts = previewToasts(frame);
     document.getElementById("preview-status").textContent = "Preview ready.";
   }
   if (event.data.type === "meridian-error") {
@@ -359,7 +532,9 @@ const stopInteractions = mount(
 addEventListener("pagehide", (event) => {
   if (!event.persisted) {
     stopSource();
+    stopToasts();
     stopInteractions();
+    headerSize.disconnect();
   }
 });
 try {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
+import { dateRanges } from "./date_ranges.mjs";
 
 export async function datePickers(page, scenario) {
   const form = page.locator("#primary-form");
@@ -52,6 +53,21 @@ export async function datePickers(page, scenario) {
   await expect(popup).toHaveCount(0);
   await expect(date).toBeFocused();
 
+  await date.click();
+  await popup.locator(".meridian-picker-title").click();
+  await popup.locator(".meridian-picker-title").click();
+  await expect(popup.locator(".meridian-picker-title")).toHaveText("2020-2029");
+  await expect(popup.locator('[data-year="2024"]')).toBeFocused();
+  await page.keyboard.press("PageUp");
+  await expect(popup.locator(".meridian-picker-title")).toHaveText("2010-2019");
+  await expect(date).toHaveValue("2024-02-29");
+  await page.keyboard.press("PageDown");
+  await popup.locator('[data-year="2024"]').click();
+  await popup.locator('[data-month="2024-02"]').click();
+  await expect(date).toHaveValue("2024-02-29");
+  await popup.locator('[data-date="2024-02-29"]').click();
+  await expect(popup).toHaveCount(0);
+
   const month = form.getByLabel("Appointment month", { exact: true });
   await month.click();
   await expect(popup.locator('[data-month="2024-03"]')).toHaveAttribute(
@@ -69,22 +85,22 @@ export async function datePickers(page, scenario) {
 
   const time = form.getByLabel("Appointment time", { exact: true });
   await time.click();
-  const hours = popup.getByRole("spinbutton", { name: "Hours", exact: true });
-  const minutes = popup.getByRole("spinbutton", {
+  const hours = popup.getByRole("listbox", { name: "Hours", exact: true });
+  const minutes = popup.getByRole("listbox", {
     name: "Minutes",
     exact: true,
   });
   const apply = popup.getByRole("button", { name: "Apply", exact: true });
   await expect(hours).toBeFocused();
-  await hours.fill("08");
+  await hours.selectOption("08");
   await expect(apply).toBeDisabled();
-  await hours.fill("11");
-  await minutes.fill("16");
+  await hours.selectOption("11");
+  await minutes.selectOption("16");
   await expect(apply).toBeDisabled();
-  await minutes.fill("30");
+  await minutes.selectOption("30");
   await expect(apply).toBeEnabled();
   await minutes.press("Enter");
-  await expect(time).toHaveValue("11:30");
+  await expect(time).toHaveValue(/^11:30(?::00)?$/);
   await expect(time).toBeFocused();
   await time.evaluate((input) => {
     input.min = "22:00";
@@ -92,15 +108,20 @@ export async function datePickers(page, scenario) {
     input.step = "0.5";
   });
   await time.click();
-  await hours.fill("23");
-  await minutes.fill("45");
-  const seconds = popup.getByRole("spinbutton", {
+  await hours.selectOption("23");
+  await minutes.selectOption("45");
+  const seconds = popup.getByRole("listbox", {
     name: "Seconds",
     exact: true,
   });
-  await seconds.fill("30.25");
+  await seconds.selectOption("30");
+  const milliseconds = popup.getByRole("spinbutton", {
+    name: "Milliseconds",
+    exact: true,
+  });
+  await milliseconds.fill("250");
   await expect(apply).toBeDisabled();
-  await seconds.fill("30.5");
+  await milliseconds.fill("500");
   await apply.click();
   await expect(time).toHaveValue(/^23:45:30\.50{0,2}$/);
 
@@ -109,8 +130,8 @@ export async function datePickers(page, scenario) {
   });
   await datetime.click();
   await popup.locator('[data-date="2024-03-01"]').click();
-  await hours.fill("12");
-  await minutes.fill("30");
+  await hours.selectOption("12");
+  await minutes.selectOption("30");
   await apply.click();
   await expect(datetime).toHaveValue("2024-03-01T12:30");
   const data = await form.evaluate((form) =>
@@ -120,6 +141,7 @@ export async function datePickers(page, scenario) {
   assert.equal(data.month, "2024-04");
   assert.match(data.time, /^23:45:30\.50{0,2}$/);
   assert.equal(data["date-time"], "2024-03-01T12:30");
+  await dateRanges(page);
 
   await date.click();
   const bounds = await popup.boundingBox();

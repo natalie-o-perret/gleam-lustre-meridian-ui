@@ -226,10 +226,57 @@ export async function pro(page, scenario) {
       !html.includes("<script") &&
       !html.includes("onerror"),
   );
+  await editor.press("ControlOrMeta+a");
+  const textColour = page.getByLabel("Text colour", { exact: true });
+  for (const colour of ["#225588", "#884422"]) {
+    await textColour.click();
+    const picker = page.getByRole("dialog", {
+      name: "Text colour picker",
+      exact: true,
+    });
+    await picker
+      .getByRole("textbox", { name: "Hex colour", exact: true })
+      .fill(colour);
+    await picker.getByRole("button", { name: "Apply", exact: true }).click();
+    await expect(editor).toBeFocused();
+    await expect(editor.locator("[data-text-colour]").first()).toHaveAttribute(
+      "data-text-colour",
+      colour,
+    );
+    await expect(page.locator("#document-json")).toContainText(colour);
+    await expect(textColour).toHaveValue(colour);
+    assert.equal(
+      await page.locator("#document-html").evaluate((node, colour) => {
+        const template = document.createElement("template");
+        template.innerHTML = node.textContent;
+        const sample = document.createElement("span");
+        sample.style.color = colour;
+        return (
+          template.content.querySelector("[data-text-colour]").style.color ===
+          sample.style.color
+        );
+      }, colour),
+      true,
+    );
+  }
+  await page
+    .getByRole("button", { name: "Default text colour", exact: true })
+    .click();
+  await expect(editor.locator("[data-text-colour]")).toHaveCount(0);
+  await editor.press("ControlOrMeta+z");
+  await expect(editor.locator("[data-text-colour]").first()).toHaveAttribute(
+    "data-text-colour",
+    "#884422",
+  );
+  await page
+    .getByRole("button", { name: "Default text colour", exact: true })
+    .click();
+  await expect(editor.locator("[data-text-colour]")).toHaveCount(0);
   await page
     .getByRole("switch", { name: "Read-only editor", exact: true })
     .check();
   await expect(editor).toHaveAttribute("contenteditable", "false");
+  await expect(textColour).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "Bold", exact: true }),
   ).toBeDisabled();

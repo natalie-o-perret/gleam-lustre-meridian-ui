@@ -16,6 +16,28 @@ pub type Action {
   Select(String)
 }
 
+/// Shared presentation attributes for Tree, TreeSelect, FileTree and TreeTable.
+pub fn appearance(
+  lines: Bool,
+  boxed_toggles: Bool,
+  animated: Bool,
+) -> List(Attribute(msg)) {
+  [
+    a.data("tree-lines", case lines {
+      True -> "true"
+      False -> "false"
+    }),
+    a.data("tree-boxes", case boxed_toggles {
+      True -> "true"
+      False -> "false"
+    }),
+    a.data("tree-animate", case animated {
+      True -> "true"
+      False -> "false"
+    }),
+  ]
+}
+
 pub fn update(model: Model, action: Action, mode: Mode) -> Model {
   case action {
     Expand(id) ->
@@ -33,6 +55,21 @@ pub fn view(
   attrs: List(Attribute(msg)),
   nodes: List(Node),
 ) -> Element(msg) {
+  view_with(label, mode, model, on_action, attrs, nodes, fn(node) {
+    h.text(node.label)
+  })
+}
+
+/// Render non-interactive node content, including its visible label.
+pub fn view_with(
+  label: String,
+  mode: Mode,
+  model: Model,
+  on_action: fn(Action) -> msg,
+  attrs: List(Attribute(msg)),
+  nodes: List(Node),
+  render: fn(Node) -> Element(msg),
+) -> Element(msg) {
   case hierarchy.validate(nodes) {
     Error(_) -> h.p([a.role("alert")], [h.text("Invalid tree options.")])
     Ok(_) ->
@@ -45,7 +82,7 @@ pub fn view(
           a.data("meridian-tree", "true"),
           ..attrs
         ],
-        branches(nodes, 1, "", model, on_action),
+        branches(nodes, 1, "", model, on_action, render),
       )
   }
 }
@@ -56,6 +93,7 @@ fn branches(
   parent: String,
   model: Model,
   on_action: fn(Action) -> msg,
+  render: fn(Node) -> Element(msg),
 ) -> List(Element(msg)) {
   list.index_map(nodes, fn(node, index) {
     let expanded = list.contains(model.expanded, node.id)
@@ -110,7 +148,7 @@ fn branches(
                   |> event.stop_propagation
               },
             ],
-            [h.text(node.label)],
+            [render(node)],
           ),
         ]),
         case node.children {
@@ -118,7 +156,7 @@ fn branches(
           children ->
             h.ul(
               [a.role("group"), a.hidden(!expanded)],
-              branches(children, level + 1, node.id, model, on_action),
+              branches(children, level + 1, node.id, model, on_action, render),
             )
         },
       ],

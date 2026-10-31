@@ -1,12 +1,16 @@
 body {
   margin: 0;
   color: var(--ink);
-  background: var(--panel);
+  background: var(--meridian-preview-background, var(--panel));
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
+html {
+  scrollbar-gutter: stable both-edges;
+}
 .demo-root {
-  padding: 24px;
-  min-block-size: 300px;
+  position: relative;
+  top: var(--meridian-preview-offset, 0px);
+  padding: 16px;
   background: var(--panel);
 }
 .demo-stack,
@@ -32,11 +36,33 @@ body {
 .demo-status {
   color: var(--muted);
 }
+.demo-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 12px;
+}
+.demo-icon-grid > div {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 12px;
+  min-block-size: 96px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  text-align: center;
+  font-size: 0.8rem;
+}
+.demo-icon-grid .meridian-icon {
+  inline-size: 32px;
+  block-size: 32px;
+  color: var(--accent);
+}
 .demo-project,
 .demo-slide {
   padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius, 12px);
   background: var(--bg);
 }
 .demo-slide {
@@ -55,6 +81,17 @@ body {
 .demo-root img {
   max-inline-size: 100%;
 }
+.demo-skeleton-card img {
+  border-radius: var(--radius, 12px);
+}
+.demo-skeleton-line {
+  block-size: 1rem;
+  margin: 0;
+  line-height: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .demo-root .meridian-splitter {
   min-block-size: 180px;
 }
@@ -66,6 +103,6 @@ body {
 }
 @media (max-width: 500px) {
   .demo-root {
-    padding: 16px;
+    padding: 8px;
   }
 }

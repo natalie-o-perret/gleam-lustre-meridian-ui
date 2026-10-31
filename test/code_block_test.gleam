@@ -19,6 +19,9 @@ pub fn code_is_labelled_keyboard_scrollable_and_ltr_test() {
   html |> string.contains("meridian-code-gutter") |> should.be_true
   html |> string.contains("aria-hidden=\"true\"") |> should.be_true
   html |> string.contains("data-line-numbers=\"1\"") |> should.be_true
+  html |> string.contains("<details") |> should.be_true
+  html |> string.contains("open") |> should.be_true
+  html |> string.contains("<summary") |> should.be_true
 }
 
 pub fn source_is_text_not_markup_test() {
@@ -34,4 +37,21 @@ pub fn source_is_text_not_markup_test() {
   html |> string.contains("&lt;script&gt;") |> should.be_true
   html |> string.contains("meridian-code-string") |> should.be_true
   html |> string.contains("meridian-code-comment") |> should.be_true
+}
+
+pub fn other_source_languages_keep_numbering_and_escape_html_test() {
+  let html =
+    code_block.view_language(
+      "HTML example",
+      code_block.Html,
+      "<img src=\"x\">",
+      [],
+    )
+    |> element.to_string
+  html |> string.contains("data-language=\"html\"") |> should.be_true
+  html |> string.contains("data-line-numbers=\"1\"") |> should.be_true
+  html |> string.contains("meridian-code-keyword") |> should.be_true
+  html |> string.contains("&lt;img") |> should.be_true
+  html |> string.contains("<img") |> should.be_false
+  html |> string.contains("data-code-action=\"collapse\"") |> should.be_false
 }

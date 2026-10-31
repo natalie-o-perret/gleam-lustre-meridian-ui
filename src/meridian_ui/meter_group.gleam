@@ -54,7 +54,7 @@ pub fn view(
         ),
       ]),
       h.ul(
-        [],
+        [a.role("list")],
         list.map(meters, fn(meter) {
           h.li([], [
             badge.view(meter.tone, [], [

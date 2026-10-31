@@ -1,5 +1,7 @@
 import catalogue/common
+import gleam/dict
 import gleam/list
+import gleam/string
 import lustre/attribute as a
 import lustre/element.{type Element}
 import lustre/element/html as h
@@ -8,24 +10,32 @@ import meridian_ui/charts
 import meridian_ui/field
 
 pub type Model {
-  Model(kind: String, selected: String)
+  Model(kind: String, selected: String, props: common.Properties)
 }
 
 pub type Msg {
   Kind(String)
   Select(charts.Selection)
+  Properties(common.Properties)
 }
 
 pub fn start(_component: String) {
   common.start(
-    Model("bar", "Choose a data point or open the data table."),
+    Model("bar", "Choose a data point or open the data table.", dict.new()),
     update,
+    Properties,
     charts_example,
   )
 }
 
 fn update(model: Model, msg: Msg) -> Model {
   case msg {
+    Properties(props) ->
+      Model(
+        ..model,
+        props: dict.merge(model.props, props),
+        kind: common.property(props, "kind", model.kind),
+      )
     Kind(kind) -> Model(..model, kind: kind)
     Select(value) ->
       Model(..model, selected: value.series <> ": " <> value.name)
@@ -61,12 +71,22 @@ pub fn charts_example(model: Model) -> Element(Msg) {
         ),
       ),
     ),
-    charts.view("requests-chart", chart_config(model.kind), Select, []),
+    charts.view(
+      "requests-chart",
+      chart_config(model.kind, model.props),
+      Select,
+      [
+        a.style(
+          "--meridian-chart-height",
+          common.property(model.props, "height", "384") <> "px",
+        ),
+      ],
+    ),
     h.p([a.role("status")], [h.text(model.selected)]),
   ])
 }
 
-fn chart_config(kind: String) -> charts.Config {
+fn chart_config(kind: String, props: common.Properties) -> charts.Config {
   let values = charts.Values([3.0, 2.0, 5.0])
   let nodes =
     charts.Nodes([
@@ -82,7 +102,10 @@ fn chart_config(kind: String) -> charts.Config {
     "pie" -> #(charts.Pie, values)
     "doughnut" -> #(charts.Doughnut, values)
     "radar" -> #(charts.Radar, values)
-    "gauge" -> #(charts.Gauge, charts.Values([65.0]))
+    "gauge" -> #(
+      charts.Gauge,
+      charts.Values([common.decimal(props, "value", 65.0)]),
+    )
     "heatmap" -> #(
       charts.Heatmap,
       charts.Cells([#(0, 0, 1.0), #(1, 1, 3.0), #(2, 2, 5.0)]),
@@ -97,7 +120,13 @@ fn chart_config(kind: String) -> charts.Config {
     )
     _ -> #(charts.Bar, values)
   }
-  charts.Config("Weekly requests", ["Mon", "Tue", "Wed"], [
-    charts.Series("Requests", kind, data),
-  ])
+  charts.Config(
+    common.property(props, "title", "Weekly requests"),
+    common.property(props, "categories", "Mon,Tue,Wed")
+      |> string.split(",")
+      |> list.map(string.trim),
+    [
+      charts.Series(common.property(props, "series", "Requests"), kind, data),
+    ],
+  )
 }

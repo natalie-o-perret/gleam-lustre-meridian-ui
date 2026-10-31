@@ -31,6 +31,7 @@
     "prosemirror-gapcursor": "1.4.1",
     "prosemirror-history": "1.5.1",
     "prosemirror-keymap": "1.2.3",
+    "prosemirror-markdown": "1.13.9",
     "prosemirror-model": "1.25.12",
     "prosemirror-schema-basic": "1.2.5",
     "prosemirror-schema-list": "1.6.0",

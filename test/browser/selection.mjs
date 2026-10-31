@@ -5,6 +5,13 @@ export async function selection(page, scenario) {
   await page.waitForFunction(() => window.meridianReady);
   const form = page.locator("#primary-form");
   await form.locator(".meridian-select-button").evaluate((group) => {
+    window.selectionAnimations = [];
+    group.addEventListener("change", (event) => {
+      if (event.target.checked)
+        window.selectionAnimations.push(
+          event.target.nextElementSibling.getAnimations().length,
+        );
+    });
     group.querySelector('input[value="list"]').click();
     group.querySelector('input[value="grid"]').click();
   });
@@ -15,6 +22,14 @@ export async function selection(page, scenario) {
     form.getByRole("checkbox", { name: "Grid", exact: true }),
   ).toBeChecked();
   await form.getByText("List", { exact: true }).click();
+  const animations = await page.evaluate(() => window.selectionAnimations);
+  assert.ok(animations.length > 0);
+  assert.ok(
+    animations.every((count) =>
+      scenario.motion === "reduce" ? count === 0 : count > 0,
+    ),
+    "SelectButton changes animate unless motion is reduced",
+  );
   await form
     .getByRole("listbox", { name: "Owners", exact: true })
     .selectOption(["one", "two"]);
@@ -25,11 +40,46 @@ export async function selection(page, scenario) {
   await expect(
     form.getByRole("checkbox", { name: "List", exact: true }),
   ).toBeChecked();
-  const star = form.getByRole("radio", { name: "3 stars", exact: true });
+  const precise = form.getByRole("radiogroup", {
+    name: "Precise quality",
+    exact: true,
+  });
+  const half = precise.getByRole("radio", { name: "2.5 stars", exact: true });
+  await expect(half).toBeChecked();
+  await half.focus();
+  await half.press(scenario.direction === "rtl" ? "ArrowLeft" : "ArrowRight");
+  await expect(
+    precise.getByRole("radio", { name: "3 stars", exact: true }),
+  ).toBeChecked();
+  assert.equal(
+    await form.evaluate((el) => new FormData(el).get("primary-precise-rating")),
+    "3",
+  );
+  await precise
+    .getByRole("button", { name: "Clear rating", exact: true })
+    .click();
+  await expect(precise.locator("input:checked")).toHaveCount(0);
+  assert.equal(
+    await form.evaluate((el) => new FormData(el).has("primary-precise-rating")),
+    false,
+  );
+  await precise.locator(".meridian-rating-zero").click();
+  await expect(
+    precise.getByRole("radio", { name: "0 stars", exact: true }),
+  ).toBeChecked();
+  assert.equal(
+    await form.evaluate((el) => new FormData(el).get("primary-precise-rating")),
+    "0",
+  );
+  const quality = form.getByRole("radiogroup", {
+    name: "Quality",
+    exact: true,
+  });
+  const star = quality.getByRole("radio", { name: "3 stars", exact: true });
   await star.focus();
   await star.press(scenario.direction === "rtl" ? "ArrowLeft" : "ArrowRight");
   await expect(
-    form.getByRole("radio", { name: "4 stars", exact: true }),
+    quality.getByRole("radio", { name: "4 stars", exact: true }),
   ).toBeChecked();
   await page.keyboard.press(
     scenario.direction === "rtl" ? "ArrowRight" : "ArrowLeft",
@@ -37,11 +87,11 @@ export async function selection(page, scenario) {
   await expect(star).toBeChecked();
   await star.press("End");
   await expect(
-    form.getByRole("radio", { name: "5 stars", exact: true }),
+    quality.getByRole("radio", { name: "5 stars", exact: true }),
   ).toBeChecked();
   await page.keyboard.press("Home");
   await expect(
-    form.getByRole("radio", { name: "1 star", exact: true }),
+    quality.getByRole("radio", { name: "1 star", exact: true }),
   ).toBeChecked();
   const otp = form.getByLabel("Verification code", { exact: true });
   await otp.fill("001234");

@@ -43,7 +43,7 @@ for (const path of [...packages].sort()) {
     await readFile(resolve(path, "package.json"), "utf8"),
   );
   const names = (await readdir(path))
-    .filter((name) => /^(licen[cs]e|notice|copying)(\.|$)/i.test(name))
+    .filter((name) => /^(licen[cs]e|notice|copying)([.-]|$)/i.test(name))
     .sort();
   assert.ok(
     names.length,

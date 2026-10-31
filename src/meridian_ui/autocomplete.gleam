@@ -3,7 +3,7 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import meridian_ui/field
 
-/// Native suggestions preserve browser editing and keyboard behaviour.
+/// Mounted suggestions use a themed listbox. Unmounted inputs keep a native datalist.
 /// The caller can replace suggestions after an asynchronous request.
 pub fn view(
   id: String,
@@ -14,6 +14,7 @@ pub fn view(
     field.input([
       a.id(id),
       a.list(id <> "-suggestions"),
+      a.data("meridian-autocomplete", id <> "-suggestions"),
       a.autocomplete("off"),
       ..attrs
     ]),

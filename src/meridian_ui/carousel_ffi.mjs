@@ -11,6 +11,10 @@ export function setupCarousels(root, signal) {
     if (!active) return;
     delete active.area.dataset.dragging;
     active.slide.style.translate = "";
+    if (active.preview) {
+      delete active.preview.dataset.carouselPreview;
+      active.preview.style.translate = "";
+    }
     if (active.area.hasPointerCapture(active.id))
       active.area.releasePointerCapture(active.id);
   };
@@ -65,7 +69,23 @@ export function setupCarousels(root, signal) {
         view.getSelection()?.removeAllRanges();
       }
       event.preventDefault();
-      slide.style.translate = `${x}px 0`;
+      const width = area.clientWidth;
+      const scale = area.getBoundingClientRect().width / area.offsetWidth || 1;
+      const offset = Math.max(-width, Math.min(width, x / scale));
+      const sign = x < 0 ? -1 : 1;
+      const rtl = view.getComputedStyle(drag.carousel).direction === "rtl";
+      const slides = [...area.children];
+      const index = slides.indexOf(slide);
+      const preview =
+        slides[(index - sign * (rtl ? -1 : 1) + slides.length) % slides.length];
+      if (drag.preview && drag.preview !== preview) {
+        delete drag.preview.dataset.carouselPreview;
+        drag.preview.style.translate = "";
+      }
+      drag.preview = preview;
+      preview.dataset.carouselPreview = "true";
+      preview.style.translate = `${offset - sign * width}px 0`;
+      slide.style.translate = `${offset}px 0`;
     },
     { signal, passive: false },
   );
@@ -75,7 +95,7 @@ export function setupCarousels(root, signal) {
       if (drag?.id !== event.pointerId) return;
       const { area, carousel, slide, moved, x } = drag;
       const distance = event.clientX - x;
-      const threshold = Math.min(80, Math.max(30, area.clientWidth * 0.2));
+      const threshold = area.getBoundingClientRect().width / 2;
       const change =
         moved &&
         Math.abs(distance) >= threshold &&

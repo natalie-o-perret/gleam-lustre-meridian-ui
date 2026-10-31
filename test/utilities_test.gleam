@@ -76,6 +76,7 @@ pub fn meters_and_timelines_expose_values_without_relying_on_colour_test() {
   html |> string.contains("Total: 130 of 100") |> should.be_true
   html |> string.contains("flex-grow:40") |> should.be_true
   html |> string.contains("Reserved: 70") |> should.be_true
+  html |> string.contains("role=\"list\"") |> should.be_true
   timeline.view("Activity", orientation.Vertical, [], [
     timeline.Event("Created", "2026-10-31", "Today", [h.text("Project created")]),
   ])

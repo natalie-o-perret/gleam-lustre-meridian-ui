@@ -1,16 +1,22 @@
+import { viewportBounds, watchViewport } from "./overlays_ffi.mjs";
+
 export function tooltipPosition(target, tip, viewport) {
   const gap = 8;
+  const left = viewport.left ?? 0;
+  const top = viewport.top ?? 0;
+  const right = viewport.right ?? viewport.width;
+  const bottom = viewport.bottom ?? viewport.height;
   return {
     left: Math.max(
-      gap,
+      left + gap,
       Math.min(
         target.left + (target.width - tip.width) / 2,
-        viewport.width - tip.width - gap,
+        right - tip.width - gap,
       ),
     ),
     top: Math.max(
-      gap,
-      target.bottom + tip.height + gap * 2 <= viewport.height
+      top + gap,
+      target.bottom + tip.height + gap * 2 <= bottom
         ? target.bottom + gap
         : target.top - tip.height - gap,
     ),
@@ -50,10 +56,13 @@ export function setupTooltips(root, signal) {
     if (!trigger || tip.hidden) return;
     tip.style.left = "0px";
     tip.style.top = "0px";
+    const viewport = viewportBounds(view);
+    tip.style.maxWidth = `${Math.max(0, Math.min(280, viewport.right - viewport.left - 16))}px`;
+    tip.style.maxHeight = `${Math.max(0, viewport.bottom - viewport.top - 16)}px`;
     const bounds = tooltipPosition(
       trigger.getBoundingClientRect(),
       tip.getBoundingClientRect(),
-      { width: view.innerWidth, height: view.innerHeight },
+      viewport,
     );
     tip.style.left = `${bounds.left}px`;
     tip.style.top = `${bounds.top}px`;
@@ -70,6 +79,10 @@ export function setupTooltips(root, signal) {
     }
     const next = target.closest?.("[data-tooltip]");
     if (!next || next.closest(".meridian-ui") !== root) return;
+    if (!next.dataset.tooltip?.trim()) {
+      hide();
+      return;
+    }
     if (next === pendingTarget && delay > 0) return;
     if (next === trigger) {
       clearTimeout(timer);
@@ -80,8 +93,10 @@ export function setupTooltips(root, signal) {
     timer = setTimeout(() => {
       pendingTarget = undefined;
       if (signal.aborted || !next.isConnected || !root.contains(next)) return;
+      const text = next.dataset.tooltip?.trim();
+      if (!text) return;
       trigger = next;
-      tip.textContent = next.dataset.tooltip;
+      tip.textContent = text;
       tip.hidden = false;
       tip.showPopover?.();
       trigger.setAttribute(
@@ -136,11 +151,7 @@ export function setupTooltips(root, signal) {
   );
   // Keep keyboard hints visible while focus scrolls the control into view.
   const updatePosition = () => (hasFocus() ? position() : hide());
-  document.addEventListener("scroll", updatePosition, {
-    signal,
-    capture: true,
-  });
-  view.addEventListener("resize", updatePosition, options);
+  watchViewport(view, updatePosition, signal);
   return () => {
     hide();
     tip.remove();

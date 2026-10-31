@@ -12,6 +12,17 @@ pub type Notice {
   Notice(id: String, tone: message.Tone, text: String, timeout: Int)
 }
 
+pub type Position {
+  Inline
+  TopLeft
+  TopCentre
+  TopRight
+  Centre
+  BottomLeft
+  BottomCentre
+  BottomRight
+}
+
 pub fn remove(notices: List(Notice), id: String) -> List(Notice) {
   list.filter(notices, fn(notice) { notice.id != id })
 }
@@ -23,8 +34,35 @@ pub fn view(
   on_dismiss: fn(String) -> msg,
   attrs: List(Attribute(msg)),
 ) -> Element(msg) {
+  view_with(label, Inline, True, notices, on_dismiss, attrs)
+}
+
+/// Positioned stacks stay inside their viewport. The caller owns the notice queue.
+pub fn view_with(
+  label: String,
+  position: Position,
+  closable: Bool,
+  notices: List(Notice),
+  on_dismiss: fn(String) -> msg,
+  attrs: List(Attribute(msg)),
+) -> Element(msg) {
   keyed.div(
-    [a.class("meridian-toasts"), a.role("region"), a.aria_label(label), ..attrs],
+    [
+      a.class("meridian-toasts"),
+      a.role("region"),
+      a.aria_label(label),
+      a.data("toast-position", case position {
+        Inline -> "inline"
+        TopLeft -> "top-left"
+        TopCentre -> "top-centre"
+        TopRight -> "top-right"
+        Centre -> "centre"
+        BottomLeft -> "bottom-left"
+        BottomCentre -> "bottom-centre"
+        BottomRight -> "bottom-right"
+      }),
+      ..attrs
+    ],
     list.map(notices, fn(notice) {
       #(
         notice.id,
@@ -36,9 +74,13 @@ pub fn view(
               |> event.stop_propagation,
           ],
           [
-            message.dismissible(notice.tone, on_dismiss(notice.id), [], [
-              h.text(notice.text),
-            ]),
+            case closable {
+              True ->
+                message.dismissible(notice.tone, on_dismiss(notice.id), [], [
+                  h.text(notice.text),
+                ])
+              False -> message.view(notice.tone, [], [h.text(notice.text)])
+            },
           ],
         ),
       )

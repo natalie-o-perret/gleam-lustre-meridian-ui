@@ -302,3 +302,24 @@ test("keyboard hints preempt hover and disconnected hover targets can retry", (t
   t.mock.timers.tick(100);
   assert.equal(tip.hidden, false);
 });
+
+test("blank tooltips and hints cleared during the hover delay never open", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const f = fixture(t);
+  const root = f.root("one");
+  f.mount(root);
+  const trigger = root.controls[0];
+  const tip = root.children[0];
+  f.hint(root, trigger, "pointerover");
+  trigger.dataset.tooltip = " \n ";
+  t.mock.timers.tick(100);
+  assert.equal(tip.hidden, true);
+  assert.equal(trigger.getAttribute("aria-describedby"), null);
+  f.hint(root, trigger);
+  trigger.dataset.tooltip = " ";
+  root.dispatchEvent(
+    Object.defineProperty(new Event("focusin"), "target", { value: trigger }),
+  );
+  t.mock.timers.tick(0);
+  assert.equal(tip.hidden, true);
+});

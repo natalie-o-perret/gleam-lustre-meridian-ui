@@ -8,6 +8,7 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import meridian_ui/button
+import meridian_ui/disclosure
 
 pub type Kind {
   Line
@@ -117,7 +118,7 @@ fn render(
       [],
     ),
     h.details([], [
-      h.summary([], [h.text("Chart data")]),
+      disclosure.summary("Chart data", []),
       h.div(
         [
           a.class("meridian-table-scroll"),

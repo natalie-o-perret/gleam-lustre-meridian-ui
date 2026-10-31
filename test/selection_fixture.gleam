@@ -1,11 +1,13 @@
 import gleam/int
 import gleam/list
+import gleam/option.{type Option, Some}
 import lustre
 import lustre/attribute as a
 import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event as e
 import meridian_ui/autocomplete
+import meridian_ui/badge
 import meridian_ui/button
 import meridian_ui/cascade_select
 import meridian_ui/date_picker
@@ -29,6 +31,7 @@ pub type State {
     owners: List(String),
     views: List(String),
     rating: Int,
+    precise: Option(Float),
     tags: input_tags.Model,
     path: List(String),
     start: String,
@@ -47,6 +50,7 @@ pub type Action {
   Owners(List(String))
   Views(select_button.Action)
   Rate(Int)
+  Precision(Option(Float))
   Tags(input_tags.Action)
   Path(cascade_select.Action)
   Dates(date_picker.Action)
@@ -74,6 +78,7 @@ fn initial() -> State {
     ["one"],
     ["list"],
     3,
+    Some(2.5),
     input_tags.Model(["Initial"], ""),
     [],
     "2026-10-01",
@@ -113,6 +118,7 @@ fn change(state: State, action: Action) -> State {
         views: select_button.update(state.views, action, selection.Multiple),
       )
     Rate(value) -> State(..state, rating: value)
+    Precision(value) -> State(..state, precise: value)
     Tags(action) -> State(..state, tags: input_tags.update(state.tags, action))
     Path(action) ->
       State(..state, path: cascade_select.update(state.path, action))
@@ -214,7 +220,7 @@ fn controls(prefix: String, state: State) -> Element(Action) {
               select_button.Choice("locked", "Locked view", True),
             ],
           ),
-          select.view(
+          select.view_with(
             "Primary owner",
             state.select_query,
             state.select_value,
@@ -225,6 +231,7 @@ fn controls(prefix: String, state: State) -> Element(Action) {
               select.Option("one", "Alex", False),
               select.Option("two", "Blair", False),
             ],
+            fn(option) { badge.view(badge.Accent, [], [h.text(option.label)]) },
           ),
           rating.view(
             "Quality",
@@ -233,6 +240,17 @@ fn controls(prefix: String, state: State) -> Element(Action) {
             5,
             False,
             Rate,
+            [],
+          ),
+          rating.range(
+            "Precise quality",
+            prefix <> "-precise-rating",
+            state.precise,
+            0.0,
+            5.0,
+            0.5,
+            False,
+            Precision,
             [],
           ),
           h.label([], [

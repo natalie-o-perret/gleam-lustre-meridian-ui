@@ -4,19 +4,25 @@ import { mkdir, readFile } from "node:fs/promises";
 import { chromium, firefox, webkit } from "playwright";
 import { expect } from "playwright/test";
 import { serve } from "../browser/server.mjs";
+import { catalogueScenarios, viewportChecks } from "./viewport.mjs";
+import { polishChecks } from "./polish.mjs";
+import { propertyChecks, propertyInteractions } from "./properties.mjs";
+import { feedbackChecks } from "./feedback.mjs";
+import { refinements } from "./refinements.mjs";
 
 const require = createRequire(import.meta.url);
 const entries = JSON.parse(await readFile("dist/catalogue.json", "utf8"));
+const starterSource = await readFile(
+  "examples/catalogue/src/getting_started.gleam",
+  "utf8",
+);
 const engines = { chromium, firefox, webkit };
 const browsers = (process.env.BROWSER ?? "chromium,firefox,webkit").split(",");
 assert.ok(
   browsers.every((name) => Object.hasOwn(engines, name)),
   "Unknown browser",
 );
-const scenarios = [
-  { width: 1440, theme: "light", direction: "ltr", motion: "no-preference" },
-  { width: 320, theme: "dark", direction: "rtl", motion: "reduce" },
-];
+const scenarios = catalogueScenarios(process.env.WIDTH);
 await mkdir("test-results", { recursive: true });
 const server = await serve("dist", "/gleam-lustre-meridian-ui/");
 const base = `${server.url}/gleam-lustre-meridian-ui/`;
@@ -25,16 +31,12 @@ async function accessible(frame, label) {
   await frame.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
   const violations = await frame.evaluate(async () => {
     await document.fonts.ready;
-    await Promise.allSettled(
-      document
-        .getAnimations()
-        .filter(
-          (animation) =>
-            animation.playState === "running" &&
-            Number.isFinite(animation.effect.getComputedTiming().endTime),
-        )
-        .map((animation) => animation.finished),
-    );
+    for (const animation of document.getAnimations())
+      if (
+        animation.playState === "running" &&
+        Number.isFinite(animation.effect.getComputedTiming().endTime)
+      )
+        animation.finish();
     const result = await axe.run(document, {
       runOnly: {
         type: "tag",
@@ -85,7 +87,9 @@ async function pasteCode(page, source, selection = false) {
     await page.keyboard.press("ControlOrMeta+c");
   } else {
     await page.getByRole("button", { name: "Copy code", exact: true }).click();
-    await expect(page.locator("#copy-status")).toHaveText("Copied.");
+    await expect(page.locator(".meridian-code-status:visible")).toHaveText(
+      "Copied.",
+    );
   }
   await page.evaluate(() => {
     const input = document.createElement("textarea");
@@ -115,10 +119,16 @@ async function interactions(page) {
   );
 
   await pasteCode(page, entries.find((entry) => entry.id === "button").snippet);
-  await expect(page.locator(".meridian-code-gutter:visible")).toHaveAttribute(
-    "aria-hidden",
-    "true",
-  );
+  await expect(
+    page.locator(".meridian-code-gutter:visible [data-number]").first(),
+  ).toHaveAttribute("aria-hidden", "true");
+  const sourceToggle = page
+    .locator(".meridian-code-viewer:visible > summary")
+    .first();
+  await sourceToggle.click();
+  await expect(page.locator("#example-code")).toBeHidden();
+  await sourceToggle.press("Enter");
+  await expect(page.locator("#example-code")).toBeVisible();
   await pasteCode(
     page,
     entries.find((entry) => entry.id === "button").snippet,
@@ -167,7 +177,9 @@ async function interactions(page) {
     };
   });
   await page.getByRole("button", { name: "Copy code", exact: true }).click();
-  await expect(page.locator("#copy-status")).toContainText("Copy unavailable.");
+  await expect(page.locator(".meridian-code-status:visible")).toContainText(
+    "Copy unavailable.",
+  );
 
   frame = await open(page, "inputtext");
   await frame
@@ -217,6 +229,15 @@ async function interactions(page) {
   await expect(frame.getByLabel("Accent colour", { exact: true })).toHaveValue(
     "#316a91",
   );
+  await frame.getByLabel("Accent colour", { exact: true }).click();
+  await accessible(frame, "Themed colour popup");
+  await frame
+    .getByRole("textbox", { name: "Hex colour", exact: true })
+    .fill("#b41472");
+  await frame.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(frame.getByLabel("Accent colour", { exact: true })).toHaveValue(
+    "#b41472",
+  );
 
   frame = await open(page, "datepicker");
   await frame.getByLabel("Single date", { exact: true }).fill("2026-11-07");
@@ -257,14 +278,14 @@ async function interactions(page) {
     "The native form is valid.",
   );
   await frame.evaluate(() => {
-    document.querySelector('link[href="./preview.css"]').disabled = true;
+    document.querySelector('link[href^="./preview.css"]').disabled = true;
   });
   assert.ok(
     await frame
       .getByLabel("Start date", { exact: true })
       .evaluate(
         (input) =>
-          getComputedStyle(input).borderRadius === "9px" &&
+          getComputedStyle(input).borderRadius === "12px" &&
           getComputedStyle(input).fontFamily.includes("Manrope"),
       ),
   );
@@ -276,12 +297,15 @@ async function interactions(page) {
   await frame.getByLabel("Meeting time (09:00-17:00)", { exact: true }).click();
   await accessible(frame, "Themed time popup");
   await frame
-    .getByRole("spinbutton", { name: "Hours", exact: true })
-    .fill("11");
+    .getByRole("listbox", { name: "Hours", exact: true })
+    .selectOption("11");
+  await frame
+    .getByRole("listbox", { name: "Seconds", exact: true })
+    .selectOption("27");
   await frame.getByRole("button", { name: "Apply", exact: true }).click();
   await expect(
     frame.getByLabel("Meeting time (09:00-17:00)", { exact: true }),
-  ).toHaveValue("11:15");
+  ).toHaveValue("11:15:27");
   await frame
     .getByLabel("Meeting time (09:00-17:00)", { exact: true })
     .fill("10:15");
@@ -389,11 +413,9 @@ async function interactions(page) {
 
   frame = await open(page, "terminal");
   const command = frame.getByRole("textbox");
-  await command.fill("hello");
+  await command.fill("echo hello");
   await command.press("Enter");
-  await expect(
-    frame.getByText("You entered: hello", { exact: true }),
-  ).toBeVisible();
+  await expect(frame.getByRole("log").locator("pre")).toHaveText("hello");
 
   frame = await open(page, "charts");
   await expect(frame.locator("#requests-chart svg")).toBeVisible();
@@ -452,6 +474,23 @@ async function interactions(page) {
 
 async function fallbackChecks(browser, name) {
   const context = await browser.newContext();
+  // Old cached entrypoints can import chunks removed by the next deployment.
+  await context.route(
+    /\/assets\/(?:catalogue|preview|examples\/[^/]+)\.js$/,
+    (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: 'import "./removed-from-previous-deployment.js";',
+      }),
+  );
+  await context.route(/\/preview\.html\?/, (route) =>
+    new URL(route.request().url()).searchParams.get("v")
+      ? route.continue()
+      : route.fulfill({
+          contentType: "text/html",
+          body: '<script type="module" src="./assets/preview.js"></script>',
+        }),
+  );
   const errors = [];
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
@@ -465,6 +504,9 @@ async function fallbackChecks(browser, name) {
   });
   try {
     await page.goto(base);
+    const offscreen = await page.addStyleTag({
+      content: "#preview-container { margin-block-start: 2000px; }",
+    });
     let releasePreview;
     const pendingPreview = new Promise((resolve) => {
       releasePreview = resolve;
@@ -483,17 +525,23 @@ async function fallbackChecks(browser, name) {
     await setTheme(page, "dark");
     releasePreview();
     const firstFrame = await loaded;
+    assert.equal(
+      new URL(firstFrame.url()).searchParams.get("v"),
+      await page.locator("body").getAttribute("data-preview-version"),
+      "Preview documents must bypass the previous deployment's cache",
+    );
     await expect(firstFrame.locator("#demo-root")).toHaveAttribute(
       "data-theme",
       "dark",
     );
+    await offscreen.evaluate((style) => style.remove());
     await page.getByRole("tab", { name: "Full module", exact: true }).click();
     await expect(
       page.getByRole("tabpanel", { name: "Full module", exact: true }),
     ).toContainText("Loading source...");
     await expect(
       page.getByRole("button", { name: "Copy code", exact: true }),
-    ).toBeDisabled();
+    ).toHaveCount(0);
     await open(page, "inputtext");
     release();
     await open(page, "button");
@@ -509,7 +557,7 @@ async function fallbackChecks(browser, name) {
     );
     await expect(
       page.getByRole("button", { name: "Copy code", exact: true }),
-    ).toBeDisabled();
+    ).toHaveCount(0);
     await page.getByRole("tab", { name: "Example", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Copy code", exact: true }),
@@ -545,7 +593,7 @@ async function fallbackChecks(browser, name) {
     await expect(page.locator("body")).toHaveAttribute("data-theme", "dark");
     await open(page, "button");
     await page.route(
-      "**/assets/examples/forms.js",
+      "**/assets/chunks/forms-*.js",
       (route) => route.fulfill({ status: 503, body: "Unavailable" }),
       { times: 1 },
     );
@@ -559,7 +607,7 @@ async function fallbackChecks(browser, name) {
     await expect(page.locator("iframe")).toHaveCSS("visibility", "hidden");
     assert.deepEqual(errors, []);
     console.log(
-      `${name}: preview readiness/failure, source failure, pending-source disposal and blocked-storage checks PASS`,
+      `${name}: cache-safe assets, preview readiness/failure, source failure, pending-source disposal and blocked-storage checks PASS`,
     );
   } finally {
     release();
@@ -581,7 +629,11 @@ try {
           await context.grantPermissions(["clipboard-read", "clipboard-write"]);
         const page = await context.newPage();
         const errors = [];
-        page.on("pageerror", (error) => errors.push(error.message));
+        page.on("pageerror", (error) => {
+          const message = `${new URL(page.url()).hash}: ${error.message}`;
+          errors.push(message);
+          console.error(message);
+        });
         page.on("response", (response) => {
           if (response.status() >= 400)
             errors.push(`${response.status()} ${response.url()}`);
@@ -594,11 +646,12 @@ try {
             errors.push(`External request: ${request.url()}`);
         });
         const label = `${name} ${scenario.width}px ${scenario.theme} ${scenario.direction}`;
-        let active = "overview";
+        let active = "getting started";
         try {
+          console.log(`${label}: getting started`);
           await page.goto(base);
-          await expect(page.getByRole("heading", { level: 1 })).toContainText(
-            "Small components.",
+          await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+            "Getting started",
           );
           await expect(page.locator(".docs-nav-link")).toHaveCount(
             entries.length,
@@ -612,18 +665,69 @@ try {
             await page
               .getByRole("button", { name: "RTL", exact: true })
               .click();
-          await accessible(page, `${label} overview`);
+          await expect(page.locator(".docs-start-link")).toHaveAttribute(
+            "aria-current",
+            "page",
+          );
+          await expect(page.locator(".docs-setup h2")).toHaveText([
+            "1. Add the dependency",
+            "2. Load the styles",
+            "3. Render a component",
+            "4. Mount interactions",
+          ]);
+          await expect(
+            page.getByLabel("Git dependency", { exact: true }),
+          ).toContainText('ref = "main"');
+          await expect(
+            page.getByLabel("Stylesheet link", { exact: true }),
+          ).toContainText("meridian-ui/meridian-ui.css");
+          const starter = page.getByLabel("Component example", { exact: true });
+          assert.equal(await starter.textContent(), starterSource);
+          const starterToggle = page
+            .locator(".docs-setup .meridian-code-viewer")
+            .filter({ has: starter })
+            .locator("summary");
+          for (const [label, language, count] of [
+            ["Git dependency", "toml", 2],
+            ["Stylesheet link", "html", 1],
+          ]) {
+            const snippet = page.getByLabel(label, { exact: true });
+            await expect(snippet.locator("code")).toHaveAttribute(
+              "data-language",
+              language,
+            );
+            await expect(snippet.locator("[data-code-number]")).toHaveCount(
+              count,
+            );
+            await expect(
+              snippet.locator(".meridian-code-string"),
+            ).not.toHaveCount(0);
+          }
+          await starterToggle.focus();
+          await starterToggle.press("Enter");
+          await expect(starter).toBeHidden();
+          await starterToggle.press("Space");
+          await expect(starter).toBeVisible();
+          await expect(page.locator(".docs-category-grid")).toHaveCount(0);
+          console.log(`${label}: getting started WCAG`);
+          await accessible(page, `${label} getting started`);
+          console.log(`${label}: getting started screenshot`);
           await page.screenshot({
-            path: `test-results/site-${name}-${scenario.width}-overview.png`,
+            path: `test-results/site-${name}-${scenario.width}-getting-started.png`,
             fullPage: true,
             animations: "disabled",
           });
-          const overviewGroup = page.locator("#category-form-toggle");
-          await overviewGroup.focus();
-          await overviewGroup.press("Enter");
-          await expect(page.locator("#category-form-content")).toBeHidden();
-          await overviewGroup.press("Space");
-          await expect(page.locator("#category-form-content")).toBeVisible();
+          console.log(`${label}: navigation`);
+          await page
+            .getByRole("link", { name: "Try the Button example", exact: true })
+            .click();
+          await expect(
+            page.locator('iframe[data-ready="button"]'),
+          ).toBeVisible();
+          await page.goBack();
+          await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+            "Getting started",
+          );
           if (scenario.width < 900)
             await page
               .getByRole("button", { name: "Components", exact: true })
@@ -704,10 +808,30 @@ try {
             await expect(page.locator("#navigation-form-content")).toBeHidden();
             await formGroup.click();
           }
+          active = "component interactions";
+          console.log(`${label}: ${active}`);
           await interactions(page);
+          active = "polish checks";
+          console.log(`${label}: ${active}`);
+          await polishChecks(page, (id) => open(page, id));
+          active = "property interactions";
+          console.log(`${label}: ${active}`);
+          await propertyInteractions(page, (id) => open(page, id));
+          active = "feedback checks";
+          console.log(`${label}: ${active}`);
+          await feedbackChecks(page, (id) => open(page, id));
+          active = "refinements";
+          console.log(`${label}: ${active}`);
+          await refinements(page, (id) => open(page, id));
           for (const entry of entries) {
             active = entry.id;
+            console.log(
+              `${label} ${active}: ${entry.examples.length} presets and WCAG`,
+            );
             const frame = await open(page, entry.id);
+            await propertyChecks(page, frame, entry);
+            if (entry.id === "scheduler" && scenario.width < 560)
+              await propertyChecks(page, frame, entry);
             await expect(page.getByRole("heading", { level: 1 })).toHaveText(
               entry.name,
             );
@@ -741,12 +865,58 @@ try {
               `${entry.name}: preview overflow`,
             );
             await expect(frame.getByRole("alert")).toHaveCount(0);
-            if (entry.id === "animateonscroll")
+            if (entry.id === "animateonscroll") {
+              await frame
+                .getByRole("region", {
+                  name: "Animation viewport",
+                  exact: true,
+                })
+                .evaluate((node) => {
+                  node.scrollTop = node.scrollHeight;
+                });
               await expect(frame.locator("[data-meridian-reveal]")).toHaveCSS(
                 "opacity",
                 "1",
               );
+            }
             await accessible(frame, `${label} ${entry.name}`);
+            await expect(page.locator(".docs-properties")).toBeVisible();
+            await page
+              .getByRole("button", { name: "API reference", exact: true })
+              .click();
+            await expect(page.locator(".docs-api-content")).toBeVisible();
+            if (scenario.width < 560)
+              assert.ok(
+                await page
+                  .locator(".docs-api-table")
+                  .first()
+                  .evaluate(
+                    (table) =>
+                      table.getBoundingClientRect().width >= 512 &&
+                      table.parentElement.scrollWidth >
+                        table.parentElement.clientWidth,
+                  ),
+                `${entry.name}: API tables must scroll instead of crushing columns`,
+              );
+            if (entry.module)
+              await expect(page.locator(".docs-api-function")).toHaveCount(
+                entry.api.functions.length + entry.api.types.length,
+              );
+            if (scenario.width < 560 && entry.id === "select") {
+              const scroll = page.locator(".docs-api-scroll").first();
+              await scroll.focus();
+              await scroll.press(
+                scenario.direction === "rtl" ? "ArrowLeft" : "ArrowRight",
+              );
+              await expect
+                .poll(() =>
+                  scroll.evaluate((node) => Math.abs(node.scrollLeft)),
+                )
+                .toBeGreaterThan(0);
+              await scroll.evaluate((node) => {
+                node.scrollLeft = 0;
+              });
+            }
             if (
               [
                 "button",
@@ -756,13 +926,17 @@ try {
                 "timepicker",
                 "datetimepicker",
                 "codeblock",
+                "select",
+                "filetree",
               ].includes(entry.id)
-            )
+            ) {
+              await accessible(page, `${label} ${entry.name} reference`);
               await page.screenshot({
                 path: `test-results/site-${name}-${scenario.width}-${entry.id}.png`,
                 fullPage: true,
                 animations: "disabled",
               });
+            }
           }
           await open(page, "button");
           await open(page, "slider");
@@ -798,10 +972,11 @@ try {
             "Component not found",
           );
           await page
-            .getByRole("link", { name: "Browse all components", exact: true })
+            .locator("#main")
+            .getByRole("link", { name: "Getting started", exact: true })
             .click();
-          await expect(page.getByRole("heading", { level: 1 })).toContainText(
-            "Small components.",
+          await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+            "Getting started",
           );
           assert.deepEqual(errors, [], label);
           console.log(
@@ -819,7 +994,11 @@ try {
           await context.close();
         }
       }
-      await fallbackChecks(browser, name);
+      // Keep shared checks on the shorter mobile job without duplicating them.
+      if (scenarios.some((scenario) => scenario.width === 320)) {
+        await fallbackChecks(browser, name);
+        await viewportChecks(browser, name, base);
+      }
     } finally {
       await browser.close();
     }

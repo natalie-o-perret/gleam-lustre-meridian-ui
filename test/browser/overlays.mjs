@@ -105,26 +105,26 @@ export async function overlays(page, scenario) {
     });
     await expect(drawer).toBeVisible();
     await expect(drawer).toHaveAttribute("data-side", side);
-    const box = await drawer.boundingBox();
     const viewport = await page.evaluate(() => {
       const bounds = document.documentElement.getBoundingClientRect();
       return { left: bounds.left, right: bounds.right, height: innerHeight };
     });
-    if (side === "start")
-      assert.ok(
-        scenario.direction === "rtl"
-          ? Math.abs(box.x + box.width - viewport.right) < 2
-          : Math.abs(box.x - viewport.left) < 2,
-      );
-    if (side === "end")
-      assert.ok(
-        scenario.direction === "rtl"
-          ? Math.abs(box.x - viewport.left) < 2
-          : Math.abs(box.x + box.width - viewport.right) < 2,
-      );
-    if (side === "top") assert.ok(box.y < 2);
-    if (side === "bottom")
-      assert.ok(Math.abs(box.y + box.height - viewport.height) < 2);
+    await expect
+      .poll(async () => {
+        const box = await drawer.boundingBox();
+        if (side === "start")
+          return scenario.direction === "rtl"
+            ? Math.abs(box.x + box.width - viewport.right)
+            : Math.abs(box.x - viewport.left);
+        if (side === "end")
+          return scenario.direction === "rtl"
+            ? Math.abs(box.x - viewport.left)
+            : Math.abs(box.x + box.width - viewport.right);
+        return side === "top"
+          ? Math.abs(box.y)
+          : Math.abs(box.y + box.height - viewport.height);
+      })
+      .toBeLessThan(2);
     await page.keyboard.press("Escape");
     await expect(drawer).toBeHidden();
   }

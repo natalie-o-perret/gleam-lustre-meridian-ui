@@ -29,6 +29,8 @@ pub type FormState {
     revealed: Bool,
     locked: Bool,
     submissions: Int,
+    dates: #(String, String),
+    date_times: #(String, String),
   )
 }
 
@@ -48,6 +50,8 @@ pub type FormMsg {
   ToggleLock
   Submitted
   Reset
+  Dates(date_picker.Action)
+  DateTimes(date_picker.Action)
 }
 
 pub type Model {
@@ -83,6 +87,8 @@ fn initial() -> FormState {
     revealed: False,
     locked: False,
     submissions: 0,
+    dates: #("2024-02-28", "2024-03-02"),
+    date_times: #("2024-02-29T10:15", "2024-03-01T11:30"),
   )
 }
 
@@ -112,6 +118,13 @@ fn update_form(model: FormState, msg: FormMsg) -> FormState {
     ToggleLock -> FormState(..model, locked: !model.locked)
     Submitted -> FormState(..model, submissions: model.submissions + 1)
     Reset -> initial()
+    Dates(action) ->
+      FormState(..model, dates: date_picker.update(model.dates, action))
+    DateTimes(action) ->
+      FormState(
+        ..model,
+        date_times: date_picker.update(model.date_times, action),
+      )
   }
 }
 
@@ -178,6 +191,24 @@ fn form(prefix: String, model: FormState) -> Element(FormMsg) {
           ]),
         ]),
       ]),
+      date_picker.range(
+        "Stay dates",
+        "stay",
+        model.dates.0,
+        model.dates.1,
+        True,
+        Dates,
+        [],
+      ),
+      date_picker.date_time_range(
+        "Event dates and times",
+        "event",
+        model.date_times.0,
+        model.date_times.1,
+        True,
+        DateTimes,
+        [],
+      ),
       h.div([a.class("fixture-row")], [
         toggle_switch.view("Email alerts", [
           a.name("alerts"),

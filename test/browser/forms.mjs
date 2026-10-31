@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
 import { datePickers } from "./date_pickers.mjs";
+import { colourPickers } from "./colour_pickers.mjs";
 
 export async function forms(page, scenario) {
   await page.waitForFunction(() => window.meridianReady);
@@ -92,5 +93,6 @@ export async function forms(page, scenario) {
   );
   await form.getByRole("button", { name: "Reset fields", exact: true }).click();
   await expect(title).toHaveValue("Orbit");
+  await colourPickers(page);
   await datePickers(page, scenario);
 }

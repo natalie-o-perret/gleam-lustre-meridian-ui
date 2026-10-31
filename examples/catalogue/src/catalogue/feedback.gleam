@@ -1,5 +1,7 @@
 import catalogue/common
+import gleam/dict
 import gleam/int
+import gleam/list
 import gleam/option.{None, Some}
 import lustre/attribute as a
 import lustre/element.{type Element}
@@ -11,15 +13,17 @@ import meridian_ui/button
 import meridian_ui/card
 import meridian_ui/chip
 import meridian_ui/divider
+import meridian_ui/icon
 import meridian_ui/message
 import meridian_ui/progress
 import meridian_ui/skeleton
 import meridian_ui/slider
 import meridian_ui/spinner
 import meridian_ui/tooltip
+import meridian_ui/url
 
 pub type Model {
-  Model(count: Int, visible: Bool, progress: Int)
+  Model(count: Int, visible: Bool, progress: Int, props: common.Properties)
 }
 
 pub type Msg {
@@ -27,10 +31,11 @@ pub type Msg {
   Remove
   Restore
   Progress(String)
+  Properties(common.Properties)
 }
 
 pub fn start(component: String) {
-  common.start(Model(0, True, 45), update, fn(model) {
+  common.start(Model(0, True, 45, dict.new()), update, Properties, fn(model) {
     common.stack([
       case component {
         "button" -> button_example(model)
@@ -56,6 +61,13 @@ pub fn start(component: String) {
 
 fn update(model: Model, msg: Msg) -> Model {
   case msg {
+    Properties(props) ->
+      Model(
+        props: dict.merge(model.props, props),
+        count: common.number(props, "count", model.count),
+        progress: common.number(props, "value", model.progress),
+        visible: common.flag(props, "visible", model.visible),
+      )
     Click -> Model(..model, count: model.count + 1)
     Remove -> Model(..model, visible: False)
     Restore -> Model(..model, visible: True)
@@ -67,9 +79,39 @@ fn update(model: Model, msg: Msg) -> Model {
   }
 }
 
-pub fn button_example(_model: Model) -> Element(Msg) {
+pub fn button_example(model: Model) -> Element(Msg) {
+  let variant = common.property(model.props, "variant", "primary")
+  let render = case variant {
+    "plain" -> button.view
+    "text" -> button.text
+    "icon" -> button.icon
+    _ -> button.primary
+  }
+  let label = common.property(model.props, "label", "Create project")
+  let glyph = case common.property(model.props, "icon", "none") {
+    "add" -> icon.Plus
+    "download" -> icon.Download
+    "arrow" -> icon.ArrowRight
+    _ -> icon.Check
+  }
+  let content = case variant {
+    "icon" -> [icon.view(glyph, [])]
+    _ -> {
+      let decoration = case common.property(model.props, "icon", "none") {
+        "none" -> []
+        _ -> [icon.view(glyph, [])]
+      }
+      case common.property(model.props, "iconPosition", "leading") {
+        "trailing" -> list.append([h.text(label)], decoration)
+        _ -> list.append(decoration, [h.text(label)])
+      }
+    }
+  }
   common.row([
-    button.primary([e.on_click(Click)], [h.text("Create project")]),
+    render(
+      common.attrs(model.props, [e.on_click(Click), a.aria_label(label)]),
+      content,
+    ),
     button.view([e.on_click(Click)], [h.text("Cancel")]),
     button.text([e.on_click(Click)], [h.text("Learn more")]),
     button.icon([a.aria_label("Add a project"), e.on_click(Click)], [
@@ -79,21 +121,42 @@ pub fn button_example(_model: Model) -> Element(Msg) {
   ])
 }
 
-pub fn card_example(_model: Model) -> Element(Msg) {
+pub fn card_example(model: Model) -> Element(Msg) {
   card.article([], [
-    h.h2([], [h.text("A place for your next idea")]),
-    h.p([], [
-      h.text(
-        "Cards give related content a clear home, without prescribing your layout.",
-      ),
+    h.h2([], [
+      h.text(common.property(model.props, "title", "A place for your next idea")),
     ]),
-    button.primary([e.on_click(Click)], [h.text("Start a project")]),
+    h.p([], [
+      h.text(common.property(
+        model.props,
+        "text",
+        "Cards give related content a clear home, without prescribing your layout.",
+      )),
+    ]),
+    case common.flag(model.props, "actions", True) {
+      True -> button.primary([e.on_click(Click)], [h.text("Start a project")])
+      False -> h.text("")
+    },
   ])
 }
 
-pub fn avatar_example(_model: Model) -> Element(Msg) {
+pub fn avatar_example(model: Model) -> Element(Msg) {
+  let label = common.property(model.props, "label", "Alex Morgan")
+  let attrs = [
+    a.style("inline-size", common.property(model.props, "size", "40") <> "px"),
+    a.style("block-size", common.property(model.props, "size", "40") <> "px"),
+  ]
   avatar.group("Project team", [], [
-    avatar.label("Alex Morgan", "AM", []),
+    case common.property(model.props, "content", "initials") {
+      "image" -> avatar.image(url.to_string(common.image()), label, attrs)
+      "icon" -> avatar.view(label, attrs, [icon.view(icon.User, [])])
+      _ ->
+        avatar.label(
+          label,
+          common.property(model.props, "initials", "AM"),
+          attrs,
+        )
+    },
     avatar.label("Blair Kelly", "BK", []),
     avatar.label("Casey Doyle", "CD", []),
   ])
@@ -101,8 +164,18 @@ pub fn avatar_example(_model: Model) -> Element(Msg) {
 
 pub fn badge_example(model: Model) -> Element(Msg) {
   common.row([
-    badge.counter("Unread notifications", 12 + model.count, 99, []),
-    badge.counter("All messages", 125, 99, []),
+    badge.counter(
+      "Unread notifications",
+      12 + model.count,
+      common.number(model.props, "maximum", 99),
+      [],
+    ),
+    badge.counter(
+      "All messages",
+      125,
+      common.number(model.props, "maximum", 99),
+      [],
+    ),
     badge.dot("New updates", []),
     button.view([e.on_click(Click)], [h.text("Add notification")]),
   ])
@@ -110,7 +183,7 @@ pub fn badge_example(model: Model) -> Element(Msg) {
 
 pub fn chip_example(model: Model) -> Element(Msg) {
   common.row([
-    chip.view([], [h.text("Gleam")]),
+    chip.view([], [h.text(common.property(model.props, "text", "Gleam"))]),
     case model.visible {
       True -> chip.removable("Design", Remove, [], [h.text("Design")])
       False -> button.view([e.on_click(Restore)], [h.text("Restore chip")])
@@ -118,18 +191,30 @@ pub fn chip_example(model: Model) -> Element(Msg) {
   ])
 }
 
-pub fn divider_example(_model: Model) -> Element(Msg) {
+pub fn divider_example(model: Model) -> Element(Msg) {
   common.stack([
     h.p([], [h.text("A clear break between related sections.")]),
-    divider.view([]),
-    divider.label("or", []),
+    case common.flag(model.props, "vertical", False) {
+      True -> divider.vertical([])
+      False -> divider.view([])
+    },
+    divider.label(common.property(model.props, "label", "or"), []),
     common.row([h.text("Overview"), divider.vertical([]), h.text("Activity")]),
   ])
 }
 
 pub fn message_example(model: Model) -> Element(Msg) {
   common.stack([
-    message.view(message.Success, [], [h.text("Your project is ready.")]),
+    message.view(
+      case common.property(model.props, "tone", "success") {
+        "warning" -> message.Warning
+        "info" -> message.Info
+        "danger" -> message.Danger
+        _ -> message.Success
+      },
+      [],
+      [h.text(common.property(model.props, "text", "Your project is ready."))],
+    ),
     message.view(message.Warning, [], [
       h.text("Review the details before continuing."),
     ]),
@@ -145,7 +230,14 @@ pub fn message_example(model: Model) -> Element(Msg) {
 
 pub fn progress_bar(model: Model) -> Element(Msg) {
   common.stack([
-    progress.view("Upload", Some(model.progress), []),
+    progress.view(
+      common.property(model.props, "label", "Upload"),
+      case common.flag(model.props, "indeterminate", False) {
+        True -> None
+        False -> Some(model.progress)
+      },
+      [],
+    ),
     progress.view("Processing", None, []),
     common.field(
       "Progress",
@@ -159,37 +251,137 @@ pub fn progress_bar(model: Model) -> Element(Msg) {
   ])
 }
 
-pub fn progress_spinner(_model: Model) -> Element(Msg) {
+pub fn progress_spinner(model: Model) -> Element(Msg) {
   common.row([
-    spinner.view("Loading projects", None, []),
-    spinner.view("Upload 65 percent", Some(65), []),
+    spinner.view(
+      common.property(model.props, "label", "Loading projects"),
+      None,
+      [],
+    ),
+    spinner.view(
+      "Upload progress",
+      Some(common.number(model.props, "value", 65)),
+      [],
+    ),
   ])
 }
 
-pub fn skeleton_example(_model: Model) -> Element(Msg) {
-  common.stack([
-    common.row([
-      skeleton.circle([]),
-      skeleton.view([a.style("inline-size", "12rem")]),
-    ]),
-    skeleton.view([a.style("block-size", "8rem")]),
-    skeleton.view([a.style("inline-size", "60%")]),
-  ])
+pub fn skeleton_example(model: Model) -> Element(Msg) {
+  let loaded = common.flag(model.props, "loaded", False)
+  let attrs = [
+    a.style("animation", case common.flag(model.props, "animate", True) {
+      True -> "meridian-skeleton 1.4s linear infinite"
+      False -> "none"
+    }),
+  ]
+  let cover = [
+    a.style("inline-size", "100%"),
+    a.style(
+      "block-size",
+      int.to_string(common.number(model.props, "imageHeight", 128)) <> "px",
+    ),
+  ]
+  h.section(
+    [
+      a.class("demo-stack demo-skeleton-card"),
+      a.aria_label("Matching loading and loaded card"),
+      a.aria_busy(!loaded),
+      a.style(
+        "max-inline-size",
+        int.to_string(common.number(model.props, "width", 560)) <> "px",
+      ),
+    ],
+    [
+      h.p([a.class("muted")], [
+        h.text(
+          "These placeholders are sized to this card by the caller. Switch Loaded content to compare.",
+        ),
+      ]),
+      common.row([
+        case common.flag(model.props, "avatar", True), loaded {
+          False, _ -> h.text("")
+          True, True ->
+            avatar.label("Alex Morgan", "AM", [
+              a.style("inline-size", "40px"),
+              a.style("block-size", "40px"),
+            ])
+          True, False -> skeleton.circle(attrs)
+        },
+        h.div(
+          [
+            a.style("inline-size", "12rem"),
+            a.style("max-inline-size", "100%"),
+            a.style("block-size", "24px"),
+          ],
+          [
+            case loaded {
+              True ->
+                h.h2([a.style("margin", "0"), a.style("font-size", "1rem")], [
+                  h.text("Project Meridian"),
+                ])
+              False -> skeleton.view([a.style("block-size", "24px"), ..attrs])
+            },
+          ],
+        ),
+      ]),
+      case common.flag(model.props, "image", True), loaded {
+        False, _ -> h.text("")
+        True, True ->
+          h.img([
+            a.src(url.to_string(common.image())),
+            a.alt("A mountain landscape at sunrise"),
+            a.style("object-fit", "cover"),
+            ..cover
+          ])
+        True, False -> skeleton.view(list.append(cover, attrs))
+      },
+      ..list.index_map(
+        list.repeat(Nil, common.number(model.props, "lines", 3)),
+        fn(_, index) {
+          let width = case index == 0 {
+            True -> "60%"
+            False -> "100%"
+          }
+          case loaded {
+            True ->
+              h.p(
+                [a.class("demo-skeleton-line"), a.style("inline-size", width)],
+                [h.text("Make room for your team's next idea.")],
+              )
+            False -> skeleton.view([a.style("inline-size", width), ..attrs])
+          }
+        },
+      )
+    ],
+  )
 }
 
-pub fn tag(_model: Model) -> Element(Msg) {
+pub fn tag(model: Model) -> Element(Msg) {
   common.row([
-    badge.view(badge.Success, [], [h.text("Active")]),
+    badge.view(
+      case common.property(model.props, "tone", "success") {
+        "warning" -> badge.Warning
+        "danger" -> badge.Danger
+        "accent" -> badge.Accent
+        _ -> badge.Success
+      },
+      [],
+      [h.text(common.property(model.props, "text", "Active"))],
+    ),
     badge.view(badge.Warning, [], [h.text("At risk")]),
     badge.view(badge.Danger, [], [h.text("Blocked")]),
     badge.view(badge.Accent, [], [h.text("In review")]),
   ])
 }
 
-pub fn tooltip_example(_model: Model) -> Element(Msg) {
+pub fn tooltip_example(model: Model) -> Element(Msg) {
   button.view(
     [
-      tooltip.hint("This hint also appears when the button has keyboard focus."),
+      tooltip.hint(common.property(
+        model.props,
+        "hint",
+        "This hint also appears when the button has keyboard focus.",
+      )),
       e.on_click(Click),
     ],
     [h.text("Hover or focus me")],

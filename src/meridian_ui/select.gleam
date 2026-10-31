@@ -21,6 +21,30 @@ pub fn view(
   attrs: List(Attribute(msg)),
   options: List(Option),
 ) -> Element(msg) {
+  view_with(
+    label,
+    query,
+    value,
+    on_query,
+    on_change,
+    attrs,
+    options,
+    fn(option) { h.text(option.label) },
+  )
+}
+
+/// Custom, non-interactive option content. Filtering uses label and forms use value.
+/// Browsers without customisable selects show plain labels instead of rich content.
+pub fn view_with(
+  label: String,
+  query: String,
+  value: String,
+  on_query: fn(String) -> msg,
+  on_change: fn(String) -> msg,
+  attrs: List(Attribute(msg)),
+  options: List(Option),
+  render: fn(Option) -> Element(msg),
+) -> Element(msg) {
   let filtered =
     list.filter(options, fn(option) {
       filter_service.text(option.label, query, filter_service.Contains)
@@ -48,27 +72,27 @@ pub fn view(
             list.map(retained, fn(option) {
               #(
                 option.value,
-                h.option(
+                field.option(
                   [
                     a.value(option.value),
                     a.selected(True),
                     a.hidden(True),
                     a.disabled(option.disabled),
                   ],
-                  option.label,
+                  [render(option)],
                 ),
               )
             }),
             list.map(filtered, fn(option) {
               #(
                 option.value,
-                h.option(
+                field.option(
                   [
                     a.value(option.value),
                     a.selected(option.value == value),
                     a.disabled(option.disabled),
                   ],
-                  option.label,
+                  [render(option)],
                 ),
               )
             }),

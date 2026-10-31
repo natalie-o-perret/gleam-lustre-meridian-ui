@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/string
 import lustre
 import lustre/attribute as a
 import lustre/element.{type Element}
@@ -6,6 +7,7 @@ import lustre/element/html as h
 import lustre/event as e
 import meridian_ui/button
 import meridian_ui/charts
+import meridian_ui/date_picker
 import meridian_ui/field
 import meridian_ui/scheduler
 import meridian_ui/task_board
@@ -172,6 +174,8 @@ fn chart_config(kind: String) -> charts.Config {
 }
 
 fn view(model: Model) -> Element(Msg) {
+  let assert Ok(review) =
+    list.find(model.events, fn(event) { event.id == "review" })
   h.main(
     [
       a.id("pro-demo"),
@@ -232,17 +236,15 @@ fn view(model: Model) -> Element(Msg) {
         ),
         h.label([], [
           h.span([], [h.text("Review start")]),
-          field.input([
-            a.type_("datetime-local"),
-            a.default_value("2026-10-12T10:00"),
+          date_picker.date_time([
+            a.value(string.slice(review.start, 0, 19)),
             e.on_input(Start),
           ]),
         ]),
         h.label([], [
           h.span([], [h.text("Review end")]),
-          field.input([
-            a.type_("datetime-local"),
-            a.default_value("2026-10-12T11:00"),
+          date_picker.date_time([
+            a.value(string.slice(review.end, 0, 19)),
             e.on_input(End),
           ]),
         ]),
