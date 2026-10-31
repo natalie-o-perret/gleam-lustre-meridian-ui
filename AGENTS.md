@@ -85,6 +85,11 @@ Check compile/build time and workflow cost as well as runtime responsiveness.
   force-push a shared branch.
 - Keep PRs focused. Summarise behaviour and material risks, with captured evidence
   where it helps. Keep local logs and screenshots in ignored `test-results/`.
+- For visual changes, show labelled before/after screenshots in the PR description.
+  Capture local runs with matching themes, viewports and states, including desktop
+  and mobile. Attach through GitHub and scrub private data before uploading.
+- If screenshots can't be attached, tell the user before publishing. Automated
+  tests alone don't replace the visual evidence.
 - Don't publish secrets, private endpoints or local paths in evidence. Don't claim
   manual screen-reader or real-device testing unless it was actually done.
 - Push or open a PR when authorised. Merging, releasing and deploying need their
