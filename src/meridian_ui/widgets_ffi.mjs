@@ -8,6 +8,8 @@ import { setupData } from "./data_ffi.mjs";
 import { setupMenus } from "./menu_ffi.mjs";
 import { setupToasts } from "./toast_ffi.mjs";
 import { setupUploads } from "./upload_ffi.mjs";
+import { setupDatePickers } from "./date_picker_ffi.mjs";
+import { setupCarousels } from "./carousel_ffi.mjs";
 
 export function keyDestination(key, index, count, orientation, rtl = false) {
   if (!count) return -1;
@@ -49,7 +51,9 @@ export function setupWidgets(root, signal) {
   const syncData = setupData(root, signal);
   const syncMenus = setupMenus(root, signal);
   const syncToasts = setupToasts(root, signal);
+  const syncDatePickers = setupDatePickers(root, signal);
   setupUploads(root, signal);
+  setupCarousels(root, signal);
   const belongs = (element) => element?.closest?.(".meridian-ui") === root;
   const visible = (element) =>
     element.getClientRects().length &&
@@ -256,6 +260,7 @@ export function setupWidgets(root, signal) {
     syncData();
     syncMenus();
     syncToasts();
+    syncDatePickers();
     for (const group of root.querySelectorAll("[data-meridian-keys]")) {
       if (belongs(group)) syncGroup(group);
     }

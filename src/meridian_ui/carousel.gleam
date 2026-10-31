@@ -1,3 +1,4 @@
+import gleam/dynamic/decode
 import gleam/int
 import gleam/list
 import lustre/attribute.{type Attribute} as a
@@ -11,6 +12,7 @@ pub fn next(index: Int, count: Int, delta: Int) -> Int {
   { { index + delta } % count + count } % count
 }
 
+/// Drag/swipe uses mounted browser interactions. Buttons also work without the mount.
 /// Autoplay is opt-in and caller-owned. Pause it for focus, hover and reduced motion.
 pub fn view(
   label: String,
@@ -26,6 +28,11 @@ pub fn view(
       a.class("meridian-carousel"),
       a.aria_label(label),
       a.attribute("aria-roledescription", "carousel"),
+      a.data("meridian-carousel", "true"),
+      event.on("meridian-swipe", {
+        use delta <- decode.field("detail", decode.int)
+        decode.success(on_change(next(active, count, delta)))
+      }),
       ..attrs
     ],
     [

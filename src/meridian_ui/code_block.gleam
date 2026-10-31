@@ -3,7 +3,7 @@ import lustre/attribute.{type Attribute} as a
 import lustre/element.{type Element}
 import lustre/element/html as h
 
-/// Selectable, escaped Gleam source with lexical highlighting. No HTML is evaluated.
+/// Numbered, selectable Gleam source with lexical highlighting. No HTML is evaluated.
 pub fn view(
   label: String,
   source: String,
@@ -18,6 +18,14 @@ pub fn view(
       ..attrs
     ],
     [
+      h.span(
+        [
+          a.class("meridian-code-gutter"),
+          a.aria_hidden(True),
+          a.data("line-numbers", line_numbers(source)),
+        ],
+        [],
+      ),
       h.code(
         [a.data("language", "gleam")],
         list.map(tokens(source), fn(token) {
@@ -34,3 +42,6 @@ pub fn view(
 
 @external(javascript, "./code_block_ffi.mjs", "tokens")
 fn tokens(source: String) -> List(#(String, String))
+
+@external(javascript, "./code_block_ffi.mjs", "lineNumbers")
+fn line_numbers(source: String) -> String

@@ -6,9 +6,9 @@ A small styled UI package for Lustre 5.7, extracted from the
 or [see the original dashboard](https://natalie-o-perret.github.io/spa-dashboards/gleam-lustre/).
 The API is experimental and the package is not published to Hex.
 
-The library includes 93 core entries, four advanced widgets, FilterService,
-CodeBlock, TimePicker and DateTimePicker. Components share Meridian's design and
-native browser semantics, with optional open-source engines for richer widgets.
+The library includes 95 core entries, four advanced widgets, FilterService and
+CodeBlock. Components share Meridian's design and native browser semantics, with
+optional open-source engines for richer widgets.
 [Component catalogue](COMPONENTS.md) lists their APIs and limits.
 
 No Tailwind, remote fonts or icon assets are required. Applications use Lustre and
@@ -361,15 +361,22 @@ Cards have 24px padding by default. Panels with their own headers manage their
 content spacing separately. Applications can override these defaults with CSS.
 
 `code_block.view(label, source, attrs)` renders escaped, selectable Gleam source
-with syntax colours, a left-to-right code layout and keyboard scrolling. It does
-not evaluate HTML or source code. Compose it with `tabs.view` and ordinary buttons
-to build a multi-file example, as the catalogue does.
+with syntax colours, line numbers, a left-to-right code layout and keyboard
+scrolling. Line numbers stay out of selected and copied text. It does not evaluate
+HTML or source code. Compose it with `tabs.view` and ordinary buttons to build a
+multi-file example, as the catalogue does.
 
 `date_picker.view`, `date_picker.month`, `date_picker.time` and
 `date_picker.date_time` share styled controls and native min/max, step, required
 and form behaviour. `date_picker.range` keeps independently named start/end
 fields and cross-bounds. Time values are local times, not time-zone conversions.
-Calendar and clock popup interiors follow the browser and OS.
+With browser interactions mounted, clicking a field or pressing Alt+ArrowDown
+opens a themed calendar or time dialog. Escape closes it and returns focus.
+Native keyboard editing remains available, as do native pickers without the mount.
+
+`carousel.view` and `gallery.view` support horizontal pointer/touch dragging when
+browser interactions are mounted, including full-size gallery previews. Buttons
+remain available for keyboard users. Vertical touch scrolling is preserved.
 
 For a full-page application, optionally put `class="meridian-page"` on `<html>`.
 This opts the page's native scrollbar into the same theme and 8px grab area.

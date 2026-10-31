@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { tokens } from "../build/dev/javascript/meridian_ui/meridian_ui/code_block_ffi.mjs";
+import {
+  tokens,
+  lineNumbers,
+} from "../build/dev/javascript/meridian_ui/meridian_ui/code_block_ffi.mjs";
+
+test("line numbers include empty lines and preserve all native newline conventions", () => {
+  assert.equal(lineNumbers(""), "1");
+  assert.equal(lineNumbers("one\ntwo\n"), "1\n2\n3");
+  assert.equal(lineNumbers("one\r\n\r\ntwo\rthree"), "1\n2\n3\n4");
+});
 
 test("Gleam highlighting preserves every character, including escapes, Unicode and unfinished strings", () => {
   for (const source of [

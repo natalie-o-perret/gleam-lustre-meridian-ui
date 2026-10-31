@@ -204,7 +204,10 @@ fn view(model: Model) -> Element(Msg) {
       ]),
       h.section([], [
         carousel.view("Highlights", model.slide, Slide, [], [
-          h.p([], [h.text("First highlight")]),
+          h.div([], [
+            h.p([], [h.text("First highlight")]),
+            button.view([], [h.text("Slide action")]),
+          ]),
           h.p([], [h.text("Second highlight")]),
         ]),
         gallery.view(

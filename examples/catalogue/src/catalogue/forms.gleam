@@ -4,6 +4,7 @@ import gleam/list
 import lustre/attribute as a
 import lustre/element.{type Element}
 import lustre/element/html as h
+import lustre/element/svg
 import lustre/event as e
 import meridian_ui/autocomplete
 import meridian_ui/button
@@ -291,7 +292,23 @@ pub fn icon_field(model: Model) -> Element(Msg) {
     "Search projects",
     field.icon(
       [],
-      h.text("⌕"),
+      svg.svg(
+        [
+          a.attribute("viewBox", "0 0 24 24"),
+          a.attribute("fill", "none"),
+          a.attribute("stroke", "currentColor"),
+          a.attribute("stroke-width", "1.8"),
+          a.attribute("stroke-linecap", "round"),
+        ],
+        [
+          svg.circle([
+            a.attribute("cx", "10.5"),
+            a.attribute("cy", "10.5"),
+            a.attribute("r", "6.5"),
+          ]),
+          svg.path([a.attribute("d", "m16 16 4.5 4.5")]),
+        ],
+      ),
       field.input([a.type_("search"), a.value(model.text), e.on_input(Text)]),
     ),
   )

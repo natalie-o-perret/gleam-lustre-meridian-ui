@@ -8,6 +8,7 @@ import lustre/event as e
 import meridian_ui/button
 import meridian_ui/confirm_dialog
 import meridian_ui/confirm_popup
+import meridian_ui/date_picker
 import meridian_ui/dialog
 import meridian_ui/drawer
 import meridian_ui/field
@@ -179,6 +180,10 @@ fn controls(prefix: String, state: State) -> Element(Action) {
             a.id(prefix <> "-project"),
             a.default_value("Retained project"),
             a.autofocus(True),
+          ]),
+          h.label([], [
+            h.span([], [h.text("Project date")]),
+            date_picker.view([a.default_value("2024-02-29")]),
           ]),
           button.view(
             [a.id(prefix <> "-open-nested"), e.on_click(Open("nested"))],

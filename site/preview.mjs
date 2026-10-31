@@ -24,6 +24,17 @@ addEventListener("message", (event) => {
   theme = event.data.theme === "dark" ? "dark" : "light";
   direction = event.data.direction === "rtl" ? "rtl" : "ltr";
   settings();
+  if (document.documentElement.dataset.ready)
+    requestAnimationFrame(() =>
+      notify({
+        type: "meridian-ready",
+        theme,
+        direction,
+        height: Math.ceil(
+          document.getElementById("demo-root").getBoundingClientRect().height,
+        ),
+      }),
+    );
 });
 addEventListener("pagehide", (event) => {
   if (!event.persisted) for (const dispose of disposers) dispose();
@@ -70,16 +81,19 @@ try {
     disposers.push(mount("project-notes"));
   }
   const root = document.getElementById("demo-root");
+  await document.fonts.ready;
+  await new Promise(requestAnimationFrame);
+  const height = () => Math.ceil(root.getBoundingClientRect().height);
   const observer = new ResizeObserver(() =>
     notify({
       type: "meridian-height",
-      height: Math.ceil(root.getBoundingClientRect().height),
+      height: height(),
     }),
   );
   observer.observe(root);
   disposers.push(() => observer.disconnect());
   document.documentElement.dataset.ready = id;
-  notify({ type: "meridian-ready" });
+  notify({ type: "meridian-ready", theme, direction, height: height() });
 } catch (error) {
   const message = document.createElement("p");
   message.setAttribute("role", "alert");

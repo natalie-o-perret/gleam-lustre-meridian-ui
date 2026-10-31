@@ -15,7 +15,18 @@
     /></label>
     <script type="module">
       import { main } from "../build/dev/javascript/meridian_ui/forms_fixture.mjs";
+      import { mount } from "../build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
       main();
+      requestAnimationFrame(() => {
+        window.disposeMeridian = ["forms-demo", "other-instance"].map((id) =>
+          mount(
+            id,
+            () => {},
+            () => {},
+          ),
+        );
+        window.meridianReady = true;
+      });
     </script>
   </body>
 </html>
