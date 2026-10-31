@@ -61,6 +61,25 @@ pub fn cards_keep_their_semantic_elements_test() {
   |> should.be_true
 }
 
+pub fn every_button_variant_preserves_explicit_submit_and_reset_types_test() {
+  list.each(["submit", "reset"], fn(kind) {
+    list.each(
+      [
+        button.view([a.type_(kind)], []),
+        button.primary([a.type_(kind)], []),
+        button.text([a.type_(kind)], []),
+        button.icon([a.type_(kind)], []),
+      ],
+      fn(control) {
+        let html = control |> element.to_string
+        html |> string.contains("type=\"" <> kind <> "\"") |> should.be_true
+        html |> string.contains("type=\"button\"") |> should.be_false
+        html |> string.split("type=\"") |> list.length |> should.equal(2)
+      },
+    )
+  })
+}
+
 pub fn badge_tones_are_not_project_statuses_test() {
   list.each(
     [

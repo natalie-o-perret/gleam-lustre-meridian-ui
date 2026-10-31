@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meridian selection fixture</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../priv/meridian-ui.css" />
+    <link rel="stylesheet" href="./fixture.css" />
+  </head>
+  <body>
+    <div id="selection-fixture"></div>
+    <script type="module">
+      import { main } from "../build/dev/javascript/meridian_ui/selection_fixture.mjs";
+      import { mount } from "../build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
+      import { mount as mask } from "../build/dev/javascript/meridian_ui/meridian_ui/mask_ffi.mjs";
+      main();
+      requestAnimationFrame(() => {
+        window.disposeMeridian = ["selection-demo", "other-instance"].map(
+          (id) =>
+            mount(
+              id,
+              () => {},
+              () => {},
+            ),
+        );
+        window.disposeMasks = ["primary-mask", "secondary-mask"].map(mask);
+        window.meridianReady = true;
+      });
+    </script>
+  </body>
+</html>

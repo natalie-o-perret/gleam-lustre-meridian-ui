@@ -1,6 +1,6 @@
 //// Small, styled Lustre components. Load `priv/meridian-ui.css` once per page.
 
-/// Attach tooltips, drawer focus handling and system-theme updates to a shell.
+/// Attach keyboard/pointer interactions, tooltips and shell/theme behaviour.
 /// Call after rendering. IDs must be unique within the document.
 /// Mounting again replaces the old listeners. Removing the root also cleans up.
 /// The returned function disposes the listeners immediately when needed.

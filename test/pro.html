@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meridian advanced widgets</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../priv/meridian-ui.css" />
+    <link rel="stylesheet" href="./fixture.css" />
+  </head>
+  <body>
+    <div id="pro-fixture"></div>
+    <script type="module">
+      import { main } from "../build/dev/javascript/meridian_ui/pro_fixture.mjs";
+      import { mount } from "../build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
+      import { mount as chart } from "../build/dev/javascript/meridian_ui/meridian_ui/charts_ffi.mjs";
+      import { mount as calendar } from "../build/dev/javascript/meridian_ui/meridian_ui/scheduler_ffi.mjs";
+      import { mount as editor } from "../build/dev/javascript/meridian_ui/meridian_ui/editor_ffi.mjs";
+      main();
+      requestAnimationFrame(() => {
+        window.disposeMeridian = [
+          mount(
+            "pro-demo",
+            () => {},
+            () => {},
+          ),
+        ];
+        window.disposeEngines = [
+          chart("requests-chart"),
+          calendar("calendar"),
+          editor("notes"),
+        ];
+        window.meridianReady = true;
+      });
+    </script>
+  </body>
+</html>

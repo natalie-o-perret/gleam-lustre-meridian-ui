@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meridian keyboard component fixture</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../priv/meridian-ui.css" />
+    <link rel="stylesheet" href="./fixture.css" />
+  </head>
+  <body>
+    <div id="keyboard-fixture"></div>
+    <script type="module">
+      import { main } from "../build/dev/javascript/meridian_ui/keyboard_fixture.mjs";
+      import { mount } from "../build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
+      main();
+      requestAnimationFrame(() => {
+        window.disposeMeridian = ["keyboard-demo", "other-instance"].map((id) =>
+          mount(
+            id,
+            () => {},
+            () => {},
+          ),
+        );
+        window.meridianReady = true;
+      });
+    </script>
+  </body>
+</html>
