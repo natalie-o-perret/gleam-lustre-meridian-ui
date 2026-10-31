@@ -11,8 +11,8 @@ export function setupEffects(root, signal) {
         for (const entry of entries)
           if (entry.isIntersecting) {
             entry.target.dataset.meridianEntered = "true";
-            observer.unobserve(entry.target);
-          }
+          } else if (entry.target.dataset.revealOnce === "false")
+            delete entry.target.dataset.meridianEntered;
       })
     : null;
   const ripple = (control, x, y) => {
@@ -69,6 +69,23 @@ export function setupEffects(root, signal) {
   root.addEventListener(
     "click",
     (event) => {
+      const replay = event.target.closest?.("[data-meridian-replay]");
+      if (replay && owned(replay) && !replay.matches(":disabled")) {
+        const target = doc.getElementById(replay.dataset.meridianReplay);
+        if (
+          target &&
+          root.contains(target) &&
+          owned(target) &&
+          target.hasAttribute("data-meridian-reveal")
+        ) {
+          observer?.unobserve(target);
+          delete target.dataset.meridianEntered;
+          target.scrollIntoView({ block: "nearest", behavior: "instant" });
+          void view.getComputedStyle(target).opacity;
+          if (observer) observer.observe(target);
+          else target.dataset.meridianEntered = "true";
+        }
+      }
       const control = event.target.closest?.("[data-meridian-scroll-top]");
       if (
         !control ||

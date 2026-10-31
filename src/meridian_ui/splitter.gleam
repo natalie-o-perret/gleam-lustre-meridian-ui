@@ -35,7 +35,7 @@ pub fn view(
   let proportions =
     "minmax(0,"
     <> int.to_string(value)
-    <> "fr) 24px minmax(0,"
+    <> "fr) 8px minmax(0,"
     <> int.to_string(100 - value)
     <> "fr)"
   h.div(

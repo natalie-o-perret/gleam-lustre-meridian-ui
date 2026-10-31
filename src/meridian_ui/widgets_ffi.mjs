@@ -9,7 +9,11 @@ import { setupMenus } from "./menu_ffi.mjs";
 import { setupToasts } from "./toast_ffi.mjs";
 import { setupUploads } from "./upload_ffi.mjs";
 import { setupDatePickers } from "./date_picker_ffi.mjs";
+import { setupColourPickers } from "./colour_picker_ffi.mjs";
 import { setupCarousels } from "./carousel_ffi.mjs";
+import { setupPagination } from "./pagination_ffi.mjs";
+import { setupCodeViewers } from "./code_viewer_ffi.mjs";
+import { setupAutocompletes } from "./autocomplete_ffi.mjs";
 
 export function keyDestination(key, index, count, orientation, rtl = false) {
   if (!count) return -1;
@@ -52,6 +56,10 @@ export function setupWidgets(root, signal) {
   const syncMenus = setupMenus(root, signal);
   const syncToasts = setupToasts(root, signal);
   const syncDatePickers = setupDatePickers(root, signal);
+  const syncColourPickers = setupColourPickers(root, signal);
+  const syncPagination = setupPagination(root, signal);
+  const syncCodeViewers = setupCodeViewers(root, signal);
+  const syncAutocompletes = setupAutocompletes(root, signal);
   setupUploads(root, signal);
   setupCarousels(root, signal);
   const belongs = (element) => element?.closest?.(".meridian-ui") === root;
@@ -261,6 +269,10 @@ export function setupWidgets(root, signal) {
     syncMenus();
     syncToasts();
     syncDatePickers();
+    syncColourPickers();
+    syncPagination();
+    syncAutocompletes();
+    syncCodeViewers();
     for (const group of root.querySelectorAll("[data-meridian-keys]")) {
       if (belongs(group)) syncGroup(group);
     }

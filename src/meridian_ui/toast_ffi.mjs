@@ -24,7 +24,10 @@ export function setupToasts(root, signal) {
   };
   const update = (node, state) => {
     const blocked =
-      doc.hidden || node.matches(":hover") || node.contains(doc.activeElement);
+      doc.hidden ||
+      state.paused ||
+      node.matches(":hover") ||
+      node.contains(doc.activeElement);
     if (blocked) pause(state);
     else if (!state.expired && state.timeout > 0 && state.timer === null) {
       state.started = view.performance.now();
@@ -40,6 +43,17 @@ export function setupToasts(root, signal) {
   const refresh = () => {
     for (const [node, state] of states) update(node, state);
   };
+  // Embedded previews forward hover/focus without taking focus from the host.
+  root.addEventListener(
+    "meridian-toast-pause",
+    (event) => {
+      const state = states.get(event.target);
+      if (!state || typeof event.detail !== "boolean") return;
+      state.paused = event.detail;
+      update(event.target, state);
+    },
+    { signal },
+  );
   for (const type of ["pointerover", "pointerout", "focusin", "focusout"])
     root.addEventListener(type, () => view.queueMicrotask(refresh), { signal });
   doc.addEventListener("visibilitychange", refresh, { signal });
@@ -78,6 +92,7 @@ export function setupToasts(root, signal) {
             started: 0,
             timer: null,
             expired: false,
+            paused: false,
           };
           states.set(node, state);
         }

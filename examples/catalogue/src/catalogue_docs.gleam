@@ -1,21 +1,81 @@
+import gleam/dynamic.{type Dynamic}
+import gleam/dynamic/decode
+import gleam/int
 import gleam/list
+import gleam/option.{None}
+import gleam/result
 import lustre
 import lustre/attribute as a
 import lustre/effect
 import lustre/element.{type Element}
 import lustre/element/html as h
-import lustre/event as e
-import meridian_ui/button
 import meridian_ui/code_block
 import meridian_ui/disclosure
+import meridian_ui/icon
 import meridian_ui/orientation
 import meridian_ui/panel
+import meridian_ui/table
 import meridian_ui/tabs
 
 type Source {
+  Unloaded
   Loading
   Ready(String)
   Failed
+}
+
+pub fn theme_markup(preference: String) -> String {
+  icon.view(
+    case preference {
+      "light" -> icon.Sun
+      "dark" -> icon.Moon
+      _ -> icon.Monitor
+    },
+    [],
+  )
+  |> element.to_string
+}
+
+pub fn github_markup() -> String {
+  icon.view(icon.GitHub, []) |> element.to_string
+}
+
+pub fn icon_choice_markup(value: String) -> String {
+  let glyph = case value {
+    "search" -> icon.view(icon.Search, [])
+    "mail" -> icon.view(icon.Mail, [])
+    "user" -> icon.view(icon.User, [])
+    "check" -> icon.view(icon.Check, [])
+    "add" -> icon.view(icon.Plus, [])
+    "download" -> icon.view(icon.Download, [])
+    "arrow" -> icon.view(icon.ArrowRight, [])
+    _ -> element.none()
+  }
+  h.span([a.class("docs-icon-option")], [glyph, h.text(value)])
+  |> element.to_string
+}
+
+pub fn code_markup(label: String, source: String) -> String {
+  code_block.view(label, source, []) |> element.to_string
+}
+
+pub fn snippet_markup(
+  label: String,
+  language: String,
+  source: String,
+) -> String {
+  code_block.view_language(
+    label,
+    case language {
+      "toml" -> code_block.Toml
+      "html" -> code_block.Html
+      "json" -> code_block.Json
+      _ -> code_block.Gleam
+    },
+    source,
+    [],
+  )
+  |> element.to_string
 }
 
 type File {
@@ -23,14 +83,12 @@ type File {
 }
 
 type Model {
-  Model(active: String, expanded: Bool, status: String, files: List(File))
+  Model(active: String, expanded: Bool, files: List(File))
 }
 
 type Msg {
   Select(String)
   Toggle
-  Copy
-  Copied(String)
   Loaded(String, String)
   LoadFailed(String)
 }
@@ -44,49 +102,55 @@ pub fn start_source(
     lustre.application(
       fn(_) {
         #(
-          Model("example", True, "", [
+          Model("example", True, [
             File("example", "Example", Ready(snippet)),
-            File("module", "Full module", Loading),
-            File("helpers", "Helpers", Loading),
+            File("module", "Full module", Unloaded),
+            File("helpers", "Helpers", Unloaded),
           ]),
-          effect.from(fn(dispatch) {
-            load(
-              "./source/" <> family <> ".gleam",
-              fn(source) { dispatch(Loaded("module", source)) },
-              fn() { dispatch(LoadFailed("module")) },
-            )
-            load(
-              "./source/common.gleam",
-              fn(source) { dispatch(Loaded("helpers", source)) },
-              fn() { dispatch(LoadFailed("helpers")) },
-            )
-          }),
+          effect.none(),
         )
       },
-      update,
+      fn(model, msg) { update(model, msg, family) },
       view,
     )
   let assert Ok(runtime) = lustre.start(app, "#" <> id, Nil)
   fn() { lustre.send(runtime, lustre.shutdown()) }
 }
 
-fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
+fn update(
+  model: Model,
+  msg: Msg,
+  family: String,
+) -> #(Model, effect.Effect(Msg)) {
   case msg {
-    Select(id) -> #(Model(..model, active: id, status: ""), effect.none())
-    Toggle -> #(Model(..model, expanded: !model.expanded), effect.none())
-    Copied(status) -> #(Model(..model, status: status), effect.none())
-    Loaded(id, text) -> #(set_source(model, id, Ready(text)), effect.none())
-    LoadFailed(id) -> #(set_source(model, id, Failed), effect.none())
-    Copy ->
-      case active_source(model) {
-        Ready(source) -> #(
-          model,
+    Select(id) -> {
+      let model = Model(..model, active: id)
+      case
+        list.any(model.files, fn(file) {
+          file.id == id && file.source == Unloaded
+        })
+      {
+        False -> #(model, effect.none())
+        True -> #(
+          set_source(model, id, Loading),
           effect.from(fn(dispatch) {
-            copy(source, fn(status) { dispatch(Copied(status)) })
+            load(
+              "./source/"
+                <> case id {
+                "helpers" -> "common"
+                _ -> family
+              }
+                <> ".gleam",
+              fn(source) { dispatch(Loaded(id, source)) },
+              fn() { dispatch(LoadFailed(id)) },
+            )
           }),
         )
-        _ -> #(model, effect.none())
       }
+    }
+    Toggle -> #(Model(..model, expanded: !model.expanded), effect.none())
+    Loaded(id, text) -> #(set_source(model, id, Ready(text)), effect.none())
+    LoadFailed(id) -> #(set_source(model, id, Failed), effect.none())
   }
 }
 
@@ -102,13 +166,6 @@ fn set_source(model: Model, id: String, source: Source) -> Model {
   )
 }
 
-fn active_source(model: Model) -> Source {
-  case list.find(model.files, fn(file) { file.id == model.active }) {
-    Ok(file) -> file.source
-    Error(_) -> Failed
-  }
-}
-
 fn view(model: Model) -> Element(Msg) {
   panel.collapsible(
     "source-section",
@@ -116,19 +173,7 @@ fn view(model: Model) -> Element(Msg) {
     model.expanded,
     Toggle,
     [a.class("docs-source")],
-    [
-      button.view(
-        [
-          a.id("copy-source"),
-          e.on_click(Copy),
-          a.disabled(case active_source(model) {
-            Ready(_) -> False
-            _ -> True
-          }),
-        ],
-        [h.text("Copy code")],
-      ),
-    ],
+    [],
     [
       h.p([a.class("docs-source-note muted")], [
         h.text(
@@ -152,7 +197,8 @@ fn view(model: Model) -> Element(Msg) {
                     _ -> file.id <> "-code"
                   }),
                 ])
-              Loading -> h.p([a.role("status")], [h.text("Loading source...")])
+              Unloaded | Loading ->
+                h.p([a.role("status")], [h.text("Loading source...")])
               Failed ->
                 h.p([a.role("alert")], [
                   h.text(
@@ -163,9 +209,6 @@ fn view(model: Model) -> Element(Msg) {
           ])
         }),
       ),
-      h.p([a.id("copy-status"), a.role("status"), a.class("docs-copy-status")], [
-        h.text(model.status),
-      ]),
     ],
   )
 }
@@ -178,8 +221,27 @@ pub fn toggle_markup(id: String, label: String, expanded: Bool) -> String {
   |> element.to_string
 }
 
+pub fn panel_markup(id: String, label: String, expanded: Bool) -> String {
+  panel.collapsible(id, label, expanded, Nil, [], [], []) |> element.to_string
+}
+
+pub fn table_markup(label: String, headers: Dynamic, rows: Dynamic) -> String {
+  let assert Ok(headers) = decode.run(headers, decode.list(decode.string))
+  let assert Ok(rows) =
+    decode.run(rows, decode.list(decode.list(decode.string)))
+  table.read_only(
+    label,
+    [],
+    list.index_map(rows, fn(row, index) { #(int.to_string(index), row) }),
+    fn(row: #(String, List(String))) { row.0 },
+    list.index_map(headers, fn(header, index) {
+      table.Column(header, header, None, fn(row: #(String, List(String))) {
+        h.text(row.1 |> list.drop(index) |> list.first |> result.unwrap(""))
+      })
+    }),
+  )
+  |> element.to_string
+}
+
 @external(javascript, "./catalogue_docs_ffi.mjs", "load")
 fn load(path: String, loaded: fn(String) -> Nil, failed: fn() -> Nil) -> Nil
-
-@external(javascript, "./catalogue_docs_ffi.mjs", "copy")
-fn copy(source: String, done: fn(String) -> Nil) -> Nil

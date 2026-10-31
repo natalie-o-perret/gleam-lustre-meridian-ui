@@ -61,6 +61,8 @@ pub fn drawers_cover_every_logical_side_without_copying_navigation_shell_state_t
   list.each(
     [
       #(drawer.Start, "start"),
+      #(drawer.Left, "left"),
+      #(drawer.Right, "right"),
       #(drawer.End, "end"),
       #(drawer.Top, "top"),
       #(drawer.Bottom, "bottom"),

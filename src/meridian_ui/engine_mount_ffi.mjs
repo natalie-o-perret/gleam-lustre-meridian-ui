@@ -33,8 +33,16 @@ export function mountEngine(id, attribute, create) {
     attributes: true,
     attributeFilter: [attribute, "data-theme", "dir"],
   });
+  let frame = null;
   const resize = view.ResizeObserver
-    ? new view.ResizeObserver(() => engine.resize?.())
+    ? new view.ResizeObserver(() => {
+        // Auto-sized engines can change the observed height while resizing.
+        if (frame === null)
+          frame = view.requestAnimationFrame(() => {
+            frame = null;
+            if (!disposed && element.isConnected) engine.resize?.();
+          });
+      })
     : null;
   resize?.observe(element);
   function dispose() {
@@ -42,6 +50,7 @@ export function mountEngine(id, attribute, create) {
     disposed = true;
     observer.disconnect();
     resize?.disconnect();
+    if (frame !== null) view.cancelAnimationFrame(frame);
     engine.destroy();
     mounted.delete(element);
   }

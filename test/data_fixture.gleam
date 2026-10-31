@@ -14,6 +14,7 @@ import meridian_ui/context_menu
 import meridian_ui/data_view
 import meridian_ui/dock
 import meridian_ui/field
+import meridian_ui/file_tree
 import meridian_ui/hierarchy.{Node}
 import meridian_ui/mega_menu
 import meridian_ui/menu
@@ -36,6 +37,7 @@ import meridian_ui/virtual_scroller
 pub type Model {
   Model(
     tree: tree.Model,
+    files: tree.Model,
     table: table.Model,
     order: List(String),
     target: List(String),
@@ -52,6 +54,7 @@ pub type Model {
 
 pub type Msg {
   Tree(tree.Action)
+  Files(tree.Action)
   Table(table.Action)
   Order(order_list.Action)
   Pick(pick_list.Action)
@@ -70,6 +73,7 @@ pub fn main() {
     lustre.simple(
       fn(_) {
         Model(
+          tree.Model([], []),
           tree.Model([], []),
           table.Model("", None, [], 0, 2),
           ["one", "two", "three"],
@@ -99,6 +103,8 @@ fn update(model: Model, msg: Msg) -> Model {
   case msg {
     Tree(action) ->
       Model(..model, tree: tree.update(model.tree, action, selection.Multiple))
+    Files(action) ->
+      Model(..model, files: tree.update(model.files, action, selection.Single))
     Table(action) -> Model(..model, table: table.update(model.table, action))
     Order(order_list.Move(id, position)) ->
       Model(
@@ -253,6 +259,14 @@ fn view(model: Model) -> Element(Msg) {
         [button.view([], [h.text("Context target")])],
         commands(),
       ),
+      file_tree.view("Project files", selection.Single, model.files, Files, [], [
+        file_tree.Folder("files-src", "src", False, [
+          file_tree.File("files-app", "app.gleam", False),
+          file_tree.File("files-locked", "Locked file", True),
+        ]),
+        file_tree.Folder("files-empty", "Empty folder", False, []),
+        file_tree.File("files-readme", "README.md", False),
+      ]),
       tree.view(
         "Project tree",
         selection.Multiple,

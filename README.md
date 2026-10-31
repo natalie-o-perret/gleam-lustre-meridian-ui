@@ -6,8 +6,8 @@ A small styled UI package for Lustre 5.7, extracted from the
 or [see the original dashboard](https://natalie-o-perret.github.io/spa-dashboards/gleam-lustre/).
 The API is experimental and the package is not published to Hex.
 
-The library includes 95 core entries, four advanced widgets, FilterService and
-CodeBlock. Components share Meridian's design and native browser semantics, with
+The library includes 96 core entries, four advanced widgets, FilterService,
+FormValidation, CodeBlock and Icons. Components share Meridian's design and native browser semantics, with
 optional open-source engines for richer widgets.
 [Component catalogue](COMPONENTS.md) lists their APIs and limits.
 
@@ -82,8 +82,8 @@ The [coverage ledger](COMPONENTS.md) lists the complete catalogue. Additional
 families live in their own modules:
 
 - Forms: `autocomplete`, `cascade_select`, `date_picker`, `input_mask`, `input_otp`,
-  `input_tags`, `key_filter`, `knob`, `listbox`, `rating`, `select`, `select_button`
-  and `tree_select`.
+  `input_tags`, `key_filter`, `knob`, `listbox`, `rating`, `select`, `select_button`,
+  `tree_select` and `validation`.
 - Layout: `accordion`, `splitter`, `stepper`, `tabs` and `toolbar`.
 - Overlays: `dialog`, `drawer`, `confirm_dialog`, `confirm_popup` and `popover`.
 - Navigation: `breadcrumb`, `command_menu`, `context_menu`, `dock`, `mega_menu`,
@@ -91,7 +91,7 @@ families live in their own modules:
 - Data: `data_view`, `order_list`, `org_chart`, `paginator`, `pick_list`, `table`,
   `timeline`, `tree`, `tree_table`, `virtual_scroller` and `filter_service`.
 - Media and utilities: `animate_on_scroll`, `block_ui`, `carousel`, `compare`,
-  `file_upload`, `focus_trap`, `gallery`, `inplace`, `meter_group`, `ripple`,
+  `file_upload`, `file_tree`, `focus_trap`, `gallery`, `inplace`, `meter_group`, `ripple`,
   `scroll_top`, `terminal` and `toast`.
 - Advanced widgets: `charts`, `scheduler`, `task_board` and `text_editor`.
 
@@ -101,9 +101,12 @@ Checkboxes stay native, including the `indeterminate` property and forced-colour
 fallback. Selects use native keyboard behaviour, with styled pickers where supported.
 
 `field.option` accepts elements such as a badge. Supporting browsers display that
-content in both the picker and selected value. Older browsers keep native text
+content in both the picker and selected value. Other browsers keep native text
 labels. Keep option content non-interactive and avoid IDs because it is cloned
 into the selected value.
+`select.view_with` accepts an `fn(select.Option) -> Element(msg)` callback for the
+same custom content, including tags. Search still uses the option's label, form
+submission uses its value, and filtered-out selections stay selected.
 
 Tooltips open after 100ms of hover, or immediately on keyboard focus. Moving
 within the same control doesn't restart the hover delay. A short fade respects
@@ -204,6 +207,17 @@ Long floating/inset labels truncate visually without shortening their accessible
 names. Reset controlled values in your model. A browser-only form reset does not
 update application state.
 
+`field.floating_label` wraps one control in its label when an explicit ID isn't
+needed. Tables use it for search, page number and page-size controls.
+
+`validation.check(form_id)` reads native constraint errors without opening browser
+validation bubbles. Give validated fields unique IDs. Add caller-owned cross-field
+errors as `validation.FieldError(field_id, message)`, then render
+`validation.attributes` on the control and `validation.message` beside it.
+Keep other hints in `aria-describedby` too. Use `novalidate` on a form that renders
+these messages itself, and validate again on the server. The FormValidation
+example combines required/email/length constraints with matching passwords.
+
 After `make check`, `test/forms.html` demonstrates independent forms, native
 submission, validation, disabled/read-only fields and controlled password reveal.
 
@@ -223,8 +237,10 @@ in form submission. Use the latest model when processing actions and submission.
 
 `input_otp` is one native string input, so leading zeroes, paste and one-time-code
 autofill survive. `key_filter.pattern` adds validation without deleting invalid
-text or interfering with composition. Native datalists power `autocomplete`.
-Replace its suggestions in your model when async results arrive.
+text or interfering with composition. `autocomplete` retains native datalists as
+its fallback. Mount interactions for a themed, scrollable popup with filtering,
+arrow-key selection and Escape dismissal. Replace suggestions in your model when
+async results arrive. Input values and form submission stay native.
 
 `cascade_select` consumes validated `hierarchy.Node` values and only submits an
 enabled leaf. Changing a parent truncates stale descendants. Date pickers retain
@@ -242,22 +258,42 @@ disclosures, overlays and menus. Commit emitted actions to the latest model.
   panels retain their DOM. Linear steppers require preceding steps to be complete.
 - Splitters emit clamped percentages and support pointer dragging, arrow keys,
   Shift+arrow, Home and End. Collapsed panes are inert.
-- Dialogs use native modal or non-modal lifecycle methods. Drawers use logical
-  sides. Popovers use the native top layer, Escape and outside dismissal. Closing
+- Dialogs use native modal or non-modal lifecycle methods without scrolling the
+  page on open. Drawers support physical Left/Right and logical Start/End sides,
+  plus Top/Bottom, with reduced-motion-aware slide transitions.
+  Popovers use the native top layer, Escape and outside dismissal. Closing
   restores focus unless the user has moved it elsewhere. A dynamic dialog is an
   ordinary `dialog.view` whose title and children come from application state.
+  Give its opener `a.data("meridian-opener", dialog_id)` for reliable focus return,
+  including browsers that don't focus a button when it is clicked.
 - Menus use roving focus, Home/End, typeahead and nested disclosure. Mega-menu
   navigation uses native details and links. Construct link destinations with
   `url.parse`, which rejects executable URL schemes.
 - Trees share expansion/selection state with tree selects and tree tables. Tree
-  tables deliberately retain native table navigation and disclosure buttons.
+  branches animate expansion and collapse unless reduced motion is requested.
+  Pass `tree.appearance(lines, boxed_toggles, animated)` as attributes to Tree,
+  TreeSelect, FileTree or TreeTable to configure dashed lines, tiny +/- boxes and
+  animation independently. These options default to enabled.
+  `tree.view_with` accepts a node-render callback for custom non-interactive
+  content. Include its visible label for keyboard typeahead and accessible naming.
+  Tree tables retain native table navigation and disclosure buttons.
 - Tables accept typed column comparators, stable row keys and caller-rendered
   cells, including editors. `table.view` filters, sorts and pages local data.
   `table.page` renders an already-filtered remote page and total.
 - Order lists, pick lists and task boards provide native move controls alongside
-  drag/drop. Keep IDs unique. Task-board updates return errors for invalid moves.
+  drag/drop, with a live destination preview before drop. Keep IDs unique.
+  Task-board updates return errors for invalid moves.
+- Paginators have labelled arrow controls and a numeric page field with bounded
+  autocomplete suggestions. Page state stays zero-based.
 - Virtual scrolling uses an explicit uniform row height, overscan and measured
   viewport size. Variable-height rows need a different measured layout.
+
+`file_tree.view(label, mode, model, on_action, attrs, entries)` adds file and folder
+icons to the shared tree behaviour. Supply `file_tree.File(id, name, disabled)`
+and `file_tree.Folder(id, name, disabled, children)` entries, with unique IDs across
+the whole tree. Empty folders keep their folder icon. The caller owns a
+`tree.Model` and applies actions with `tree.update(model, action, mode)`.
+FileTree does not access a filesystem, open files or mutate them.
 
 ### Media, notifications and utilities
 
@@ -265,6 +301,8 @@ Carousels are manually advanced. Autoplay is not enabled by default. If an app
 adds autoplay, pause it for hover, focus and reduced motion. Galleries add image
 alternatives, thumbnails and modal previews. Compare controls retain a labelled
 native range as their keyboard alternative.
+`compare.view_with` adds horizontal/vertical comparison and an optional on-image
+drag handle. It uses the same native range for pointer and keyboard input.
 
 File uploads expose native selection, drop validation and repeated files. Size
 limits are bytes per file. `file_upload.upload` sends multipart `files` fields,
@@ -307,9 +345,19 @@ dashboard controls do not import the large engines.
   explicit ISO offsets when a local time repeats during a clock change.
 - ProseMirror owns rich-text selection, composition, history, lists and tables.
   Store its canonical JSON document. `text_editor.parse` validates imported JSON.
+  The toolbar's text colour picker preserves validated hex colours in JSON and
+  rendered HTML. These authored colours aren't remapped when the theme changes.
+  `text_editor.parse_markdown` imports CommonMark and
+  `text_editor.to_markdown` exports it. Export returns an error rather than losing
+  text colours, underline, strike-through or tables, which require JSON.
   Pasted HTML is reduced to the schema and unsafe URLs are rejected. `to_html`
   serialises that schema in the browser. This is not a general-purpose sanitiser
   for arbitrary HTML outside the editor.
+
+`code_block.view` keeps the Gleam viewer defaults. Use
+`code_block.view_language` with `Json`, `Toml` or `Html` for other source snippets.
+All viewers preserve source selection, line numbers and full-source copy.
+Gleam additionally supports function/type folding.
 
 The pinned engine sources are build-time npm dependencies. Committed local bundles
 and their notices allow Git consumers to build without npm engine resolution.
@@ -365,18 +413,94 @@ with syntax colours, line numbers, a left-to-right code layout and keyboard
 scrolling. Line numbers stay out of selected and copied text. It does not evaluate
 HTML or source code. Compose it with `tabs.view` and ordinary buttons to build a
 multi-file example, as the catalogue does.
+Each viewer has a native expand/collapse control. With interactions mounted, its
+own toolbar copies the full source or expands/collapses function and type bodies.
+Gutter buttons fold individual bodies. Folding ignores braces in comments and
+strings. Source text is retained when folded.
+
+`icon.view(icon.Home, attrs)` renders one of Meridian's 128 SVG icons.
+Icons inherit the surrounding colour and are decorative by default. Label their
+button or link. `icon.all()`, `icon.name()` and `icon.category()` power the gallery.
+`icon.view_with` offers Auto, Outline, Soft and Duotone treatments. Auto follows the
+root's component style. The GitHub mark is official GitHub artwork, not Meridian's.
+Brand marks retain their official shape and fill.
+
+Set `data-style` on the themed root to `rounded`, `square`, `playful` or `fantasy`.
+Rounded is the default. Controls, panels and icons share the preset.
+Square uses crisp corners and strokes.
+Playful uses softer shapes and tinted icons. Fantasy adds asymmetric corners and
+duotone icons. These are CSS tokens, not separate component implementations.
+Override `--radius`, `--radius-small` or the `--icon-*` tokens for your own style.
+The catalogue's primary/accent and secondary colour controls derive readable
+foreground/background shades and sync them across previews, notices and themes.
+They show a compact colour swatch and its hex value. Icon-choice menus include
+the corresponding SVG in the options and selected value where customisable native
+selects are supported.
 
 `date_picker.view`, `date_picker.month`, `date_picker.time` and
 `date_picker.date_time` share styled controls and native min/max, step, required
-and form behaviour. `date_picker.range` keeps independently named start/end
-fields and cross-bounds. Time values are local times, not time-zone conversions.
+and form behaviour. `date_picker.range` and `date_picker.date_time_range` select
+both endpoints in one calendar and highlight the span. Date/time ranges have a
+time editor for each endpoint. Apply commits both values. Escape leaves them
+unchanged. The independently named native start/end fields and cross-bounds
+remain available for forms and keyboard editing. Time values are local times,
+not time-zone conversions.
 With browser interactions mounted, clicking a field or pressing Alt+ArrowDown
 opens a themed calendar or time dialog. Escape closes it and returns focus.
+The calendar heading drills up to month and decade-sized year grids. Choosing a
+year or month navigates without committing a new day or range.
 Native keyboard editing remains available, as do native pickers without the mount.
+Time dialogs have hour, minute and second listboxes. Time inputs default to
+`step="1"`, but keep an explicit caller step. Fractional values or steps expose a
+millisecond field. Native validity still checks bounds and step before applying.
+Now uses the selected zone and the input's step. Optional `zoned_time` and
+`zoned_date_time` helpers keep the entered clock time when the zone changes.
+They submit the clock value and `name-zone` separately. An empty zone uses the
+browser's IANA zone. Apply commits zone edits. Cancel leaves the stored values alone.
+
+`rating.range` accepts an optional float value, minimum, maximum and step, including
+half-stars. None means unrated, even when zero is a valid score. Native radios keep
+keyboard and form behaviour. Invalid or excessive ranges render an alert.
+
+`table.remote` renders server rows unchanged and accepts the server's matching
+total, loading state and error. Use `table.ServerColumn` for server sort keys.
+Handle `table.Action` with `table.update`, then fetch when `table.request` changes.
+The request contains query, sort, offset and limit. Selection alone does not fetch.
+The caller owns transport, debouncing, cancellation, stale-response guards and
+retries. Clamp or reset its page when server results shrink. The catalogue
+demonstrates this with a delayed local mock, not a real API.
+
+`paginator.with_sizes` adds page-size choices. Mounted page inputs suggest bounded
+prefix matches as you type, without allocating an option for every possible page.
+The caller resets or clamps its page state after changing sizes.
+
+`scheduler.view_with` adds first weekday, weekend visibility, week numbers, current
+time, slots, visible hours, event limits and read-only options. Events retain the
+existing all-day, editability and recurrence settings. Calendar fetching belongs
+to the caller.
+
+`terminal.view_with` adds a custom inline prompt and read-only mode. Set
+`--meridian-terminal-height` and `--meridian-terminal-wrap` through ordinary styles.
+The terminal sends actions to your application. It never executes a shell.
+
+`toast.view_with` supports inline and viewport placements, tones and optional
+dismissal. Timed notices pause on hover or focus. The embedded catalogue projects
+positioned notices into the browser page, rather than clipping them to its iframe.
+
+`field.colour` keeps its native form input and opens a themed hex/HSV dialog when
+mounted. Cancel leaves the value unchanged. Alpha and wide-gamut colours, and
+browsers without native dialogs, keep the browser's colour picker.
+
+Popups fit the visible viewport, including zoom and same-origin ancestor frames.
+They open above or below their field when space allows, otherwise within the
+usable area. Dialogs centre in that area. The catalogue temporarily resizes its
+preview while an overlay is open and restores its content height on close.
 
 `carousel.view` and `gallery.view` support horizontal pointer/touch dragging when
 browser interactions are mounted, including full-size gallery previews. Buttons
 remain available for keyboard users. Vertical touch scrolling is preserved.
+Dragging at least half the slide area's width changes slides on release. Shorter
+drags return to the current slide.
 
 For a full-page application, optionally put `class="meridian-page"` on `<html>`.
 This opts the page's native scrollbar into the same theme and 8px grab area.
@@ -411,10 +535,20 @@ Browser hooks target the JavaScript browser runtime, not SSR or Shadow DOM.
 ### Component catalogue
 
 The GitHub Pages catalogue includes live examples and copyable Gleam source for
-all 101 entries. Search the collapsible navigation, open a component's deep link,
+all 104 entries. Its getting-started page covers the Git dependency, stylesheet,
+themed root and interaction mount. Search the collapsible navigation, open a component's deep link,
 or cycle Light, Dark and System themes with the dashboard's icon control. RTL
 previews work independently. Preview and source sections collapse without losing
 state. Source tabs use Meridian's own Tabs and CodeBlock components.
+Every entry has editable preview controls, distinct example presets and a reset
+button. Individual edits preserve unrelated example state. Presets configure the
+whole example, and Reset reloads it. The source shows the default setup.
+
+Each entry also has an API reference. Public argument and return types come from
+`gleam export package-interface`, with checked argument names from the source.
+Function tables distinguish required Gleam arguments, callbacks and custom content
+from preview settings and example defaults. Platform entries describe native
+Lustre composition instead of inventing a Meridian API.
 
 To build and browse it locally:
 
@@ -428,7 +562,11 @@ Open the local URL printed by the server. It uses the same repository subdirecto
 as GitHub Pages. The static output is in `dist/`. The inventory comes from
 `COMPONENTS.md`, and the displayed snippets come from the compiled
 `examples/catalogue/` project. Chart, calendar and editor engines load with their
-examples, not with the documentation shell.
+examples, not with the documentation shell. Full source files load when their
+tabs open. Detailed API tables render when their disclosures open. Build checks
+keep advanced engines out of the shell and preview bootstrap, with static gzip
+budgets of 90 kB and 40 kB respectively. Script names are content-hashed and
+stylesheet URLs carry their content version.
 
 The Pages workflow publishes `main` through GitHub Actions. Set the repository's
 Pages source to **GitHub Actions** before its first deployment.

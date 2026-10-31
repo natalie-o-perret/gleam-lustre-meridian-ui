@@ -159,6 +159,17 @@ pub fn floating_and_inset_labels_reference_the_real_control_test() {
   )
 }
 
+pub fn implicit_float_labels_do_not_need_shared_generated_ids_test() {
+  let html =
+    field.floating_label("Search <projects>", [], field.input([]))
+    |> element.to_string
+  html
+  |> string.contains("<label class=\"meridian-float-field\">")
+  |> should.be_true
+  html |> string.contains("Search &lt;projects&gt;") |> should.be_true
+  html |> string.contains("for=") |> should.be_false
+}
+
 pub fn icon_fields_hide_decorations_without_hiding_the_control_test() {
   list.each(
     [

@@ -74,6 +74,18 @@ pub fn floating(
   labelled("meridian-float-field", for_id, label, attrs, control)
 }
 
+/// An implicitly labelled floating control, without needing a generated ID.
+pub fn floating_label(
+  label: String,
+  attrs: List(Attribute(msg)),
+  control: Element(msg),
+) -> Element(msg) {
+  h.label([a.class("meridian-float-field"), ..attrs], [
+    control,
+    h.span([], [h.text(label)]),
+  ])
+}
+
 pub fn inset(
   for_id: String,
   label: String,

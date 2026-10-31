@@ -1,14 +1,106 @@
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/string
 import gleeunit/should
 import lustre/attribute as a
 import lustre/element
+import lustre/element/html as h
+import meridian_ui/badge
 import meridian_ui/input_otp
 import meridian_ui/input_tags
 import meridian_ui/listbox
 import meridian_ui/rating
+import meridian_ui/select
 import meridian_ui/select_button
 import meridian_ui/selection
+
+pub fn fractional_ratings_keep_native_values_constraints_and_clear_semantics_test() {
+  let html =
+    rating.range(
+      "Quality",
+      "quality",
+      Some(2.5),
+      0.0,
+      5.0,
+      0.5,
+      True,
+      fn(_) { Nil },
+      [],
+    )
+    |> element.to_string
+  html |> string.contains("value=\"2.5\"") |> should.be_true
+  html |> string.contains("aria-label=\"2.5 stars\"") |> should.be_true
+  html |> string.contains(" checked") |> should.be_true
+  html |> string.contains(" required") |> should.be_true
+  html |> string.split("type=\"radio\"") |> list.length |> should.equal(12)
+  let empty =
+    rating.range(
+      "Quality",
+      "quality",
+      None,
+      1.0,
+      5.0,
+      0.5,
+      False,
+      fn(_) { Nil },
+      [],
+    )
+    |> element.to_string
+  empty |> string.contains(" checked") |> should.be_false
+  empty |> string.contains("Clear rating") |> should.be_true
+  rating.range(
+    "Quality",
+    "quality",
+    None,
+    5.0,
+    1.0,
+    0.0,
+    False,
+    fn(_) { Nil },
+    [],
+  )
+  |> element.to_string
+  |> string.contains("role=\"alert\"")
+  |> should.be_true
+}
+
+pub fn offset_fractional_ratings_keep_the_first_click_target_at_least_24_pixels_test() {
+  let html =
+    rating.range(
+      "Quality",
+      "quality",
+      Some(0.2),
+      0.2,
+      5.0,
+      1.0,
+      False,
+      fn(_) { Nil },
+      [],
+    )
+    |> element.to_string
+  html |> string.contains("--rating-unit:120.0px") |> should.be_true
+  html |> string.contains("value=\"0.2\"") |> should.be_true
+}
+
+pub fn select_templates_keep_native_values_and_filtered_selection_test() {
+  let html =
+    select.view_with(
+      "Team",
+      "missing",
+      "design",
+      fn(_) { Nil },
+      fn(_) { Nil },
+      [a.name("team")],
+      [select.Option("design", "Design <team>", False)],
+      fn(option) { badge.view(badge.Accent, [], [h.text(option.label)]) },
+    )
+    |> element.to_string
+  html |> string.contains("value=\"design\"") |> should.be_true
+  html |> string.contains("selected") |> should.be_true
+  html |> string.contains("hidden") |> should.be_true
+  html |> string.contains("badge-accent") |> should.be_true
+  html |> string.contains("Design &lt;team&gt;") |> should.be_true
+}
 
 pub fn listboxes_keep_native_multiple_values_constraints_and_selection_test() {
   let html =

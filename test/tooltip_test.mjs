@@ -10,6 +10,15 @@ test("tooltips stay inside the viewport and move above controls near the bottom"
     { left: 8, top: 38 },
   );
   assert.deepEqual(
+    tooltipPosition({ left: 290, top: 310, bottom: 330, width: 20 }, tip, {
+      left: 20,
+      top: 80,
+      right: 300,
+      bottom: 360,
+    }),
+    { left: 92, top: 262 },
+  );
+  assert.deepEqual(
     tooltipPosition(
       { left: 290, top: 570, bottom: 600, width: 30 },
       tip,

@@ -3,6 +3,8 @@ import lustre/element.{type Element}
 import meridian_ui/dialog
 
 pub type Side {
+  Left
+  Right
   Start
   End
   Top
@@ -26,6 +28,8 @@ pub fn view(
     [
       a.class("meridian-drawer"),
       a.data("side", case side {
+        Left -> "left"
+        Right -> "right"
         Start -> "start"
         End -> "end"
         Top -> "top"

@@ -5,14 +5,75 @@ export function setupData(root, signal) {
   const emit = (node, name, detail) =>
     node.dispatchEvent(new view.CustomEvent(name, { bubbles: true, detail }));
   let drag = null;
+  const clearPreview = () => {
+    if (!drag) return;
+    for (const [item, order] of drag.orders) item.style.order = order;
+    drag.orders.clear();
+    drag.preview?.remove();
+    drag.preview = undefined;
+  };
+  const endDrag = () => {
+    if (!drag) return;
+    clearPreview();
+    delete drag.item.dataset.dragging;
+    drag = null;
+  };
+  const destination = (event) =>
+    event.target.closest?.("[data-meridian-order]") ??
+    event.target
+      .closest?.("[data-board-column], [data-pick-side]")
+      ?.querySelector("[data-meridian-order]");
+  const preview = (event) => {
+    const group = destination(event);
+    if (!group || !owned(group)) return;
+    const items = [
+      ...group.querySelectorAll(":scope > [data-order-id]"),
+    ].filter((item) => item !== drag.item);
+    let position = items.findIndex((item) => {
+      const bounds = item.getBoundingClientRect();
+      return event.clientY < bounds.top + bounds.height / 2;
+    });
+    if (position < 0) position = items.length;
+    clearPreview();
+    drag.destination = group;
+    drag.position = position;
+    if (group === drag.group) {
+      items.splice(position, 0, drag.item);
+      items.forEach((item, index) => {
+        drag.orders.set(item, item.style.order);
+        item.style.order = String(index);
+      });
+    } else {
+      const placeholder = drag.item.cloneNode(true);
+      placeholder.removeAttribute("id");
+      delete placeholder.dataset.orderId;
+      delete placeholder.dataset.orderIndex;
+      delete placeholder.dataset.dragging;
+      placeholder.draggable = false;
+      placeholder.inert = true;
+      placeholder.setAttribute("aria-hidden", "true");
+      placeholder.classList.add("meridian-order-preview");
+      for (const node of placeholder.querySelectorAll("[id], [name]")) {
+        node.removeAttribute("id");
+        node.removeAttribute("name");
+      }
+      group.insertBefore(placeholder, items[position] ?? null);
+      drag.preview = placeholder;
+    }
+  };
   root.addEventListener(
     "dragstart",
     (event) => {
       const item = event.target.closest?.("[data-order-id]");
       const group = item?.closest("[data-meridian-order]");
       if (!group || !owned(group) || item.draggable !== true) return;
+      endDrag();
       drag = {
         group,
+        item,
+        orders: new Map(),
+        position: Number(item.dataset.orderIndex),
+        destination: group,
         id: item.dataset.orderId,
         board: group.closest("[data-meridian-board]"),
         pick: group.closest("[data-meridian-pick]"),
@@ -21,26 +82,31 @@ export function setupData(root, signal) {
       };
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", item.dataset.orderId);
+      item.dataset.dragging = "true";
     },
     { signal },
   );
-  root.addEventListener(
-    "dragover",
-    (event) => {
-      if (
-        drag &&
-        (event.target.closest?.("[data-meridian-order]") === drag.group ||
-          (drag.board &&
-            event.target.closest?.("[data-meridian-board]") === drag.board) ||
-          (drag.pick &&
-            event.target.closest?.("[data-meridian-pick]") === drag.pick))
-      ) {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-      }
-    },
-    { signal },
-  );
+  for (const type of ["dragenter", "dragover"])
+    root.addEventListener(
+      type,
+      (event) => {
+        if (
+          drag &&
+          (event.target.closest?.("[data-meridian-order]") === drag.group ||
+            (drag.board &&
+              event.target.closest?.("[data-meridian-board]") === drag.board) ||
+            (drag.pick &&
+              event.target.closest?.("[data-meridian-pick]") === drag.pick))
+        ) {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          preview(event);
+        } else if (drag) {
+          clearPreview();
+        }
+      },
+      { signal },
+    );
   root.addEventListener(
     "drop",
     (event) => {
@@ -58,43 +124,36 @@ export function setupData(root, signal) {
       )
         return;
       event.preventDefault();
-      const item = event.target.closest("[data-order-id]");
-      if (drag.board) {
+      preview(event);
+      const state = drag;
+      endDrag();
+      if (state.board) {
         const column = event.target.closest("[data-board-column]");
         if (column)
-          emit(drag.board, "meridian-card-move", {
-            id: drag.id,
-            source: drag.source,
+          emit(state.board, "meridian-card-move", {
+            id: state.id,
+            source: state.source,
             target: column.dataset.boardColumn,
-            position: item
-              ? Number(item.dataset.orderIndex)
-              : column.querySelectorAll("[data-order-id]").length,
+            position: state.position,
           });
       } else if (
-        drag.pick &&
+        state.pick &&
         event.target.closest("[data-pick-side]")?.dataset.pickSide !==
-          drag.pickSource
+          state.pickSource
       ) {
         const target =
           event.target.closest("[data-pick-side]")?.dataset.pickSide;
         if (target)
-          emit(drag.pick, "meridian-transfer", { id: drag.id, target });
-      } else if (item)
-        emit(drag.group, "meridian-reorder", {
-          id: drag.id,
-          position: Number(item.dataset.orderIndex),
+          emit(state.pick, "meridian-transfer", { id: state.id, target });
+      } else if (state.destination === state.group)
+        emit(state.group, "meridian-reorder", {
+          id: state.id,
+          position: state.position,
         });
-      drag = null;
     },
     { signal },
   );
-  root.addEventListener(
-    "dragend",
-    () => {
-      drag = null;
-    },
-    { signal },
-  );
+  root.addEventListener("dragend", endDrag, { signal });
   const watched = new Set();
   const sizes = new WeakMap();
   const measure = (node) => {
@@ -135,13 +194,14 @@ export function setupData(root, signal) {
   signal.addEventListener(
     "abort",
     () => {
-      drag = null;
+      endDrag();
       observer?.disconnect();
       watched.clear();
     },
     { once: true },
   );
   return () => {
+    if (drag && (!drag.item.isConnected || !owned(drag.item))) endDrag();
     for (const node of watched)
       if (!node.isConnected) {
         observer?.unobserve(node);

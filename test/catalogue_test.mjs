@@ -7,7 +7,7 @@ const document = await readFile(
   "utf8",
 );
 
-test("the coverage ledger accounts for all 95 core entries without duplicate routes", async () => {
+test("the coverage ledger accounts for all 96 core entries without duplicate routes", async () => {
   const core = document.split("## Core\n")[1].split("## Advanced\n")[0];
   const sections = [
     ...core.matchAll(/^### (.+) \((\d+)\)\n([\s\S]*?)(?=^### |$(?![\s\S]))/gm),
@@ -30,9 +30,9 @@ test("the coverage ledger accounts for all 95 core entries without duplicate rou
       }
     }
   }
-  assert.equal(routes.length, 95);
-  assert.equal(new Set(routes).size, 95);
-  assert.equal([...core.matchAll(/\| Base\s+\|/g)].length, 90);
+  assert.equal(routes.length, 96);
+  assert.equal(new Set(routes).size, 96);
+  assert.equal([...core.matchAll(/\| Base\s+\|/g)].length, 91);
   assert.equal([...core.matchAll(/\| Platform\s+\|/g)].length, 5);
 });
 
@@ -52,7 +52,7 @@ test("advanced widgets and additional controls have their own modules and exampl
     .split("## Additional controls\n")[1]
     .split("## Verification")[0];
   const sources = [...additions.matchAll(/^\|\s+\[[^\]]+\]\(([^)]+)\)/gm)];
-  assert.equal(sources.length, 1);
+  assert.equal(sources.length, 2);
   for (const [, source] of sources)
     await access(new URL(`../${source}`, import.meta.url));
 });

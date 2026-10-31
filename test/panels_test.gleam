@@ -109,3 +109,10 @@ pub fn scroll_areas_are_labelled_keyboard_focusable_native_regions_test() {
     fn(content) { html |> string.contains(content) |> should.be_true },
   )
 }
+
+pub fn empty_panel_actions_do_not_reserve_an_extra_header_gap_test() {
+  panel.view("Details", [], [], [])
+  |> element.to_string
+  |> string.contains("meridian-panel-actions")
+  |> should.be_false
+}

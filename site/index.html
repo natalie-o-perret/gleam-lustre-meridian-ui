@@ -13,14 +13,36 @@
     <link rel="stylesheet" href="./meridian-ui.css" />
     <link rel="stylesheet" href="./catalogue.css" />
   </head>
-  <body id="docs-root" class="meridian-ui docs" data-theme="light">
+  <body
+    id="docs-root"
+    class="meridian-ui docs"
+    data-theme="light"
+    data-preview-version=""
+  >
     <a class="docs-skip" href="#main">Skip to content</a>
     <header class="docs-header">
       <a class="docs-brand" href="#/" aria-label="Meridian UI home">
         <img src="./assets/mark.svg" width="32" height="32" alt="" />
         <span>Meridian <span class="muted">UI</span></span>
       </a>
-      <span class="docs-header-note muted">Gleam + Lustre</span>
+      <span class="docs-header-note">
+        <svg
+          class="meridian-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="m9 2 2 7 7 2-7 2-2 7-2-7-5-2 5-2Zm10 11 1 4 3 1-3 1-1 4-1-4-3-1 3-1Z"
+          />
+        </svg>
+        Gleam + Lustre
+      </span>
       <div class="docs-tools">
         <button
           id="direction"
@@ -39,7 +61,8 @@
         <a
           class="docs-github"
           href="https://github.com/natalie-o-perret/gleam-lustre-meridian-ui"
-          >GitHub <span aria-hidden="true">↗</span></a
+          ><span id="github-icon" aria-hidden="true"></span> GitHub
+          <span aria-hidden="true">↗</span></a
         >
         <button
           id="open-navigation"
@@ -69,6 +92,46 @@
         <p id="search-status" class="docs-count muted" role="status">
           Loading catalogue...
         </p>
+        <label class="docs-style" for="style"
+          >Library style
+          <select id="style" class="input">
+            <option value="rounded">Rounded</option>
+            <option value="square">Squared</option>
+            <option value="playful">Playful</option>
+            <option value="fantasy">Fantasy</option>
+          </select>
+        </label>
+        <div class="docs-colours">
+          <label for="primary-colour"
+            >Primary / accent<span class="docs-colour-control"
+              ><input
+                id="primary-colour"
+                aria-label="Primary / accent"
+                class="input meridian-colour"
+                type="color"
+                value="#b41472"
+              /><code id="primary-colour-value" aria-hidden="true"
+                >#b41472</code
+              ></span
+            ></label
+          >
+          <label for="secondary-colour"
+            >Secondary<span class="docs-colour-control"
+              ><input
+                id="secondary-colour"
+                aria-label="Secondary"
+                class="input meridian-colour"
+                type="color"
+                value="#316a91"
+              /><code id="secondary-colour-value" aria-hidden="true"
+                >#316a91</code
+              ></span
+            ></label
+          >
+          <button id="reset-colours" class="button" type="button">
+            Reset colours
+          </button>
+        </div>
         <nav
           id="component-navigation"
           aria-label="Components"

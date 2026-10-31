@@ -4,8 +4,11 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import meridian_ui/button
+import meridian_ui/icon
+import meridian_ui/tooltip
 
 /// Mount Meridian interactions after rendering. The caller commits close events.
+/// Mark the opener with data-meridian-opener="id" for cross-browser focus return.
 pub fn view(
   id: String,
   title: String,
@@ -58,9 +61,13 @@ fn build(
     [
       h.header([a.class("meridian-dialog-header")], [
         h.h2([a.id(id <> "-title")], [h.text(title)]),
-        button.view(
-          [a.aria_label("Close " <> title), event.on_click(on_close)],
-          [h.text("Close")],
+        button.icon(
+          [
+            a.aria_label("Close " <> title),
+            tooltip.hint("Close " <> title),
+            event.on_click(on_close),
+          ],
+          [icon.view(icon.Close, [])],
         ),
       ]),
       h.div([a.class("meridian-dialog-content")], children),

@@ -1,4 +1,65 @@
-import { positionOverlay } from "./overlays_ffi.mjs";
+import {
+  positionOverlay,
+  watchViewport,
+  preserveScroll,
+} from "./overlays_ffi.mjs";
+
+export function localTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+export function validTimeZone(zone) {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: zone }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function timeZones() {
+  return [
+    ...new Set([
+      localTimeZone(),
+      "UTC",
+      ...(Intl.supportedValuesOf?.("timeZone") ?? []),
+    ]),
+  ].sort();
+}
+
+export function nowValue(kind, zone, step, base = "", timestamp = Date.now()) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA-u-ca-iso8601", {
+      timeZone: zone || localTimeZone(),
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(timestamp)
+      .map((part) => [part.type, part.value]),
+  );
+  let value = `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}.${String(new Date(timestamp).getUTCMilliseconds()).padStart(3, "0")}`;
+  if (kind === "time") value = `1970-01-01T${value.slice(11)}`;
+  let milliseconds = Date.parse(`${value}Z`);
+  const interval = Number(step) * 1000;
+  if (Number.isFinite(interval) && interval > 0) {
+    const origin = Date.parse(
+      `${kind === "time" ? `1970-01-01T${base || "00:00:00"}` : base || "1970-01-01T00:00:00"}Z`,
+    );
+    const offset = Number.isFinite(origin) ? origin : 0;
+    milliseconds =
+      offset + Math.round((milliseconds - offset) / interval) * interval;
+  }
+  const result = new Date(milliseconds)
+    .toISOString()
+    .replace(/\.000Z$/, "")
+    .replace(/Z$/, "");
+  return kind === "time" ? result.slice(11) : result;
+}
 
 function civil(year, month, day) {
   const date = new Date(0);
@@ -64,14 +125,15 @@ export function calendarDates(year, month, firstDay = 0) {
   );
 }
 
-function valid(input, value, dateOnly = false) {
+function valid(input, value, dateOnly = false, bounds = {}) {
   if (!value) return false;
   const kind = input.getAttribute("type");
   const probe = input.cloneNode(false);
+  Object.assign(probe, bounds);
   if (dateOnly) {
     probe.type = "date";
-    probe.min = input.min.split("T")[0];
-    probe.max = input.max.split("T")[0];
+    probe.min = probe.min.split("T")[0];
+    probe.max = probe.max.split("T")[0];
     probe.step = "1";
   }
   // Firefox's month input is text, so validate its month choices here too.
@@ -134,7 +196,13 @@ export function setupDatePickers(root, signal) {
       input?.getAttribute("type"),
     );
   const signature = (input) =>
-    JSON.stringify([input.value, input.min, input.max, input.step]);
+    JSON.stringify([
+      input.value,
+      input.min,
+      input.max,
+      input.step,
+      input.dataset.meridianTimeZone,
+    ]);
   const today = () => {
     const now = new Date();
     return civil(now.getFullYear(), now.getMonth() + 1, now.getDate());
@@ -158,10 +226,12 @@ export function setupDatePickers(root, signal) {
     current = undefined;
     if (state.popup.open) state.popup.close();
     state.popup.remove();
-    if (state.input.getAttribute("aria-controls") === state.popup.id) {
-      if (state.controls === null) state.input.removeAttribute("aria-controls");
-      else state.input.setAttribute("aria-controls", state.controls);
-    }
+    state.inputs.forEach((input, index) => {
+      if (input.getAttribute("aria-controls") !== state.popup.id) return;
+      if (state.controls[index] === null)
+        input.removeAttribute("aria-controls");
+      else input.setAttribute("aria-controls", state.controls[index]);
+    });
     if (
       restore &&
       state.input.isConnected &&
@@ -170,47 +240,119 @@ export function setupDatePickers(root, signal) {
     )
       state.input.focus({ preventScroll: true });
   };
-  const commit = (state, value) => {
+  const validValues = (state, values) =>
+    values.every((value, index) =>
+      valid(
+        state.inputs[index],
+        value,
+        false,
+        state.inputs.length === 1
+          ? {}
+          : index === 0
+            ? { max: values[1] }
+            : { min: values[0] },
+      ),
+    );
+  const commit = (state, values) => {
     if (
       current !== state ||
-      !state.input.isConnected ||
-      state.input.matches(":disabled, [readonly]")
+      state.inputs.some(
+        (input) => !input.isConnected || input.matches(":disabled, [readonly]"),
+      )
     )
       return;
-    if (value && !valid(state.input, value)) return;
-    state.input.value = value;
-    state.input.dispatchEvent(new view.Event("input", { bubbles: true }));
-    state.input.dispatchEvent(new view.Event("change", { bubbles: true }));
+    if (!values.every((value) => value === "") && !validValues(state, values))
+      return;
+    state.inputs.forEach((input, index) => (input.value = values[index]));
+    if (state.inputs.length === 2) {
+      state.inputs[0].max = values[1];
+      state.inputs[1].min = values[0];
+    }
     close();
+    for (const input of state.inputs) {
+      if (state.zone)
+        input.dispatchEvent(
+          new view.CustomEvent("meridian-time-zone", {
+            bubbles: true,
+            detail: state.zone,
+          }),
+        );
+      input.dispatchEvent(new view.Event("input", { bubbles: true }));
+      input.dispatchEvent(new view.Event("change", { bubbles: true }));
+    }
   };
-  const timeValue = (state) => {
-    if (
-      !state.fields.every((input) => input.value !== "" && input.validity.valid)
-    )
+  const timeValue = (state, index = state.active) => {
+    const fields = state.times[index];
+    if (!fields?.every((input) => input.value !== "" && input.validity.valid))
       return "";
-    return state.fields
-      .map((input) => {
-        const [whole, fraction] = String(Number(input.value)).split(".");
-        return whole.padStart(2, "0") + (fraction ? `.${fraction}` : "");
-      })
+    const time = fields
+      .slice(0, 3)
+      .map((input) => input.value.padStart(2, "0"))
       .join(":");
+    const fraction = Number(fields[3]?.value || 0);
+    return (
+      time +
+      (fraction
+        ? `.${String(fraction).padStart(3, "0").replace(/0+$/, "")}`
+        : "")
+    );
   };
-  const candidate = (state) => {
-    const time = timeValue(state);
-    return time ? (state.kind === "time" ? time : `${state.date}T${time}`) : "";
-  };
-  const updateTime = (state) => {
-    const value = candidate(state);
-    state.apply.disabled = !valid(state.input, value);
-    state.status.textContent = state.apply.disabled
-      ? "Choose a time within the field's bounds and step."
+  const candidate = (state, index = state.active) => {
+    if (state.kind === "date" || state.kind === "month")
+      return state.dates[index];
+    const time = timeValue(state, index);
+    return time
+      ? state.kind === "time"
+        ? time
+        : state.dates[index]
+          ? `${state.dates[index]}T${time}`
+          : ""
       : "";
   };
+  const updateSelection = (state) => {
+    const values = state.inputs.map((_, index) => candidate(state, index));
+    state.apply.disabled = !validValues(state, values);
+    state.status.classList.toggle("sr-only", !state.apply.disabled);
+    state.status.textContent = state.apply.disabled
+      ? state.inputs.length === 2
+        ? !state.dates[0]
+          ? "Choose a start date."
+          : !state.dates[1]
+            ? "Choose an end date."
+            : "Choose valid times and bounds. The end must not precede the start."
+        : "Choose a time within the field's bounds and step."
+      : state.inputs.length === 2
+        ? "Range ready. Apply to confirm."
+        : "";
+    state.endpoints?.forEach((button, index) => {
+      const date = parse(state.dates[index]);
+      const time =
+        state.kind === "datetime-local" ? timeValue(state, index) : "";
+      button.textContent = `${index === 0 ? "Start" : "End"}: ${date ? format(date, { dateStyle: "medium" }) : "Choose date"}${time ? ` ${time}` : ""}`;
+      button.setAttribute("aria-pressed", String(state.active === index));
+    });
+    state.clocks.forEach(
+      (clock, index) => (clock.hidden = index !== state.active),
+    );
+  };
+  const validDate = (state, value) =>
+    valid(
+      state.inputs[state.active],
+      value,
+      state.kind === "datetime-local",
+      state.inputs.length === 1
+        ? {}
+        : state.active === 0
+          ? { max: "" }
+          : { min: state.dates[0] },
+    );
   const focusDate = (state) => {
     const target = state.body.querySelector(
-      state.mode === "month"
-        ? `[data-month="${iso(state.cursor).slice(0, -3)}"]`
-        : `[data-date="${iso(state.cursor)}"]`,
+      state.mode === "year"
+        ? `[data-year="${state.cursor.getUTCFullYear()}"]`
+        : state.mode === "month"
+          ? `[data-month="${iso(state.cursor).slice(0, -3)}"]`
+          : `[data-date="${iso(state.cursor)}"]`,
     );
     target?.focus({ preventScroll: true });
   };
@@ -219,23 +361,61 @@ export function setupDatePickers(root, signal) {
     const year = state.cursor.getUTCFullYear();
     const month = state.cursor.getUTCMonth() + 1;
     const months = state.mode === "month";
-    state.title.textContent = months
-      ? String(year)
-      : format(state.cursor, { month: "long", year: "numeric" });
-    if (state.title.localName === "button")
+    const years = state.mode === "year";
+    const firstYear = Math.max(1, Math.floor(year / 10) * 10);
+    const period = years ? 120 : months ? 12 : 1;
+    state.title.textContent = years
+      ? `${firstYear}-${Math.min(9999, firstYear + 9)}`
+      : months
+        ? String(year)
+        : format(state.cursor, { month: "long", year: "numeric" });
+    if (state.title.localName === "button") {
+      state.title.disabled = years;
       state.title.setAttribute(
         "aria-label",
-        `${state.title.textContent}. Choose month and year`,
+        `${state.title.textContent}. ${months || years ? "Choose year" : "Choose month and year"}`,
       );
+    }
     state.previous.setAttribute(
       "aria-label",
-      months ? "Previous year" : "Previous month",
+      years
+        ? "Previous year range"
+        : months
+          ? "Previous year"
+          : "Previous month",
     );
-    state.next.setAttribute("aria-label", months ? "Next year" : "Next month");
-    state.previous.disabled = !iso(shiftMonth(state.cursor, months ? -12 : -1));
-    state.next.disabled = !iso(shiftMonth(state.cursor, months ? 12 : 1));
+    state.next.setAttribute(
+      "aria-label",
+      years ? "Next year range" : months ? "Next year" : "Next month",
+    );
+    state.previous.disabled = !iso(shiftMonth(state.cursor, -period));
+    state.next.disabled = !iso(shiftMonth(state.cursor, period));
     state.body.replaceChildren();
-    if (months) {
+    if (years) {
+      const grid = element(
+        "div",
+        "meridian-picker-months meridian-picker-years",
+      );
+      for (
+        let value = Math.max(1, firstYear - 1);
+        value <= Math.min(9999, firstYear + 10);
+        value++
+      ) {
+        const choice = button(String(value), String(value), () => {
+          state.cursor = shiftMonth(state.cursor, (value - year) * 12);
+          state.mode = "month";
+          render(state, true);
+        });
+        choice.dataset.year = String(value);
+        choice.tabIndex = value === year ? 0 : -1;
+        choice.setAttribute(
+          "aria-pressed",
+          String(parse(state.dates[state.active])?.getUTCFullYear() === value),
+        );
+        grid.append(choice);
+      }
+      state.body.append(grid);
+    } else if (months) {
       const grid = element("div", "meridian-picker-months");
       for (let index = 1; index <= 12; index++) {
         const date = civil(year, index, 1);
@@ -244,7 +424,7 @@ export function setupDatePickers(root, signal) {
           format(date, { month: "short" }),
           format(date, { month: "long", year: "numeric" }),
           () => {
-            if (state.kind === "month") commit(state, value);
+            if (state.kind === "month") commit(state, [value]);
             else {
               state.cursor = shiftMonth(state.cursor, index - month);
               state.mode = "day";
@@ -256,7 +436,7 @@ export function setupDatePickers(root, signal) {
         choice.tabIndex = index === month ? 0 : -1;
         choice.setAttribute(
           "aria-pressed",
-          String(state.date.startsWith(value)),
+          String(state.dates[state.active].startsWith(value)),
         );
         choice.setAttribute(
           "aria-disabled",
@@ -271,6 +451,8 @@ export function setupDatePickers(root, signal) {
       const table = element("table", "meridian-picker-calendar");
       table.setAttribute("role", "grid");
       table.setAttribute("aria-label", state.title.textContent);
+      if (state.inputs.length === 2)
+        table.setAttribute("aria-multiselectable", "true");
       const head = element("thead");
       const labels = element("tr");
       for (let index = 0; index < 7; index++) {
@@ -283,26 +465,46 @@ export function setupDatePickers(root, signal) {
       head.append(labels);
       const body = element("tbody");
       const dates = calendarDates(year, month, firstDay);
+      const lastDay = dates.indexOf(iso(civil(year, month + 1, 0)));
+      dates.length = Math.ceil((lastDay + 1) / 7) * 7;
+      const start = parse(state.dates[0]);
+      const end = parse(state.dates[1] ?? "");
       for (let row = 0; row < dates.length; row += 7) {
         const cells = element("tr");
         for (const value of dates.slice(row, row + 7)) {
           const cell = element("td");
           cell.setAttribute("role", "gridcell");
-          cell.setAttribute("aria-selected", String(value === state.date));
           if (value) {
             const date = parse(value);
+            const selected =
+              state.inputs.length === 2
+                ? value === state.dates[0] ||
+                  value === state.dates[1] ||
+                  (start && end && date >= start && date <= end)
+                : value === state.dates[0];
+            cell.setAttribute("aria-selected", String(Boolean(selected)));
+            if (state.inputs.length === 2 && selected)
+              cell.dataset.range =
+                value === state.dates[0]
+                  ? "start"
+                  : value === state.dates[1]
+                    ? "end"
+                    : "inside";
             const choice = button(
               String(date.getUTCDate()),
               format(date, { dateStyle: "full" }),
               () => {
-                if (!valid(state.input, value, state.kind === "datetime-local"))
-                  return;
-                if (state.kind === "date") commit(state, value);
+                if (!validDate(state, value)) return;
+                if (state.kind === "date" && state.inputs.length === 1)
+                  commit(state, [value]);
                 else {
-                  state.date = value;
+                  state.dates[state.active] = value;
+                  if (state.inputs.length === 2 && state.active === 0) {
+                    state.dates[1] = "";
+                    state.active = 1;
+                  }
                   state.cursor = date;
                   render(state, true);
-                  updateTime(state);
                 }
               },
             );
@@ -311,9 +513,7 @@ export function setupDatePickers(root, signal) {
             choice.tabIndex = value === iso(state.cursor) ? 0 : -1;
             choice.setAttribute(
               "aria-disabled",
-              String(
-                !valid(state.input, value, state.kind === "datetime-local"),
-              ),
+              String(!validDate(state, value)),
             );
             if (value === iso(today()))
               choice.setAttribute("aria-current", "date");
@@ -326,7 +526,8 @@ export function setupDatePickers(root, signal) {
       table.append(head, body);
       state.body.append(table);
     }
-    positionOverlay(state.popup, state.input, view);
+    if (state.apply) updateSelection(state);
+    if (state.popup.open) positionOverlay(state.popup, state.input, view);
     if (focus) focusDate(state);
   };
   const open = (input) => {
@@ -334,118 +535,273 @@ export function setupDatePickers(root, signal) {
     close(false);
     input.focus({ preventScroll: true });
     const kind = input.getAttribute("type");
+    const group = input.closest("[data-meridian-picker-range]");
+    const inputs = group
+      ? ["start", "end"].map((end) =>
+          group.querySelector(`input[data-meridian-range="${end}"]`),
+        )
+      : [input];
+    if (
+      !inputs.includes(input) ||
+      inputs.some(
+        (field) =>
+          !owned(field) ||
+          field.getAttribute("type") !== kind ||
+          field.matches(":disabled, [readonly]"),
+      )
+    )
+      return;
     let cursor = parse(input.value) ?? today();
     const minimum = parse(input.min);
     const maximum = parse(input.max);
     if (minimum && cursor < minimum) cursor = minimum;
     if (maximum && cursor > maximum) cursor = maximum;
     const popup = element("dialog", "meridian-popover meridian-picker-popup");
+    popup.dataset.kind = kind;
     popup.dir = view.getComputedStyle(input.parentElement).direction;
     popup.id = `${root.id}-date-picker`;
     popup.setAttribute(
       "aria-label",
-      `${input.getAttribute("aria-label") || input.labels?.[0]?.textContent.trim() || "Date and time"} picker`,
+      `${group?.querySelector("legend")?.textContent.trim() || input.getAttribute("aria-label") || input.labels?.[0]?.textContent.trim() || "Date and time"} picker`,
     );
     const state = {
       input,
+      inputs,
+      group,
+      active: inputs.indexOf(input),
       popup,
       kind,
       cursor,
       mode: kind === "month" ? "month" : "day",
-      date: input.value.split("T")[0],
-      controls: input.getAttribute("aria-controls"),
-      signature: signature(input),
-      fields: [],
+      dates: inputs.map((field) => field.value.split("T")[0]),
+      values: inputs.map((field) => field.value),
+      controls: inputs.map((field) => field.getAttribute("aria-controls")),
+      signature: inputs.map(signature).join("|"),
+      times: [],
+      clocks: [],
+      zone: input.dataset.meridianTimeZone,
     };
     current = state;
+    if (inputs.length === 2) {
+      const endpoints = element("div", "meridian-picker-range");
+      endpoints.setAttribute("role", "group");
+      endpoints.setAttribute("aria-label", "Range endpoint");
+      state.endpoints = inputs.map((_, index) => {
+        const name = `${index === 0 ? "Start" : "End"} date${kind === "datetime-local" ? " and time" : ""}`;
+        const control = button("", name, () => {
+          state.active = index;
+          state.cursor = parse(state.dates[index]) ?? state.cursor;
+          state.mode = "day";
+          render(state);
+        });
+        control.dataset.rangeEndpoint = index === 0 ? "start" : "end";
+        endpoints.append(control);
+        return control;
+      });
+      popup.append(endpoints);
+    }
     const header = element("div", "meridian-picker-header");
     state.previous = button("‹", "Previous month", () => {
       state.cursor = shiftMonth(
         state.cursor,
-        state.mode === "month" ? -12 : -1,
+        state.mode === "year" ? -120 : state.mode === "month" ? -12 : -1,
       );
       render(state);
     });
     state.title =
-      kind === "month" || kind === "time"
+      kind === "time"
         ? element("span", "meridian-picker-title", "Time")
         : button(
             "",
             "Choose month and year",
             () => {
-              state.mode = state.mode === "month" ? "day" : "month";
+              state.mode = state.mode === "day" ? "month" : "year";
               render(state, true);
             },
             "meridian-picker-title",
           );
     state.title.setAttribute("aria-live", "polite");
     state.next = button("›", "Next month", () => {
-      state.cursor = shiftMonth(state.cursor, state.mode === "month" ? 12 : 1);
+      state.cursor = shiftMonth(
+        state.cursor,
+        state.mode === "year" ? 120 : state.mode === "month" ? 12 : 1,
+      );
       render(state);
     });
     if (kind === "time") header.append(state.title);
     else header.append(state.previous, state.title, state.next);
     state.body = element("div");
-    popup.append(header, state.body);
+    state.body.hidden = kind === "time";
+    const content = element("div", "meridian-picker-content");
+    content.append(state.body);
+    popup.append(header, content);
     const actions = element("div", "meridian-picker-actions");
     actions.append(
-      button("Clear", "Clear", () => commit(state, ""), "text-button"),
+      button(
+        "Clear",
+        "Clear",
+        () =>
+          commit(
+            state,
+            inputs.map(() => ""),
+          ),
+        "text-button",
+      ),
     );
-    if (kind === "date" || kind === "month") {
+    if (inputs.length === 1 && (kind === "date" || kind === "month")) {
       const value = kind === "month" ? iso(today()).slice(0, -3) : iso(today());
       const now = button(
         "Today",
         "Today",
-        () => commit(state, value),
+        () => commit(state, [value]),
         "text-button",
       );
       now.disabled = !valid(input, value);
       actions.append(now);
     }
-    actions.append(button("Close", "Close picker", () => close()));
     if (kind === "time" || kind === "datetime-local") {
-      const clock = element(
-        "fieldset",
-        "meridian-fieldset meridian-picker-time",
+      actions.append(
+        button(
+          "Now",
+          "Now",
+          () => {
+            const index = state.active;
+            const field = inputs[index];
+            const value = nowValue(
+              kind,
+              state.zone,
+              field.step,
+              field.min || field.getAttribute("value") || "",
+            );
+            const parts = (kind === "time" ? value : value.split("T")[1]).split(
+              ":",
+            );
+            state.times[index].forEach((control, part) => {
+              control.value =
+                part < 3
+                  ? parts[part].split(".")[0]
+                  : String(
+                      Number((parts[2].split(".")[1] || "").padEnd(3, "0")),
+                    );
+            });
+            if (kind === "datetime-local") {
+              state.dates[index] = value.split("T")[0];
+              state.cursor = parse(state.dates[index]);
+            }
+            render(state);
+            updateSelection(state);
+          },
+          "text-button",
+        ),
       );
-      clock.append(element("legend", "", "Time"));
-      const parts = (
-        kind === "time" ? input.value : input.value.split("T")[1] || ""
-      ).split(":");
-      const seconds =
-        parts.length > 2 ||
-        input.step === "any" ||
-        (Number(input.step) > 0 && Number(input.step) % 60 !== 0);
-      for (const [index, label] of [
-        "Hours",
-        "Minutes",
-        ...(seconds ? ["Seconds"] : []),
-      ].entries()) {
-        const field = element("label");
-        const control = element("input", "input");
-        control.type = "number";
-        control.min = "0";
-        control.max = index === 0 ? "23" : index === 1 ? "59" : "59.999";
-        control.step = index < 2 ? "1" : "any";
-        control.value = parts[index] || "00";
-        control.required = true;
-        control.addEventListener("input", () => updateTime(state));
-        field.append(element("span", "", label), control);
-        clock.append(field);
-        state.fields.push(control);
+      for (const [endpoint, input] of inputs.entries()) {
+        const clock = element(
+          "fieldset",
+          "meridian-fieldset meridian-picker-time",
+        );
+        clock.append(
+          element(
+            "legend",
+            "",
+            inputs.length === 2
+              ? `${endpoint === 0 ? "Start" : "End"} time`
+              : "Time",
+          ),
+        );
+        const fields = [];
+        const parts = (
+          kind === "time" ? input.value : input.value.split("T")[1] || ""
+        ).split(":");
+        const fractional =
+          input.step === "any" ||
+          parts[2]?.includes(".") ||
+          (Number(input.step) > 0 && Number(input.step) % 1 !== 0);
+        for (const [index, label] of [
+          "Hours",
+          "Minutes",
+          "Seconds",
+          ...(fractional ? ["Milliseconds"] : []),
+        ].entries()) {
+          const field = element("label");
+          const control = element(
+            index < 3 ? "select" : "input",
+            index < 3
+              ? "meridian-listbox meridian-picker-clock-column"
+              : "input",
+          );
+          if (index < 3) {
+            control.size = 5;
+            for (let value = 0; value < (index === 0 ? 24 : 60); value++) {
+              const text = String(value).padStart(2, "0");
+              const option = element("option", "", text);
+              option.value = text;
+              control.append(option);
+            }
+            control.value = (parts[index]?.split(".")[0] || "00").padStart(
+              2,
+              "0",
+            );
+          } else {
+            control.type = "number";
+            control.min = "0";
+            control.max = "999";
+            control.step = "1";
+            control.value = String(
+              Number((parts[2]?.split(".")[1] || "").padEnd(3, "0")),
+            );
+          }
+          control.required = true;
+          control.addEventListener("input", () => updateSelection(state));
+          control.addEventListener("change", () => {
+            if (!view.matchMedia("(prefers-reduced-motion: reduce)").matches)
+              control.animate(
+                [{ transform: "scale(.97)" }, { transform: "scale(1)" }],
+                { duration: 140, easing: "ease-out" },
+              );
+          });
+          field.append(element("span", "", label), control);
+          clock.append(field);
+          fields.push(control);
+        }
+        state.times.push(fields);
+        state.clocks.push(clock);
+        content.append(clock);
+        if ((!state.dates[endpoint] && inputs.length === 1) || kind === "time")
+          state.dates[endpoint] = iso(cursor);
       }
+      if (state.zone) {
+        const label = element("label", "meridian-picker-zone");
+        const select = element("select", "input");
+        for (const zone of new Set([state.zone, ...timeZones()])) {
+          const option = element("option", "", zone);
+          option.value = zone;
+          select.append(option);
+        }
+        select.value = state.zone;
+        select.addEventListener("change", () => {
+          state.zone = select.value;
+        });
+        label.append(element("span", "", "Time zone"), select);
+        content.append(label);
+      }
+    }
+    actions.append(button("Close", "Close picker", () => close()));
+    if (inputs.length === 2 || kind === "time" || kind === "datetime-local") {
       state.status = element("p", "meridian-picker-status");
       state.status.setAttribute("role", "status");
       state.apply = button(
         "Apply",
         "Apply",
-        () => commit(state, candidate(state)),
+        () =>
+          commit(
+            state,
+            inputs.map((_, index) => candidate(state, index)),
+          ),
         "primary-button",
       );
       actions.append(state.apply);
-      popup.append(clock, state.status);
-      if (!state.date || kind === "time") state.date = iso(cursor);
-      updateTime(state);
+      popup.append(state.status);
+      updateSelection(state);
     }
     popup.append(actions);
     popup.addEventListener("cancel", (event) => {
@@ -469,50 +825,79 @@ export function setupDatePickers(root, signal) {
     popup.addEventListener("keydown", (event) => {
       if (event.isComposing || event.altKey || event.metaKey || event.ctrlKey)
         return;
-      if (state.fields.includes(event.target) && event.key === "Enter") {
+      if (
+        state.times.some((fields) => fields.includes(event.target)) &&
+        event.key === "Enter"
+      ) {
         event.preventDefault();
-        if (!state.apply.disabled) commit(state, candidate(state));
+        if (!state.apply.disabled)
+          commit(
+            state,
+            inputs.map((_, index) => candidate(state, index)),
+          );
         return;
       }
-      if (!event.target.dataset.date && !event.target.dataset.month) return;
-      state.cursor =
-        parse(event.target.dataset.date || event.target.dataset.month) ??
-        state.cursor;
+      if (
+        !event.target.dataset.date &&
+        !event.target.dataset.month &&
+        !event.target.dataset.year
+      )
+        return;
+      state.cursor = event.target.dataset.year
+        ? shiftMonth(
+            state.cursor,
+            (Number(event.target.dataset.year) -
+              state.cursor.getUTCFullYear()) *
+              12,
+          )
+        : (parse(event.target.dataset.date || event.target.dataset.month) ??
+          state.cursor);
       const rtl = view.getComputedStyle(popup).direction === "rtl";
       const months = state.mode === "month";
+      const years = state.mode === "year";
       const move = {
         ArrowLeft: rtl ? 1 : -1,
         ArrowRight: rtl ? -1 : 1,
-        ArrowUp: months ? -3 : -7,
-        ArrowDown: months ? 3 : 7,
+        ArrowUp: months || years ? -3 : -7,
+        ArrowDown: months || years ? 3 : 7,
       }[event.key];
       let next;
       if (move) {
-        next = months
-          ? shiftMonth(state.cursor, move)
-          : civil(
-              state.cursor.getUTCFullYear(),
-              state.cursor.getUTCMonth() + 1,
-              state.cursor.getUTCDate() + move,
-            );
+        next = years
+          ? shiftMonth(state.cursor, move * 12)
+          : months
+            ? shiftMonth(state.cursor, move)
+            : civil(
+                state.cursor.getUTCFullYear(),
+                state.cursor.getUTCMonth() + 1,
+                state.cursor.getUTCDate() + move,
+              );
       } else if (event.key === "PageUp" || event.key === "PageDown") {
         next = shiftMonth(
           state.cursor,
-          (months || event.shiftKey ? 12 : 1) *
+          (years ? 120 : months || event.shiftKey ? 12 : 1) *
             (event.key === "PageUp" ? -1 : 1),
         );
       } else if (event.key === "Home" || event.key === "End") {
-        const offset = months
-          ? state.cursor.getUTCMonth()
-          : (state.cursor.getUTCDay() - firstDay + 7) % 7;
-        next = months
-          ? shiftMonth(state.cursor, (event.key === "Home" ? 0 : 11) - offset)
-          : civil(
-              state.cursor.getUTCFullYear(),
-              state.cursor.getUTCMonth() + 1,
-              state.cursor.getUTCDate() +
-                (event.key === "Home" ? -offset : 6 - offset),
-            );
+        const offset = years
+          ? state.cursor.getUTCFullYear() -
+            Math.max(1, Math.floor(state.cursor.getUTCFullYear() / 10) * 10)
+          : months
+            ? state.cursor.getUTCMonth()
+            : (state.cursor.getUTCDay() - firstDay + 7) % 7;
+        next = years
+          ? shiftMonth(
+              state.cursor,
+              ((event.key === "Home" ? 0 : 9) - offset) * 12,
+            )
+          : months
+            ? shiftMonth(state.cursor, (event.key === "Home" ? 0 : 11) - offset)
+            : civil(
+                state.cursor.getUTCFullYear(),
+                state.cursor.getUTCMonth() + 1,
+                state.cursor.getUTCDate() +
+                  (event.key === "Home" ? -offset : 6 - offset),
+              );
       } else return;
       event.preventDefault();
       event.stopPropagation();
@@ -521,12 +906,12 @@ export function setupDatePickers(root, signal) {
         render(state, true);
       }
     });
-    input.setAttribute("aria-controls", popup.id);
+    for (const field of inputs) field.setAttribute("aria-controls", popup.id);
     (input.closest("dialog") ?? root).append(popup);
     render(state);
-    popup.showModal();
+    preserveScroll(view, () => popup.showModal());
     positionOverlay(popup, input, view);
-    if (kind === "time") state.fields[0].focus({ preventScroll: true });
+    if (kind === "time") state.times[0][0].focus({ preventScroll: true });
     else focusDate(state);
   };
   const target = (event) => {
@@ -574,12 +959,7 @@ export function setupDatePickers(root, signal) {
   const position = () => {
     if (current) positionOverlay(current.popup, current.input, view);
   };
-  view.addEventListener("resize", position, { signal });
-  doc.addEventListener("scroll", position, {
-    signal,
-    capture: true,
-    passive: true,
-  });
+  watchViewport(view, position, signal);
   signal.addEventListener(
     "abort",
     () => {
@@ -615,21 +995,48 @@ export function setupDatePickers(root, signal) {
       ready.delete(input);
     }
     if (current) {
-      const { input } = current;
+      const { inputs, group } = current;
       if (
-        !input.isConnected ||
-        !owned(input) ||
-        !input.hasAttribute("data-meridian-picker") ||
-        input.getAttribute("type") !== current.kind ||
-        input.matches(":disabled, [readonly]") ||
-        input.closest("[hidden], [inert], dialog:not([open])") ||
+        inputs.some(
+          (field, index) =>
+            !field.isConnected ||
+            !owned(field) ||
+            !field.hasAttribute("data-meridian-picker") ||
+            field.getAttribute("type") !== current.kind ||
+            field.matches(":disabled, [readonly]") ||
+            field.closest("[hidden], [inert], dialog:not([open])") ||
+            (group &&
+              (field.closest("[data-meridian-picker-range]") !== group ||
+                field.dataset.meridianRange !== ["start", "end"][index])),
+        ) ||
         !current.popup.isConnected
       )
         close(false);
-      else if (current.signature !== signature(input)) {
-        current.signature = signature(input);
+      else if (current.signature !== inputs.map(signature).join("|")) {
+        current.signature = inputs.map(signature).join("|");
+        if (
+          inputs.some((field, index) => field.value !== current.values[index])
+        ) {
+          current.values = inputs.map((field) => field.value);
+          current.dates = inputs.map((field) => field.value.split("T")[0]);
+          current.times.forEach((fields, index) => {
+            const parts = (
+              current.kind === "time"
+                ? inputs[index].value
+                : inputs[index].value.split("T")[1] || ""
+            ).split(":");
+            fields.forEach((field, part) => {
+              field.value =
+                part < 3
+                  ? (parts[part]?.split(".")[0] || "00").padStart(2, "0")
+                  : String(
+                      Number((parts[2]?.split(".")[1] || "").padEnd(3, "0")),
+                    );
+            });
+          });
+        }
         render(current);
-        if (current.fields.length) updateTime(current);
+        if (current.apply) updateSelection(current);
       }
     }
   };

@@ -7,12 +7,6 @@ export function load(path, loaded, failed) {
     .then(loaded, failed);
 }
 
-export function copy(source, done) {
-  const failed = () =>
-    done("Copy unavailable. Select the code to copy it manually.");
-  try {
-    navigator.clipboard.writeText(source).then(() => done("Copied."), failed);
-  } catch {
-    failed();
-  }
+export function prettyJson(value) {
+  return JSON.stringify(JSON.parse(value), null, 2);
 }

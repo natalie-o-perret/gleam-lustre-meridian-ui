@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
 
-async function swipe(page, carousel, rtl) {
+async function swipe(page, carousel, rtl, fraction = 0.51) {
   const slides = carousel.locator(".meridian-carousel-slides");
   await slides.scrollIntoViewIfNeeded();
   const bounds = await slides.boundingBox();
-  const x = bounds.x + bounds.width / 2;
+  const x = bounds.x + bounds.width * (rtl ? 0.25 : 0.75);
   const y = bounds.y + bounds.height / 2;
-  const distance = Math.min(120, bounds.width * 0.4) * (rtl ? 1 : -1);
+  const distance = bounds.width * fraction * (rtl ? 1 : -1);
   await slides.locator(":scope > :not([hidden])").evaluate((node) => {
     // Touch starts with implicit capture on the child before the surface takes it.
     node.addEventListener(
@@ -20,8 +20,28 @@ async function swipe(page, carousel, rtl) {
   await page.mouse.down();
   await page.mouse.move(x + distance, y, { steps: 12 });
   await expect(slides).toHaveAttribute("data-dragging", "true");
+  const preview = slides.locator(":scope > [data-carousel-preview]");
+  await expect(preview).toBeVisible();
+  await expect(preview).toHaveAttribute("aria-hidden", "true");
+  await expect(preview).toHaveAttribute("inert");
+  const adjacent = await preview.boundingBox();
+  const active = await slides.locator(":scope > :not([hidden])").boundingBox();
+  assert.ok(
+    Math.min(
+      Math.abs(active.x + active.width - adjacent.x),
+      Math.abs(adjacent.x + adjacent.width - active.x),
+    ) <= 1,
+    "Adjacent slides must meet without a drag gap",
+  );
+  assert.ok(
+    Math.min(adjacent.x + adjacent.width, bounds.x + bounds.width) -
+      Math.max(adjacent.x, bounds.x) >=
+      Math.min(20, bounds.width * fraction),
+    "Dragging must expose the adjacent slide, not an empty gap",
+  );
   await page.mouse.up();
   await expect(slides).not.toHaveAttribute("data-dragging");
+  await expect(slides.locator("[data-carousel-preview]")).toHaveCount(0);
   assert.equal(
     await slides
       .locator(":scope > :not([hidden])")
@@ -157,6 +177,8 @@ export async function utilities(page, scenario) {
   await expect(
     carousel.getByText("Second highlight", { exact: true }),
   ).toBeVisible();
+  await swipe(page, carousel, scenario.direction === "rtl", 0.49);
+  await expect(carousel.getByRole("status")).toHaveText("2 of 2");
   await swipe(page, carousel, scenario.direction === "rtl");
   await expect(carousel.getByRole("status")).toHaveText("1 of 2");
   const slides = carousel.locator(".meridian-carousel-slides");

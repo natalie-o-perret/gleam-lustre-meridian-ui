@@ -7,6 +7,8 @@ import lustre/element/html as h
 import lustre/event
 import meridian_ui/button
 import meridian_ui/field
+import meridian_ui/icon
+import meridian_ui/tooltip
 
 pub type Entry {
   Entry(command: String, output: String)
@@ -68,20 +70,48 @@ pub fn view(
   on_action: fn(Action) -> msg,
   attrs: List(Attribute(msg)),
 ) -> Element(msg) {
+  view_with(label, ">", False, model, on_action, attrs)
+}
+
+/// The caller handles submitted commands. Height and wrapping use ordinary CSS.
+pub fn view_with(
+  label: String,
+  prompt: String,
+  readonly: Bool,
+  model: Model,
+  on_action: fn(Action) -> msg,
+  attrs: List(Attribute(msg)),
+) -> Element(msg) {
   h.section([a.class("meridian-terminal"), a.aria_label(label), ..attrs], [
+    h.header([a.class("meridian-terminal-header")], [
+      icon.view(icon.Terminal, []),
+      h.span([], [h.text(label)]),
+    ]),
     h.div(
       [a.role("log"), a.aria_label(label <> " output"), a.tabindex(0)],
       list.map(model.entries, fn(entry) {
         h.div([], [
-          h.p([], [h.text("> " <> entry.command)]),
-          h.pre([], [h.text(entry.output)]),
+          h.p([a.class("meridian-terminal-command")], [
+            h.span([a.class("meridian-terminal-prompt"), a.aria_hidden(True)], [
+              h.text(prompt),
+            ]),
+            h.text(entry.command),
+          ]),
+          case entry.output {
+            "" -> element.none()
+            _ -> h.pre([], [h.text(entry.output)])
+          },
         ])
       }),
     ),
     h.form([event.on_submit(fn(_) { on_action(Submit) })], [
       h.label([], [
-        h.span([], [h.text("Command")]),
+        h.span([a.class("meridian-terminal-prompt"), a.aria_hidden(True)], [
+          h.text(prompt),
+        ]),
         field.input([
+          a.aria_label("Command"),
+          a.readonly(readonly),
           a.value(model.draft),
           a.autocomplete("off"),
           a.spellcheck(False),
@@ -89,12 +119,12 @@ pub fn view(
           event.advanced("keydown", {
             use key <- decode.field("key", decode.string)
             use composing <- decode.field("isComposing", decode.bool)
-            case key, composing {
-              "ArrowUp", False ->
+            case key, composing, readonly {
+              "ArrowUp", False, False ->
                 decode.success(event.handler(on_action(Previous), True, False))
-              "ArrowDown", False ->
+              "ArrowDown", False, False ->
                 decode.success(event.handler(on_action(Next), True, False))
-              _, _ ->
+              _, _, _ ->
                 decode.failure(
                   event.handler(on_action(Next), False, False),
                   "history key",
@@ -103,7 +133,15 @@ pub fn view(
           }),
         ]),
       ]),
-      button.view([a.type_("submit")], [h.text("Run")]),
+      button.icon(
+        [
+          a.type_("submit"),
+          a.aria_label("Run"),
+          a.disabled(readonly),
+          tooltip.hint("Run command"),
+        ],
+        [icon.view(icon.Play, [])],
+      ),
     ]),
   ])
 }

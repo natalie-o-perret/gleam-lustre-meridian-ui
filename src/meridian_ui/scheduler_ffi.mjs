@@ -120,6 +120,62 @@ export function encode(config) {
   });
 }
 
+export function optionsError(options) {
+  const seconds = (value) => {
+    if (!/^\d{2}:\d{2}:\d{2}$/.test(value)) return NaN;
+    const [hour, minute, second] = value.split(":").map(Number);
+    return hour <= 24 &&
+      minute < 60 &&
+      second < 60 &&
+      (hour < 24 || minute + second === 0)
+      ? hour * 3600 + minute * 60 + second
+      : NaN;
+  };
+  if (
+    !Number.isInteger(options.first_day) ||
+    options.first_day < 0 ||
+    options.first_day > 6
+  )
+    return "The first weekday must be from Sunday 0 to Saturday 6";
+  if (
+    !Number.isInteger(options.event_limit) ||
+    options.event_limit < 1 ||
+    options.event_limit > 50
+  )
+    return "The visible event limit must be from 1 to 50";
+  const start = seconds(options.day_start);
+  const end = seconds(options.day_end);
+  const slot = seconds(options.slot_duration);
+  if (!(
+    start >= 0 &&
+    end <= 86400 &&
+    start < end &&
+    slot > 0 &&
+    slot <= end - start
+  ))
+    return "Choose valid calendar hours and a slot duration within that range";
+  return "";
+}
+
+export function encodeWith(config, options) {
+  const result = JSON.parse(encode(config));
+  return JSON.stringify({
+    ...result,
+    firstDay: options.first_day,
+    weekends: options.weekends,
+    weekNumbers: options.week_numbers,
+    nowIndicator: options.now_indicator,
+    slotDuration: options.slot_duration,
+    slotMinTime: options.day_start,
+    slotMaxTime: options.day_end,
+    dayMaxEvents: options.event_limit,
+    events: result.events.map((event) => ({
+      ...event,
+      editable: !options.readonly && event.editable,
+    })),
+  });
+}
+
 export function mount(id) {
   return mountEngine(id, "data-scheduler", (element, view) => {
     const labelCells = () => {
@@ -151,6 +207,7 @@ export function mount(id) {
       buttonIcons: false,
       buttonText: { prev: "Previous", next: "Next" },
       eventMinHeight: 28,
+      eventDisplay: "block",
       headerToolbar: {
         left: "prev,next today",
         center: "title",
@@ -202,6 +259,18 @@ export function mount(id) {
         calendar.batchRendering(() => {
           calendar.setOption("direction", direction);
           calendar.setOption("timeZone", config.timeZone);
+          for (const key of [
+            "firstDay",
+            "weekends",
+            "weekNumbers",
+            "nowIndicator",
+            "slotDuration",
+            "slotMinTime",
+            "slotMaxTime",
+            "dayMaxEvents",
+          ])
+            if (config[key] !== previous[key])
+              calendar.setOption(key, config[key]);
           if (config.initialView !== previous.initialView)
             calendar.changeView(config.initialView);
           if (config.initialDate !== previous.initialDate)

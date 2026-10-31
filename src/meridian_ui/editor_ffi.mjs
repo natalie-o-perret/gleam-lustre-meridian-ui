@@ -15,6 +15,8 @@ const requireUrl = (value) => {
 const requireImage = (value) => {
   if (!safeImage(value)) throw new TypeError("Unsafe image URL");
 };
+const validColour = (value) =>
+  typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
 let nodes = pm.addListNodes(
   pm.basicSchema.spec.nodes,
   "paragraph block*",
@@ -54,6 +56,10 @@ nodes = nodes.update("image", {
 nodes = nodes.append(
   pm.tableNodes({ tableGroup: "block", cellContent: "block+" }),
 );
+nodes = nodes.update("code_block", {
+  ...nodes.get("code_block"),
+  attrs: { params: { default: "", validate: "string" } },
+});
 const schema = new pm.Schema({
   nodes,
   marks: pm.basicSchema.spec.marks
@@ -87,6 +93,35 @@ const schema = new pm.Schema({
       },
     })
     .append({
+      text_colour: {
+        attrs: {
+          colour: {
+            validate(value) {
+              if (!validColour(value))
+                throw new TypeError("Invalid text colour");
+            },
+          },
+        },
+        parseDOM: [
+          {
+            tag: "span[data-text-colour]",
+            getAttrs(dom) {
+              const colour = dom.getAttribute("data-text-colour");
+              return validColour(colour) ? { colour } : false;
+            },
+          },
+        ],
+        toDOM(mark) {
+          return [
+            "span",
+            {
+              "data-text-colour": mark.attrs.colour,
+              style: `color: ${mark.attrs.colour}`,
+            },
+            0,
+          ];
+        },
+      },
       underline: {
         parseDOM: [{ tag: "u" }, { style: "text-decoration=underline" }],
         toDOM() {
@@ -125,6 +160,27 @@ export function parse(value) {
     return new GleamError(`Invalid editor document: ${error.message}`);
   }
 }
+const markdownParser = new pm.MarkdownParser(
+  schema,
+  pm.defaultMarkdownParser.tokenizer,
+  pm.defaultMarkdownParser.tokens,
+);
+export function parseMarkdown(value) {
+  try {
+    return parse(JSON.stringify(markdownParser.parse(value).toJSON()));
+  } catch (error) {
+    return new GleamError(`Invalid Markdown document: ${error.message}`);
+  }
+}
+export function markdown(value) {
+  try {
+    return new Ok(pm.defaultMarkdownSerializer.serialize(documentNode(value)));
+  } catch {
+    return new GleamError(
+      "Markdown cannot represent this formatting. Keep JSON for text colours, underline, strike through and tables.",
+    );
+  }
+}
 export function html(value) {
   const wrapper = document.createElement("div");
   wrapper.append(
@@ -148,6 +204,19 @@ export function mount(id) {
     const container = element.closest(".meridian-editor");
     let readonly = element.dataset.readonly === "true";
     const commands = {
+      "clear-colour": (state, dispatch) => {
+        if (dispatch)
+          dispatch(
+            state.tr
+              .removeMark(
+                state.selection.from,
+                state.selection.to,
+                schema.marks.text_colour,
+              )
+              .removeStoredMark(schema.marks.text_colour),
+          );
+        return true;
+      },
       strong: pm.toggleMark(schema.marks.strong),
       em: pm.toggleMark(schema.marks.em),
       underline: pm.toggleMark(schema.marks.underline),
@@ -177,6 +246,18 @@ export function mount(id) {
       "Shift-Tab": pm.goToNextCell(-1),
     };
     const updateToolbar = () => {
+      const colour = container.querySelector("[data-editor-colour]");
+      let mark = schema.marks.text_colour.isInSet(
+        editor.state.storedMarks ?? editor.state.selection.$from.marks(),
+      );
+      const { from, to, empty } = editor.state.selection;
+      if (!empty && !mark)
+        editor.state.doc.nodesBetween(from, to, (node) => {
+          mark ??= schema.marks.text_colour.isInSet(node.marks);
+          return !mark;
+        });
+      colour.value = mark?.attrs.colour ?? "#b41472";
+      colour.disabled = readonly;
       for (const control of container.querySelectorAll(
         "[data-editor-command]",
       )) {
@@ -258,12 +339,33 @@ export function mount(id) {
       );
       editor.focus();
     };
+    const colourChange = (event) => {
+      if (
+        !event.target.matches("[data-editor-colour]") ||
+        readonly ||
+        !validColour(event.target.value)
+      )
+        return;
+      const mark = schema.marks.text_colour.create({
+        colour: event.target.value,
+      });
+      const { from, to, empty } = editor.state.selection;
+      const transaction = empty
+        ? editor.state.tr.addStoredMark(mark)
+        : editor.state.tr.addMark(from, to, mark);
+      editor.dispatch(pm.closeHistory(transaction));
+      view.queueMicrotask(() => {
+        if (!editor.isDestroyed && element.isConnected && !readonly)
+          editor.focus();
+      });
+    };
     const preserve = (event) => {
       if (event.target.closest?.("[data-editor-command]"))
         event.preventDefault();
     };
     container.addEventListener("click", click);
     container.addEventListener("mousedown", preserve);
+    container.addEventListener("change", colourChange);
     const observer = new view.MutationObserver(() => {
       readonly = element.dataset.readonly === "true";
       editor.setProps({
@@ -297,6 +399,7 @@ export function mount(id) {
         observer.disconnect();
         container.removeEventListener("click", click);
         container.removeEventListener("mousedown", preserve);
+        container.removeEventListener("change", colourChange);
         editor.destroy();
       },
     };

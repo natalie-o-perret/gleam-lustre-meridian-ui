@@ -6,6 +6,8 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import meridian_ui/button
+import meridian_ui/icon
+import meridian_ui/tooltip
 
 pub fn next(index: Int, count: Int, delta: Int) -> Int {
   let count = int.max(count, 1)
@@ -36,44 +38,68 @@ pub fn view(
       ..attrs
     ],
     [
-      h.div(
-        [a.class("meridian-carousel-slides")],
-        list.index_map(slides, fn(slide, index) {
-          h.div(
-            [
-              a.role("group"),
-              a.aria_label(
-                int.to_string(index + 1) <> " of " <> int.to_string(count),
-              ),
-              a.attribute("aria-roledescription", "slide"),
-              a.hidden(index != active),
-            ],
-            [slide],
-          )
-        }),
-      ),
-      h.div([a.class("meridian-carousel-controls")], [
-        button.view(
-          [
-            a.disabled(count < 2),
-            event.on_click(on_change(next(active, count, -1))),
-          ],
-          [h.text("Previous slide")],
+      h.div([a.class("meridian-carousel-viewport")], [
+        h.div(
+          [a.class("meridian-carousel-slides")],
+          list.index_map(slides, fn(slide, index) {
+            h.div(
+              [
+                a.role("group"),
+                a.aria_label(
+                  int.to_string(index + 1) <> " of " <> int.to_string(count),
+                ),
+                a.attribute("aria-roledescription", "slide"),
+                a.hidden(index != active),
+                a.aria_hidden(index != active),
+                a.inert(index != active),
+              ],
+              [slide],
+            )
+          }),
         ),
+        navigation(
+          "Previous slide",
+          "previous",
+          icon.ChevronLeft,
+          count < 2,
+          on_change(next(active, count, -1)),
+        ),
+        navigation(
+          "Next slide",
+          "next",
+          icon.ChevronRight,
+          count < 2,
+          on_change(next(active, count, 1)),
+        ),
+      ]),
+      h.div([a.class("meridian-carousel-controls")], [
         h.span([a.role("status"), a.aria_atomic(True)], [
           h.text(case count {
             0 -> "No slides"
             _ -> int.to_string(active + 1) <> " of " <> int.to_string(count)
           }),
         ]),
-        button.view(
-          [
-            a.disabled(count < 2),
-            event.on_click(on_change(next(active, count, 1))),
-          ],
-          [h.text("Next slide")],
-        ),
       ]),
     ],
+  )
+}
+
+fn navigation(
+  label: String,
+  direction: String,
+  glyph: icon.Icon,
+  disabled: Bool,
+  on_click: msg,
+) -> Element(msg) {
+  button.icon(
+    [
+      a.class("meridian-carousel-step"),
+      a.data("direction", direction),
+      a.aria_label(label),
+      tooltip.hint(label),
+      a.disabled(disabled),
+      event.on_click(on_click),
+    ],
+    [icon.view(glyph, [])],
   )
 }

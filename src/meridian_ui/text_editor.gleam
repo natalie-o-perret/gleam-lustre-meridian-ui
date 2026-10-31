@@ -6,8 +6,11 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event
 import meridian_ui/button
+import meridian_ui/field
+import meridian_ui/icon
 import meridian_ui/orientation
 import meridian_ui/toolbar
+import meridian_ui/tooltip
 
 pub opaque type Document {
   Document(String)
@@ -31,6 +34,16 @@ pub fn to_html(document: Document) -> String {
   html(value)
 }
 
+pub fn parse_markdown(value: String) -> Result(Document, String) {
+  parse_markdown_json(value) |> result.map(Document)
+}
+
+/// CommonMark export rejects formatting it cannot preserve. Keep JSON for rich documents.
+pub fn to_markdown(document: Document) -> Result(String, String) {
+  let Document(value) = document
+  markdown(value)
+}
+
 /// The editor owns selection, composition and history. The caller stores canonical
 /// JSON documents. Imported JSON and pasted HTML are checked against its schema.
 pub fn view(
@@ -42,34 +55,51 @@ pub fn view(
   attrs: List(Attribute(msg)),
 ) -> Element(msg) {
   h.div([a.class("meridian-editor"), ..attrs], [
-    toolbar.view(
-      label <> " formatting",
-      orientation.Horizontal,
-      [],
-      list.map(
+    toolbar.view(label <> " formatting", orientation.Horizontal, [], [
+      field.input([
+        a.type_("color"),
+        a.class("meridian-colour"),
+        a.aria_label("Text colour"),
+        a.data("editor-colour", "true"),
+        a.default_value("#b41472"),
+        a.disabled(readonly),
+      ]),
+      button.icon(
         [
-          #("strong", "Bold"),
-          #("em", "Italic"),
-          #("underline", "Underline"),
-          #("strike", "Strike through"),
-          #("code", "Code"),
-          #("paragraph", "Paragraph"),
-          #("heading", "Heading"),
-          #("bullet", "Bullet list"),
-          #("ordered", "Numbered list"),
-          #("quote", "Quote"),
-          #("undo", "Undo"),
-          #("redo", "Redo"),
-          #("table", "Insert table"),
-          #("row", "Add row"),
-          #("column", "Add column"),
-          #("delete-table", "Delete table"),
+          toolbar.item(),
+          a.data("editor-command", "clear-colour"),
+          a.aria_label("Default text colour"),
+          tooltip.hint("Default text colour"),
+          a.disabled(readonly),
+        ],
+        [icon.view(icon.Palette, [])],
+      ),
+      ..list.map(
+        [
+          #("strong", "Bold", icon.Bold),
+          #("em", "Italic", icon.Italic),
+          #("underline", "Underline", icon.Underline),
+          #("strike", "Strike through", icon.Strikethrough),
+          #("code", "Code", icon.Code),
+          #("paragraph", "Paragraph", icon.Paragraph),
+          #("heading", "Heading", icon.Heading),
+          #("bullet", "Bullet list", icon.BulletList),
+          #("ordered", "Numbered list", icon.NumberedList),
+          #("quote", "Quote", icon.Quote),
+          #("undo", "Undo", icon.Undo),
+          #("redo", "Redo", icon.Redo),
+          #("table", "Insert table", icon.TableInsert),
+          #("row", "Add row", icon.RowAdd),
+          #("column", "Add column", icon.ColumnAdd),
+          #("delete-table", "Delete table", icon.TableDelete),
         ],
         fn(command) {
-          button.view(
+          button.icon(
             [
               toolbar.item(),
               a.data("editor-command", command.0),
+              a.aria_label(command.1),
+              tooltip.hint(command.1),
               a.disabled(readonly),
               case command.0 {
                 "strong" | "em" | "underline" | "strike" | "code" ->
@@ -77,11 +107,11 @@ pub fn view(
                 _ -> a.none()
               },
             ],
-            [h.text(command.1)],
+            [icon.view(command.2, [])],
           )
         },
-      ),
-    ),
+      )
+    ]),
     h.div(
       [
         a.id(id),
@@ -109,6 +139,12 @@ fn from_text(value: String) -> String
 
 @external(javascript, "./editor_ffi.mjs", "parse")
 fn parse_json(value: String) -> Result(String, String)
+
+@external(javascript, "./editor_ffi.mjs", "parseMarkdown")
+fn parse_markdown_json(value: String) -> Result(String, String)
+
+@external(javascript, "./editor_ffi.mjs", "markdown")
+fn markdown(value: String) -> Result(String, String)
 
 @external(javascript, "./editor_ffi.mjs", "html")
 fn html(value: String) -> String

@@ -45,6 +45,9 @@ pub fn collapsible(
 fn header(title: Element(msg), actions: List(Element(msg))) -> Element(msg) {
   h.header([a.class("meridian-panel-header")], [
     h.h2([a.class("meridian-panel-heading")], [title]),
-    h.div([a.class("meridian-panel-actions")], actions),
+    case actions {
+      [] -> element.none()
+      _ -> h.div([a.class("meridian-panel-actions")], actions)
+    },
   ])
 }
