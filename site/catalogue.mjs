@@ -10,6 +10,7 @@ import starterSource from "../examples/catalogue/src/getting_started.gleam";
 import { componentDocs } from "./component-docs.mjs";
 import { previewToasts } from "./preview-toasts.mjs";
 import { applyPalette, validColour } from "./palette.mjs";
+import { appearanceMenu } from "./appearance.mjs";
 import { mount } from "../examples/catalogue/build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
 import {
   next,
@@ -20,6 +21,7 @@ const repository =
   "https://github.com/natalie-o-perret/gleam-lustre-meridian-ui";
 const root = document.body;
 document.getElementById("github-icon").innerHTML = github_markup();
+const closeAppearance = appearanceMenu();
 const main = document.getElementById("main");
 const search = document.getElementById("component-search");
 const navigation = document.getElementById("component-navigation");
@@ -418,6 +420,9 @@ function component(entry) {
   frame.style.visibility = "hidden";
   frame.addEventListener("load", () => {
     if (!frame.isConnected) return;
+    frame.contentDocument.addEventListener("pointerdown", closeAppearance, {
+      capture: true,
+    });
     stopToasts();
     stopToasts = () => {};
     if (
@@ -434,6 +439,7 @@ function component(entry) {
 }
 
 function render(focus = false) {
+  closeAppearance();
   stopToasts();
   stopToasts = () => {};
   stopSource();

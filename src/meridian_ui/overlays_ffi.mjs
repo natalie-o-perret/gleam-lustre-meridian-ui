@@ -66,6 +66,8 @@ export function positionOverlay(popup, anchor, view) {
   const context = popup.dataset?.contextX !== undefined;
   if (!anchor && !context) return;
   const area = viewportBounds(view);
+  const scale = popup.getBoundingClientRect?.().width / popup.offsetWidth || 1;
+  for (const edge of ["left", "top", "right", "bottom"]) area[edge] /= scale;
   popup.style.setProperty(
     "--meridian-overlay-width",
     `${Math.max(0, area.right - area.left - 16)}px`,
@@ -74,12 +76,18 @@ export function positionOverlay(popup, anchor, view) {
     "--meridian-overlay-height",
     `${Math.max(0, area.bottom - area.top - 16)}px`,
   );
-  const bounds = context
+  const anchorBounds = context
     ? {
         left: Number(popup.dataset.contextX),
         top: Number(popup.dataset.contextY),
       }
     : anchor.getBoundingClientRect();
+  const bounds = {
+    left: anchorBounds.left / scale,
+    top: anchorBounds.top / scale,
+    right: anchorBounds.right / scale,
+    bottom: anchorBounds.bottom / scale,
+  };
   const width = popup.offsetWidth;
   const height = popup.offsetHeight;
   const below = area.bottom - bounds.bottom;

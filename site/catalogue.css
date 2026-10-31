@@ -62,6 +62,29 @@ body.docs {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
+.docs-palette-tools {
+  display: flex;
+}
+.docs-tools button[aria-expanded="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.docs-palette {
+  inline-size: 320px;
+  container-type: inline-size;
+}
+.docs-palette h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+.docs-palette .docs-colours {
+  margin-block-end: 0;
+}
+@container (max-width: 200px) {
+  .docs-palette .docs-colours {
+    grid-template-columns: 1fr;
+  }
+}
 .docs-github {
   display: inline-flex;
   align-items: center;
@@ -123,18 +146,18 @@ body.docs {
   color: var(--muted);
 }
 .docs-style {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 8px;
   margin-block-end: 16px;
   font-size: 11px;
   color: var(--muted);
 }
 .docs-style select {
-  flex: 1;
+  gap: 8px;
   min-inline-size: 0;
   padding: 6px 8px;
   font-size: 12px;
+  white-space: nowrap;
 }
 .docs-colours {
   display: grid;
@@ -167,9 +190,11 @@ body.docs {
   box-shadow: none;
 }
 .docs-colour-control code {
+  direction: ltr;
   color: var(--ink);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .docs-colour-control:focus-within {
   outline: 2px solid var(--accent);
@@ -556,7 +581,8 @@ body.docs {
   .docs-tools {
     gap: 6px;
   }
-  .docs-tools button {
+  .docs-tools > button,
+  .docs-palette-tools > button {
     min-block-size: 36px;
     padding: 6px 8px;
     font-size: 11px;
@@ -607,5 +633,10 @@ body.docs {
   .docs-properties-content,
   .docs-api-content {
     padding: 8px 12px;
+  }
+}
+@media (max-width: 400px) {
+  .docs-brand > span {
+    display: none;
   }
 }

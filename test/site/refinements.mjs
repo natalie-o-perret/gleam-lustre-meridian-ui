@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { expect } from "playwright/test";
 import { treeAppearance } from "./tree-appearance.mjs";
 import { editorChecks } from "./editor.mjs";
+import { appearanceChecks } from "./appearance.mjs";
 
 export async function refinements(page, open) {
   await editorChecks(page, open);
@@ -250,66 +251,7 @@ export async function refinements(page, open) {
   await expect(frame.locator(".meridian-compare-divider")).toHaveCount(0);
   await expect(control).toBeVisible();
 
-  frame = await open("codeblock");
-  const navigation = async (action) => {
-    const mobile = page.viewportSize().width <= 900;
-    if (mobile) await page.locator("#open-navigation").click();
-    await action();
-    if (mobile) await page.locator("#close-navigation").click();
-  };
-  await navigation(async () => {
-    await page.locator("#style").selectOption("square");
-  });
-  await expect(page.locator(".docs-source .meridian-tab").first()).toHaveCSS(
-    "border-top-left-radius",
-    "2px",
-  );
-  await navigation(async () => {
-    await page.locator("#primary-colour").click();
-    const popup = page.locator(".meridian-colour-popup");
-    await popup
-      .getByRole("textbox", { name: "Hex colour", exact: true })
-      .fill("#228b22");
-    await popup.getByRole("button", { name: "Apply", exact: true }).click();
-    await page.locator("#secondary-colour").click();
-    await popup
-      .getByRole("textbox", { name: "Hex colour", exact: true })
-      .fill("#663399");
-    await popup.getByRole("button", { name: "Apply", exact: true }).click();
-  });
-  await expect(page.locator("#primary-colour-value")).toHaveText("#228b22");
-  await expect(page.locator("#secondary-colour-value")).toHaveText("#663399");
-  for (const token of [
-    "--accent",
-    "--accent-soft",
-    "--on-accent",
-    "--secondary",
-    "--secondary-soft",
-  ])
-    await expect
-      .poll(() =>
-        frame
-          .locator("#demo-root")
-          .evaluate((node, token) => node.style.getPropertyValue(token), token),
-      )
-      .toBe(
-        await page
-          .locator("body")
-          .evaluate((node, token) => node.style.getPropertyValue(token), token),
-      );
-  await page.reload();
-  await expect(page.locator('iframe[data-ready="codeblock"]')).toBeVisible();
-  assert.deepEqual(
-    await page.evaluate(() => {
-      const saved = JSON.parse(localStorage.getItem("meridian-catalogue"));
-      return [saved.primary, saved.secondary];
-    }),
-    ["#228b22", "#663399"],
-  );
-  await navigation(async () => {
-    await page.locator("#reset-colours").click();
-    await page.locator("#style").selectOption("rounded");
-  });
+  await appearanceChecks(page, open);
   frame = await open("button");
   const buttonProperties = page.getByRole("form", {
     name: "Button preview properties",
