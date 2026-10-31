@@ -587,5 +587,8 @@ Prettier, listener lifecycle tests, reproducible engine bundles, catalogue cover
 and browser fixtures with WCAG checks. Browser tests serve only local static files.
 Use `BROWSER=chromium` or `SUITE=selection,data` to focus a local run.
 Use `npm run test:site:browser` after a site build to check the catalogue alone.
+Set `WIDTH=1440` or `WIDTH=320` to select one catalogue scenario. CI runs those
+scenarios in parallel. The mobile job also runs shared cache, fallback and
+viewport checks, once per browser.
 
 Business data, authorisation and persistence belong to the consuming application.

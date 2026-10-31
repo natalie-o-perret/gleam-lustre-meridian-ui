@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
 
+export function catalogueScenarios(width = "") {
+  const scenarios = [
+    { width: 1440, theme: "light", direction: "ltr", motion: "no-preference" },
+    { width: 320, theme: "dark", direction: "rtl", motion: "reduce" },
+  ].filter((scenario) => !width || String(scenario.width) === width);
+  assert.ok(scenarios.length, "Unknown catalogue width");
+  return scenarios;
+}
+
 export async function viewportChecks(browser, name, base) {
   await layoutChecks(browser, name, base);
   const sizes = [

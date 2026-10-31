@@ -45,13 +45,20 @@ jobs:
             build: gleam test
             script: test:browser
             suites: utilities,pro
-          - name: Catalogue
+          - name: Catalogue desktop
             build: npm run build:site
             script: test:site:browser
             suites: ""
+            width: 1440
+          - name: Catalogue mobile
+            build: npm run build:site
+            script: test:site:browser
+            suites: ""
+            width: 320
     env:
       BROWSER: ${{ matrix.browser }}
       SUITE: ${{ matrix.suite.suites }}
+      WIDTH: ${{ matrix.suite.width }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

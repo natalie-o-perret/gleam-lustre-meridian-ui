@@ -4,7 +4,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { chromium, firefox, webkit } from "playwright";
 import { expect } from "playwright/test";
 import { serve } from "../browser/server.mjs";
-import { viewportChecks } from "./viewport.mjs";
+import { catalogueScenarios, viewportChecks } from "./viewport.mjs";
 import { polishChecks } from "./polish.mjs";
 import { propertyChecks, propertyInteractions } from "./properties.mjs";
 import { feedbackChecks } from "./feedback.mjs";
@@ -22,10 +22,7 @@ assert.ok(
   browsers.every((name) => Object.hasOwn(engines, name)),
   "Unknown browser",
 );
-const scenarios = [
-  { width: 1440, theme: "light", direction: "ltr", motion: "no-preference" },
-  { width: 320, theme: "dark", direction: "rtl", motion: "reduce" },
-];
+const scenarios = catalogueScenarios(process.env.WIDTH);
 await mkdir("test-results", { recursive: true });
 const server = await serve("dist", "/gleam-lustre-meridian-ui/");
 const base = `${server.url}/gleam-lustre-meridian-ui/`;
@@ -997,8 +994,11 @@ try {
           await context.close();
         }
       }
-      await fallbackChecks(browser, name);
-      await viewportChecks(browser, name, base);
+      // Keep shared checks on the shorter mobile job without duplicating them.
+      if (scenarios.some((scenario) => scenario.width === 320)) {
+        await fallbackChecks(browser, name);
+        await viewportChecks(browser, name, base);
+      }
     } finally {
       await browser.close();
     }
