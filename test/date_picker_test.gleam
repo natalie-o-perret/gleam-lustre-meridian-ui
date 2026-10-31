@@ -23,6 +23,9 @@ pub fn date_and_time_variants_keep_native_attributes_and_shared_styling_test() {
         ])
         |> element.to_string
       html |> string.contains("meridian-date-input") |> should.be_true
+      html
+      |> string.contains("data-meridian-picker=\"" <> variant.0 <> "\"")
+      |> should.be_true
       html |> string.contains("type=\"" <> variant.0 <> "\"") |> should.be_true
       html |> string.contains("name=\"appointment\"") |> should.be_true
       html |> string.contains("required") |> should.be_true

@@ -93,6 +93,7 @@ export function mount(id, onSystemTheme, onDesktop) {
     attributeFilter: [
       "aria-selected",
       "hidden",
+      "inert",
       "disabled",
       "data-meridian-keys",
       "data-open",
@@ -107,6 +108,10 @@ export function mount(id, onSystemTheme, onDesktop) {
       "max",
       "step",
       "required",
+      "readonly",
+      "type",
+      "value",
+      "data-meridian-picker",
       "open",
     ],
   });

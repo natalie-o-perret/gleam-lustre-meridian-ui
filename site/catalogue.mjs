@@ -218,14 +218,14 @@ function overview() {
       <h1>Small components.<br />Room for ideas.</h1>
       <p class="docs-lead">Native foundations, Gleam types and a considered design. Explore every building block, try it live and take the source with you.</p>
       <div class="docs-hero-actions"><a class="button primary-button" href="#/components/button">Explore the components <span aria-hidden="true">→</span></a><a class="button" href="${repository}#use-it">Get started with Gleam</a></div>
-      <div class="docs-stats"><span><strong>93</strong> core entries</span><span><strong>4</strong> advanced widgets</span><span><strong>4</strong> utilities and additions</span></div>
+      <div class="docs-stats"><span><strong>95</strong> core entries</span><span><strong>4</strong> advanced widgets</span><span><strong>2</strong> utilities and additions</span></div>
     </section>
     <section class="docs-intro" aria-labelledby="catalogue-heading">
       <div><p class="eyebrow">A place for everything</p><h2 id="catalogue-heading">Find your building block</h2></div>
       <p class="muted">Every entry includes a live preview and the Gleam code that renders it. Switch the theme or direction at any time.</p>
     </section>
     <div id="category-grid" class="docs-category-grid"></div>
-    <section class="panel docs-note"><h2>Native by design</h2><p>Meridian builds on browser semantics, with shared styling, keyboard access and application-owned state. Native popup interiors follow your browser and OS. Optional engines are bundled locally and loaded with their examples.</p><a href="${repository}/blob/main/COMPONENTS.md">Read the component guide <span aria-hidden="true">↗</span></a></section>`;
+    <section class="panel docs-note"><h2>Native by design</h2><p>Meridian builds on browser semantics, with shared styling, keyboard access and application-owned state. Date and time pickers pair native inputs with themed dialogs. Optional engines are bundled locally and loaded with their examples.</p><a href="${repository}/blob/main/COMPONENTS.md">Read the component guide <span aria-hidden="true">↗</span></a></section>`;
   const grid = document.getElementById("category-grid");
   for (const group of groups()) {
     const members = entries.filter((entry) => entry.group === group);
@@ -288,7 +288,8 @@ function component(entry) {
   const frame = document.createElement("iframe");
   frame.title = `${entry.name} interactive example`;
   frame.src = previewURL(entry);
-  frame.style.height = "360px";
+  frame.style.height = "340px";
+  frame.style.visibility = "hidden";
   document.getElementById("preview-container").append(frame);
   stopSource = start_source("source-demo", entry.snippet, entry.family);
 }
@@ -329,13 +330,22 @@ addEventListener("message", (event) => {
   )
     frame.style.height = `${Math.min(1100, Math.max(340, event.data.height))}px`;
   if (event.data.type === "meridian-ready") {
+    if (event.data.theme !== theme || event.data.direction !== direction) {
+      settings();
+      return;
+    }
+    if (!Number.isFinite(event.data.height)) return;
+    frame.style.height = `${Math.min(1100, Math.max(340, event.data.height))}px`;
     frame.dataset.ready = current.id;
+    frame.style.visibility = "visible";
     document.getElementById("preview-status").textContent = "Preview ready.";
-    settings();
   }
-  if (event.data.type === "meridian-error")
-    document.getElementById("preview-status").textContent =
+  if (event.data.type === "meridian-error") {
+    const status = document.getElementById("preview-status");
+    status.classList.remove("sr-only");
+    status.textContent =
       "The preview could not be loaded. Try opening it in a new tab.";
+  }
 });
 settings();
 const stopInteractions = mount(

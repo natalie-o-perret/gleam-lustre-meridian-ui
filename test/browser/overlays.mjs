@@ -15,6 +15,15 @@ export async function overlays(page, scenario) {
   });
   await expect(input).toBeFocused();
   await input.fill("Retained é <项目>");
+  const date = modal.getByLabel("Project date", { exact: true });
+  await date.click();
+  const calendar = modal.locator(".meridian-picker-popup");
+  await expect(calendar).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(calendar).toHaveCount(0);
+  await expect(modal).toBeVisible();
+  await expect(date).toBeFocused();
+  await input.focus();
   await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
   await page.keyboard.press("Shift+Tab");
   assert.equal(

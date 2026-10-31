@@ -3,6 +3,7 @@ import gleam/list
 import lustre/attribute.{type Attribute} as a
 import lustre/element.{type Element}
 import lustre/element/html as h
+import lustre/element/svg
 import lustre/event
 import meridian_ui/button
 import meridian_ui/fieldset
@@ -51,7 +52,7 @@ pub fn view(
                 a.required(required),
                 event.on_check(fn(_) { on_change(score) }),
               ]),
-              h.span([a.aria_hidden(True)], [h.text("★")]),
+              star(),
             ],
           )
         }),
@@ -97,8 +98,37 @@ pub fn display(
             False -> "false"
           }),
         ],
-        [h.text("★")],
+        [star()],
       )
     }),
+  )
+}
+
+fn star() -> Element(msg) {
+  svg.svg(
+    [
+      a.class("meridian-rating-star"),
+      a.aria_hidden(True),
+      a.attribute("focusable", "false"),
+      a.attribute("viewBox", "0 0 24 24"),
+    ],
+    [
+      svg.path([
+        a.attribute(
+          "d",
+          "m12 2.5 2.9 6 6.6 1-4.8 4.6 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6L2.5 9.5l6.6-1Z",
+        ),
+        a.attribute("fill", "currentColor"),
+        a.attribute("stroke", "currentColor"),
+        a.attribute("stroke-width", "1.6"),
+        a.attribute("stroke-linejoin", "round"),
+      ]),
+      svg.path([
+        a.class("meridian-rating-eyes"),
+        a.attribute("d", "M9.5 10.5v2m5-2v2"),
+        a.attribute("stroke-width", "1.8"),
+        a.attribute("stroke-linecap", "round"),
+      ]),
+    ],
   )
 }

@@ -196,6 +196,8 @@ pub fn password_visibility_preserves_identity_values_and_button_relationship_tes
     |> string.contains("autocomplete=\"current-password\"")
     |> should.be_true
     html |> string.contains("type=\"button\"") |> should.be_true
+    html |> string.contains("<svg") |> should.be_true
+    html |> string.contains("aria-hidden=\"true\"") |> should.be_true
   })
 }
 

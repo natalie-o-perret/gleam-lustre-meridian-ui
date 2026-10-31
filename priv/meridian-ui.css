@@ -350,6 +350,12 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
   }
+  .meridian-date-input[data-meridian-picker-ready="true"]:not(
+      :disabled,
+      [readonly]
+    ) {
+    cursor: pointer;
+  }
   .meridian-date-input::-webkit-calendar-picker-indicator {
     margin-inline-start: 10px;
     padding: 6px;
@@ -439,9 +445,19 @@
     inset-inline-start: 12px;
     inset-block-start: 50%;
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 20px;
+    block-size: 20px;
+    font-size: 20px;
+    line-height: 1;
     color: var(--muted);
     pointer-events: none;
     transform: translateY(-50%);
+  }
+  .meridian-field-icon > svg {
+    inline-size: 100%;
+    block-size: 100%;
   }
   .meridian-icon-field-end > :is(input, textarea) {
     padding-inline-start: 12px;
@@ -650,7 +666,7 @@
     gap: 12px;
     inline-size: 100%;
     min-inline-size: 0;
-    padding: 4px;
+    padding: 8px 12px;
     border: 0;
     color: inherit;
     background: transparent;
@@ -908,9 +924,115 @@
     min-inline-size: 0;
   }
   .meridian-dialog-content {
+    display: grid;
+    gap: 16px;
     min-block-size: 0;
     overflow: auto;
     padding: 16px;
+  }
+  .meridian-popover.meridian-picker-popup {
+    inline-size: 22rem;
+    max-inline-size: calc(100vw - 16px);
+    padding: 12px;
+  }
+  .meridian-picker-popup::backdrop {
+    background: transparent;
+  }
+  .meridian-picker-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-block-end: 12px;
+  }
+  .meridian-picker-header > button:not(.meridian-picker-title) {
+    inline-size: 38px;
+    min-block-size: 38px;
+    padding: 4px;
+    font-size: 24px;
+  }
+  .meridian-picker-title {
+    flex: 1;
+    min-inline-size: 0;
+    border: 0;
+    background: transparent;
+    text-align: center;
+    font-weight: 700;
+  }
+  .meridian-picker-calendar {
+    inline-size: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+  .meridian-picker-calendar :is(th, td) {
+    padding: 2px;
+    text-align: center;
+  }
+  .meridian-picker-calendar th {
+    block-size: 30px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .meridian-picker-calendar button {
+    inline-size: 100%;
+    min-block-size: 36px;
+    padding: 4px;
+    border-color: transparent;
+    font-variant-numeric: tabular-nums;
+  }
+  .meridian-picker-calendar [data-outside="true"] {
+    color: var(--muted);
+  }
+  .meridian-picker-popup [aria-disabled="true"] {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .meridian-picker-calendar [aria-current="date"] {
+    border-color: var(--accent);
+  }
+  .meridian-picker-calendar [aria-selected="true"] > button,
+  .meridian-picker-months [aria-pressed="true"] {
+    color: var(--on-accent);
+    background: var(--accent);
+  }
+  .meridian-picker-months {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .meridian-picker-time {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr));
+    gap: 12px;
+    margin-block-start: 12px;
+    padding: 12px;
+  }
+  .meridian-picker-time .input {
+    inline-size: 100%;
+    padding-inline: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .meridian-picker-status {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .meridian-picker-status:not(:empty) {
+    margin-block-start: 8px;
+  }
+  .meridian-picker-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-block-start: 12px;
+  }
+  .meridian-picker-actions > :first-child {
+    margin-inline-end: auto;
+  }
+  .meridian-dialog-content > button {
+    justify-self: start;
+  }
+  .meridian-dialog-content > .meridian-overlay-actions {
+    margin-block-start: 0;
   }
   .meridian-overlay-actions {
     display: flex;
@@ -1025,9 +1147,17 @@
     font-size: 1.75rem;
     color: var(--muted);
   }
+  .meridian-rating-star {
+    inline-size: 30px;
+    block-size: 30px;
+    vertical-align: middle;
+  }
+  .meridian-rating-eyes {
+    stroke: var(--panel);
+  }
   .meridian-rating [data-filled="true"],
   .meridian-rating-display [data-filled="true"] {
-    color: var(--amber);
+    color: var(--accent);
   }
   .meridian-rating-choice:has(> input:disabled) {
     cursor: default;
@@ -1183,16 +1313,6 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
-  }
-  @keyframes meridian-ripple {
-    from {
-      transform: scale(0);
-      opacity: 0.16;
-    }
-    to {
-      transform: scale(1);
-      opacity: 0;
-    }
   }
   .meridian-ripple-effect {
     position: absolute;
@@ -1708,6 +1828,16 @@
   .meridian-carousel {
     min-inline-size: 0;
   }
+  .meridian-carousel-slides {
+    touch-action: pan-y pinch-zoom;
+    cursor: grab;
+    overflow: clip;
+    overflow-clip-margin: 4px;
+  }
+  .meridian-carousel-slides[data-dragging] {
+    cursor: grabbing;
+    user-select: none;
+  }
   .meridian-carousel-controls {
     display: flex;
     flex-wrap: wrap;
@@ -1969,6 +2099,9 @@
     border-block-start: 1px solid currentColor;
   }
   .meridian-code-block {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 16px;
     min-inline-size: 0;
     max-inline-size: 100%;
     max-block-size: 36rem;
@@ -1987,6 +2120,16 @@
     tab-size: 2;
     white-space: pre;
     overflow-wrap: normal;
+  }
+  .meridian-code-gutter {
+    padding-inline-end: 12px;
+    border-inline-end: 1px solid var(--border);
+    color: var(--muted);
+    text-align: end;
+    user-select: none;
+  }
+  .meridian-code-gutter::before {
+    content: attr(data-line-numbers);
   }
   .meridian-code-keyword,
   .meridian-code-annotation {
@@ -2776,6 +2919,17 @@
 }
 @keyframes meridian-fade-in {
   from {
+    opacity: 0;
+  }
+}
+
+@keyframes meridian-ripple {
+  from {
+    transform: scale(0);
+    opacity: 0.16;
+  }
+  to {
+    transform: scale(1);
     opacity: 0;
   }
 }

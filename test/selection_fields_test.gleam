@@ -95,6 +95,10 @@ pub fn rating_uses_named_native_radios_and_optional_clear_without_fake_slider_ro
   html |> string.contains("aria-label=\"5 stars\"") |> should.be_true
   html |> string.split(" checked") |> list.length |> should.equal(2)
   html |> string.contains("Clear rating") |> should.be_true
+  html
+  |> string.split("class=\"meridian-rating-star\"")
+  |> list.length
+  |> should.equal(6)
   rating.display("Read-only rating", 20, 5, [])
   |> element.to_string
   |> string.contains("Read-only rating: 5 of 5")

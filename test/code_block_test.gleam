@@ -16,6 +16,9 @@ pub fn code_is_labelled_keyboard_scrollable_and_ltr_test() {
   html |> string.contains("meridian-code-keyword") |> should.be_true
   html |> string.contains("meridian-code-function") |> should.be_true
   html |> string.contains("meridian-code-type") |> should.be_true
+  html |> string.contains("meridian-code-gutter") |> should.be_true
+  html |> string.contains("aria-hidden=\"true\"") |> should.be_true
+  html |> string.contains("data-line-numbers=\"1\"") |> should.be_true
 }
 
 pub fn source_is_text_not_markup_test() {

@@ -5,6 +5,7 @@ import lustre/element.{type Element}
 import lustre/element/html as h
 import lustre/event as e
 import meridian_ui/button
+import meridian_ui/date_picker
 import meridian_ui/field
 import meridian_ui/password
 import meridian_ui/radio
@@ -342,6 +343,46 @@ fn form(prefix: String, model: FormState) -> Element(FormMsg) {
           e.on_input(SetPassword),
         ],
       ),
+      h.label([], [
+        h.span([], [h.text("Appointment date")]),
+        date_picker.view([
+          a.name("date"),
+          a.default_value("2024-02-28"),
+          a.min("2024-02-27"),
+          a.max("2024-03-03"),
+          a.required(True),
+        ]),
+      ]),
+      h.label([], [
+        h.span([], [h.text("Appointment month")]),
+        date_picker.month([
+          a.name("month"),
+          a.default_value("2024-02"),
+          a.min("2024-02"),
+          a.max("2024-08"),
+          a.step("2"),
+        ]),
+      ]),
+      h.label([], [
+        h.span([], [h.text("Appointment time")]),
+        date_picker.time([
+          a.name("time"),
+          a.default_value("10:15"),
+          a.min("09:00"),
+          a.max("17:00"),
+          a.step("900"),
+        ]),
+      ]),
+      h.label([], [
+        h.span([], [h.text("Appointment date and time")]),
+        date_picker.date_time([
+          a.name("date-time"),
+          a.default_value("2024-02-29T10:15"),
+          a.min("2024-02-28T09:00"),
+          a.max("2024-03-02T17:00"),
+          a.step("900"),
+        ]),
+      ]),
       h.div([a.class("fixture-row")], [
         button.view([e.on_click(ToggleLock)], [
           h.text(case model.locked {

@@ -17,9 +17,14 @@ pub fn update(value: #(String, String), action: Action) -> #(String, String) {
   }
 }
 
-/// Values stay native ISO date strings. The browser owns locale display and its calendar.
+/// Native ISO values and validation, with a Meridian calendar when interactions are mounted.
 pub fn view(attrs: List(Attribute(msg))) -> Element(msg) {
-  field.input([a.type_("date"), a.class("meridian-date-input"), ..attrs])
+  field.input([
+    a.type_("date"),
+    a.class("meridian-date-input"),
+    a.data("meridian-picker", "date"),
+    ..attrs
+  ])
 }
 
 /// Zone-less local date/time, not an instant. The application chooses the time zone.
@@ -27,16 +32,27 @@ pub fn date_time(attrs: List(Attribute(msg))) -> Element(msg) {
   field.input([
     a.type_("datetime-local"),
     a.class("meridian-date-input"),
+    a.data("meridian-picker", "datetime-local"),
     ..attrs
   ])
 }
 
 pub fn time(attrs: List(Attribute(msg))) -> Element(msg) {
-  field.input([a.type_("time"), a.class("meridian-date-input"), ..attrs])
+  field.input([
+    a.type_("time"),
+    a.class("meridian-date-input"),
+    a.data("meridian-picker", "time"),
+    ..attrs
+  ])
 }
 
 pub fn month(attrs: List(Attribute(msg))) -> Element(msg) {
-  field.input([a.type_("month"), a.class("meridian-date-input"), ..attrs])
+  field.input([
+    a.type_("month"),
+    a.class("meridian-date-input"),
+    a.data("meridian-picker", "month"),
+    ..attrs
+  ])
 }
 
 pub fn range(

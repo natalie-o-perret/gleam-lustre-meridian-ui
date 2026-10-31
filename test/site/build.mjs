@@ -36,6 +36,8 @@ test("the built catalogue has one compiled live example and exact source for all
   );
   for (const id of ["codeblock", "timepicker", "datetimepicker"])
     assert.ok(entries.some((entry) => entry.id === id));
+  for (const id of ["datepicker", "timepicker", "datetimepicker"])
+    assert.equal(entries.find((entry) => entry.id === id).group, "Form");
 });
 
 test("Pages output contains only distributable assets, local art and dependency notices", async () => {

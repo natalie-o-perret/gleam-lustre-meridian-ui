@@ -72,9 +72,21 @@ async function setTheme(page, preference) {
   await expect(control).toHaveAttribute("data-preference", preference);
 }
 
-async function pasteCode(page, source) {
-  await page.getByRole("button", { name: "Copy code", exact: true }).click();
-  await expect(page.locator("#copy-status")).toHaveText("Copied.");
+async function pasteCode(page, source, selection = false) {
+  if (selection) {
+    const block = page.locator(".meridian-code-block:visible").first();
+    await block.focus();
+    await block.evaluate((node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+    });
+    await page.keyboard.press("ControlOrMeta+c");
+  } else {
+    await page.getByRole("button", { name: "Copy code", exact: true }).click();
+    await expect(page.locator("#copy-status")).toHaveText("Copied.");
+  }
   await page.evaluate(() => {
     const input = document.createElement("textarea");
     input.id = "clipboard-probe";
@@ -103,6 +115,15 @@ async function interactions(page) {
   );
 
   await pasteCode(page, entries.find((entry) => entry.id === "button").snippet);
+  await expect(page.locator(".meridian-code-gutter:visible")).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  await pasteCode(
+    page,
+    entries.find((entry) => entry.id === "button").snippet,
+    true,
+  );
   await page.getByRole("tab", { name: "Full module", exact: true }).click();
   await expect(page.locator("#module-code")).toContainText("fn update(");
   await pasteCode(page, await readFile("dist/source/feedback.gleam", "utf8"));
@@ -199,6 +220,14 @@ async function interactions(page) {
 
   frame = await open(page, "datepicker");
   await frame.getByLabel("Single date", { exact: true }).fill("2026-11-07");
+  await frame.getByLabel("Single date", { exact: true }).click();
+  await expect(frame.locator(".meridian-picker-popup")).toBeVisible();
+  await accessible(frame, "Themed date popup");
+  await frame.locator('[data-date="2026-11-09"]').click();
+  await expect(frame.getByLabel("Single date", { exact: true })).toHaveValue(
+    "2026-11-09",
+  );
+  await frame.getByLabel("Single date", { exact: true }).fill("2026-11-07");
   await frame.getByLabel("Start date", { exact: true }).fill("2026-11-08");
   await frame.getByLabel("End date", { exact: true }).fill("2026-11-12");
   await expect(frame.getByLabel("Start date", { exact: true })).toHaveAttribute(
@@ -244,6 +273,18 @@ async function interactions(page) {
   await frame
     .getByLabel("Meeting time (09:00-17:00)", { exact: true })
     .fill("10:15");
+  await frame.getByLabel("Meeting time (09:00-17:00)", { exact: true }).click();
+  await accessible(frame, "Themed time popup");
+  await frame
+    .getByRole("spinbutton", { name: "Hours", exact: true })
+    .fill("11");
+  await frame.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(
+    frame.getByLabel("Meeting time (09:00-17:00)", { exact: true }),
+  ).toHaveValue("11:15");
+  await frame
+    .getByLabel("Meeting time (09:00-17:00)", { exact: true })
+    .fill("10:15");
   assert.equal(
     await frame
       .locator("form")
@@ -261,6 +302,11 @@ async function interactions(page) {
   await frame
     .getByLabel("Meeting date and time", { exact: true })
     .fill("2026-11-06T10:15");
+  await frame.getByLabel("Meeting date and time", { exact: true }).click();
+  await accessible(frame, "Themed date and time popup");
+  await frame
+    .getByRole("button", { name: "Close picker", exact: true })
+    .click();
   assert.equal(
     await frame
       .locator("form")
@@ -292,11 +338,30 @@ async function interactions(page) {
   await expect(
     frame.getByRole("dialog", { name: "Edit project", exact: true }),
   ).toBeVisible();
+  const spacing = await frame
+    .locator(".meridian-dialog-content")
+    .evaluate((node) => {
+      const [field, action] = [...node.children].map((child) =>
+        child.getBoundingClientRect(),
+      );
+      return action.top - field.bottom;
+    });
+  assert.ok(spacing >= 16, "Dialog fields and actions need a gap");
   await frame
     .getByRole("textbox", { name: "Project name", exact: true })
     .press("Escape");
   await expect(frame.getByRole("dialog")).not.toBeVisible();
   await expect(launch).toBeFocused();
+
+  frame = await open(page, "iconfield");
+  await expect(frame.locator(".meridian-field-icon > svg")).toHaveCSS(
+    "width",
+    "20px",
+  );
+  await expect(frame.locator(".meridian-field-icon > svg")).toHaveCSS(
+    "height",
+    "20px",
+  );
 
   frame = await open(page, "commandmenu");
   await frame
@@ -400,7 +465,28 @@ async function fallbackChecks(browser, name) {
   });
   try {
     await page.goto(base);
-    await open(page, "button");
+    let releasePreview;
+    const pendingPreview = new Promise((resolve) => {
+      releasePreview = resolve;
+    });
+    await page.route(
+      /preview\.html\?component=button&/,
+      async (route) => {
+        await pendingPreview;
+        await route.continue();
+      },
+      { times: 1 },
+    );
+    const loaded = open(page, "button");
+    await page.locator("iframe").waitFor({ state: "attached" });
+    await expect(page.locator("iframe")).toHaveCSS("visibility", "hidden");
+    await setTheme(page, "dark");
+    releasePreview();
+    const firstFrame = await loaded;
+    await expect(firstFrame.locator("#demo-root")).toHaveAttribute(
+      "data-theme",
+      "dark",
+    );
     await page.getByRole("tab", { name: "Full module", exact: true }).click();
     await expect(
       page.getByRole("tabpanel", { name: "Full module", exact: true }),
@@ -457,9 +543,23 @@ async function fallbackChecks(browser, name) {
     );
     await setTheme(page, "dark");
     await expect(page.locator("body")).toHaveAttribute("data-theme", "dark");
+    await open(page, "button");
+    await page.route(
+      "**/assets/examples/forms.js",
+      (route) => route.fulfill({ status: 503, body: "Unavailable" }),
+      { times: 1 },
+    );
+    await page.evaluate(() => {
+      location.hash = "#/components/datepicker";
+    });
+    await expect(page.locator("#preview-status")).toBeVisible();
+    await expect(page.locator("#preview-status")).toContainText(
+      "The preview could not be loaded.",
+    );
+    await expect(page.locator("iframe")).toHaveCSS("visibility", "hidden");
     assert.deepEqual(errors, []);
     console.log(
-      `${name}: source failure, pending-source disposal and blocked-storage checks PASS`,
+      `${name}: preview readiness/failure, source failure, pending-source disposal and blocked-storage checks PASS`,
     );
   } finally {
     release();
@@ -536,6 +636,26 @@ try {
             name: "Form",
             exact: true,
           });
+          assert.ok(
+            await formGroup.evaluate((node) => {
+              const group = node.closest(".docs-nav-group");
+              const heading = node.getBoundingClientRect();
+              const list = group.querySelector("ul").getBoundingClientRect();
+              const icon = node
+                .querySelector(".meridian-disclosure-icon")
+                .getBoundingClientRect();
+              return getComputedStyle(node).direction === "rtl"
+                ? heading.right - list.right >= 20 &&
+                    heading.right - icon.right >= 10
+                : list.left - heading.left >= 20 &&
+                    icon.left - heading.left >= 10;
+            }),
+            "Navigation entries must be nested and chevrons inset",
+          );
+          await expect(page.locator("#direction")).toHaveCSS(
+            "align-items",
+            "center",
+          );
           await formGroup.click();
           await expect(page.locator("#navigation-form-content")).toBeHidden();
           await page

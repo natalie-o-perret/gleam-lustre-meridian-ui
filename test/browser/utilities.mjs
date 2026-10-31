@@ -1,6 +1,35 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
 
+async function swipe(page, carousel, rtl) {
+  const slides = carousel.locator(".meridian-carousel-slides");
+  await slides.scrollIntoViewIfNeeded();
+  const bounds = await slides.boundingBox();
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 2;
+  const distance = Math.min(120, bounds.width * 0.4) * (rtl ? 1 : -1);
+  await slides.locator(":scope > :not([hidden])").evaluate((node) => {
+    // Touch starts with implicit capture on the child before the surface takes it.
+    node.addEventListener(
+      "pointerdown",
+      (event) => node.setPointerCapture(event.pointerId),
+      { once: true },
+    );
+  });
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + distance, y, { steps: 12 });
+  await expect(slides).toHaveAttribute("data-dragging", "true");
+  await page.mouse.up();
+  await expect(slides).not.toHaveAttribute("data-dragging");
+  assert.equal(
+    await slides
+      .locator(":scope > :not([hidden])")
+      .evaluate((node) => node.style.translate),
+    "",
+  );
+}
+
 export async function utilities(page, scenario) {
   await page.waitForFunction(() => window.meridianReady);
   const start = page.getByRole("button", {
@@ -83,7 +112,18 @@ export async function utilities(page, scenario) {
   await ripple.click();
   if (scenario.motion === "reduce")
     await expect(page.locator(".meridian-ripple-effect")).toHaveCount(0);
-  else await expect(page.locator(".meridian-ripple-effect")).toHaveCount(1);
+  else {
+    const effect = page.locator(".meridian-ripple-effect");
+    await expect(effect).toHaveCount(1);
+    assert.equal(
+      await effect.evaluate((node) =>
+        node
+          .getAnimations()
+          .some((animation) => animation.animationName === "meridian-ripple"),
+      ),
+      true,
+    );
+  }
   const terminal = page.getByRole("textbox", { name: "Command", exact: true });
   await terminal.pressSequentially("<script>literal</script>");
   await terminal.press("Enter");
@@ -117,6 +157,69 @@ export async function utilities(page, scenario) {
   await expect(
     carousel.getByText("Second highlight", { exact: true }),
   ).toBeVisible();
+  await swipe(page, carousel, scenario.direction === "rtl");
+  await expect(carousel.getByRole("status")).toHaveText("1 of 2");
+  const slides = carousel.locator(".meridian-carousel-slides");
+  await slides.dispatchEvent("pointerdown", {
+    pointerId: 21,
+    isPrimary: true,
+    button: 0,
+    clientX: 100,
+    clientY: 100,
+    pointerType: "touch",
+  });
+  await slides.dispatchEvent("pointermove", {
+    pointerId: 21,
+    clientX: 102,
+    clientY: 160,
+    pointerType: "touch",
+  });
+  await slides.dispatchEvent("pointerup", {
+    pointerId: 21,
+    clientX: 200,
+    clientY: 160,
+    pointerType: "touch",
+  });
+  await expect(carousel.getByRole("status")).toHaveText("1 of 2");
+  await slides.dispatchEvent("pointerdown", {
+    pointerId: 22,
+    isPrimary: true,
+    button: 0,
+    clientX: 100,
+    clientY: 100,
+    pointerType: "touch",
+  });
+  await slides.dispatchEvent("pointercancel", {
+    pointerId: 22,
+    pointerType: "touch",
+  });
+  await slides.dispatchEvent("pointerup", {
+    pointerId: 22,
+    clientX: 220,
+    clientY: 100,
+    pointerType: "touch",
+  });
+  await expect(carousel.getByRole("status")).toHaveText("1 of 2");
+  const action = carousel.getByRole("button", {
+    name: "Slide action",
+    exact: true,
+  });
+  await action.scrollIntoViewIfNeeded();
+  const actionBounds = await action.boundingBox();
+  const actionX = actionBounds.x + actionBounds.width / 2;
+  const actionY = actionBounds.y + actionBounds.height / 2;
+  await page.mouse.move(actionX, actionY);
+  await page.mouse.down();
+  await page.mouse.move(actionX + 100, actionY, { steps: 10 });
+  await expect(slides).not.toHaveAttribute("data-dragging");
+  await page.mouse.up();
+  await expect(carousel.getByRole("status")).toHaveText("1 of 2");
+  await expect(slides).toHaveCSS("touch-action", "pan-y pinch-zoom");
+  const gallery = page
+    .getByRole("region", { name: "Team gallery", exact: true })
+    .filter({ visible: true });
+  await swipe(page, gallery, scenario.direction === "rtl");
+  await expect(gallery.getByRole("status")).toHaveText("2 of 2");
   await page
     .getByRole("button", { name: "Open full-size preview", exact: true })
     .click();
@@ -125,6 +228,12 @@ export async function utilities(page, scenario) {
     exact: true,
   });
   await expect(preview).toBeVisible();
+  await swipe(
+    page,
+    preview.getByRole("region", { name: "Team gallery", exact: true }),
+    scenario.direction === "rtl",
+  );
+  await expect(preview.getByRole("status")).toHaveText("1 of 2");
   await page.keyboard.press("Escape");
   await expect(preview).toBeHidden();
   const comparison = page.getByRole("slider", { name: /Image comparison/ });

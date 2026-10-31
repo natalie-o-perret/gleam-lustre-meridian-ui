@@ -61,11 +61,11 @@ for (const line of ledger.split("\n")) {
     description: coverage.replace(/^`[^`]+`, /, "").replaceAll("`", ""),
   });
 }
-assert.equal(entries.filter((entry) => entry.section === "Core").length, 93);
+assert.equal(entries.filter((entry) => entry.section === "Core").length, 95);
 assert.equal(entries.filter((entry) => entry.group === "Advanced").length, 4);
 assert.equal(
   entries.filter((entry) => entry.section === "Additional controls").length,
-  3,
+  1,
 );
 assert.equal(
   entries.filter((entry) => entry.section === "Utilities").length,

@@ -21,6 +21,13 @@ const keywords = new Set([
 const pattern =
   /\/\/[^\r\n]*|"(?:\\[\s\S]|[^"\\])*"?|@[\p{L}_][\p{L}\p{N}_]*|0[xX][\da-fA-F_]+|0[bB][01_]+|0[oO][0-7_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d[\d_]*)?|[\p{L}_][\p{L}\p{M}\p{N}_]*/gu;
 
+export function lineNumbers(source) {
+  return source
+    .split(/\r\n|\r|\n/)
+    .map((_, index) => index + 1)
+    .join("\n");
+}
+
 export function tokens(source) {
   const result = [];
   let offset = 0;

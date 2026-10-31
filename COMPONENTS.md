@@ -7,45 +7,47 @@ defaults apply in an application and in the [live catalogue](https://natalie-o-p
 - **Base**: a Meridian component with the behaviour described below.
 - **Platform**: an existing HTML or Lustre feature, demonstrated without a wrapper.
 
-The catalogue contains **93 core entries**, **four advanced widgets**, FilterService
-and **three additional controls**. The examples are compiled against the library.
+The catalogue contains **95 core entries**, **four advanced widgets**, FilterService
+and CodeBlock. The examples are compiled against the library.
 Applications own business data, persistence, authorisation, formatting policies and
 server-side validation. Optional engines are bundled locally, not loaded from a CDN.
 
 ## Core
 
-### Form (28)
+### Form (30)
 
-| Component                                             | Status   | Meridian coverage                                                                                                             |
-| ----------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| [AutoComplete](src/meridian_ui/autocomplete.gleam)    | Base     | `meridian_ui/autocomplete`, native suggestions, keyboard behaviour and caller-updated async results                           |
-| [CascadeSelect](src/meridian_ui/cascade_select.gleam) | Base     | `meridian_ui/cascade_select`, validated hierarchies, independent level actions and enabled-leaf form values                   |
-| [Checkbox](src/meridian_ui/checkbox.gleam)            | Base     | `meridian_ui/checkbox`, native checked, indeterminate and disabled state                                                      |
-| [DatePicker](src/meridian_ui/date_picker.gleam)       | Base     | `meridian_ui/date_picker`, single dates, months and constrained start/end ranges, with native locale display and validation   |
-| [FloatLabel](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, floating native labels with explicit control IDs                                                         |
-| [IconField](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, leading and trailing decorative icons                                                                    |
-| [IftaLabel](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, permanent inset labels                                                                                   |
-| [InputColor](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, native colour picker and form values                                                                     |
-| [InputGroup](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, joined inputs, addons and native action buttons                                                          |
-| [InputMask](src/meridian_ui/input_mask.gleam)         | Base     | `meridian_ui/input_mask`, optional IMask editing engine, masked/raw values, paste and composition                             |
-| [InputNumber](src/meridian_ui/field.gleam)            | Base     | `meridian_ui/field`, native numeric strings, bounds, steps and validity. Applications own currency formatting                 |
-| [InputOtp](src/meridian_ui/input_otp.gleam)           | Base     | `meridian_ui/input_otp`, string entry, leading zeroes, exact constraints, paste and autofill                                  |
-| [InputPassword](src/meridian_ui/password.gleam)       | Base     | `meridian_ui/password`, controlled reveal, retained input, constraints and disabled state. Applications own strength policies |
-| [InputTags](src/meridian_ui/input_tags.gleam)         | Base     | `meridian_ui/input_tags`, deduplicated tokens, draft submission, keyboard removal and latest-model actions                    |
-| [InputText](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, native labelled input attributes                                                                         |
-| [KeyFilter](src/meridian_ui/key_filter.gleam)         | Base     | `meridian_ui/key_filter`, Unicode-aware native validation without deleting paste or composition                               |
-| [Knob](src/meridian_ui/knob.gleam)                    | Base     | `meridian_ui/knob`, pointer dial, native range keyboard/form behaviour and forced-colour fallback                             |
-| [Label](examples/catalogue/src/catalogue/forms.gleam) | Platform | Native Lustre HTML labels and for attributes                                                                                  |
-| [Listbox](src/meridian_ui/listbox.gleam)              | Base     | `meridian_ui/listbox`, native single/multiple selection, disabled options, constraints and repeated form values               |
-| [RadioButton](src/meridian_ui/radio.gleam)            | Base     | `meridian_ui/radio`, labelled native groups, values and keyboard behaviour                                                    |
-| [Rating](src/meridian_ui/rating.gleam)                | Base     | `meridian_ui/rating`, named native radios, RTL keyboard navigation, optional clear and read-only display                      |
-| [Select](src/meridian_ui/select.gleam)                | Base     | `meridian_ui/select`, searchable native picker with keyed options and retained filtered selection                             |
-| [SelectButton](src/meridian_ui/select_button.gleam)   | Base     | `meridian_ui/select_button`, native radio/checkbox groups, required selection and latest-model actions                        |
-| [Slider](src/meridian_ui/slider.gleam)                | Base     | `meridian_ui/slider`, scalar ranges and separately named dual native thumbs that cannot cross                                 |
-| [Textarea](src/meridian_ui/field.gleam)               | Base     | `meridian_ui/field`, multiline input, native CSS autosizing and manual-resize fallback                                        |
-| [ToggleButton](src/meridian_ui/toggle_button.gleam)   | Base     | `meridian_ui/toggle_button`, controlled native button with pressed state                                                      |
-| [ToggleSwitch](src/meridian_ui/toggle_switch.gleam)   | Base     | `meridian_ui/toggle_switch`, labelled native checkbox, keyboard and form values                                               |
-| [TreeSelect](src/meridian_ui/tree_select.gleam)       | Base     | `meridian_ui/tree_select`, inline hierarchical single/multiple selection, summary and hidden form values                      |
+| Component                                             | Status   | Meridian coverage                                                                                                                                                   |
+| ----------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [AutoComplete](src/meridian_ui/autocomplete.gleam)    | Base     | `meridian_ui/autocomplete`, native suggestions, keyboard behaviour and caller-updated async results                                                                 |
+| [CascadeSelect](src/meridian_ui/cascade_select.gleam) | Base     | `meridian_ui/cascade_select`, validated hierarchies, independent level actions and enabled-leaf form values                                                         |
+| [Checkbox](src/meridian_ui/checkbox.gleam)            | Base     | `meridian_ui/checkbox`, native checked, indeterminate and disabled state                                                                                            |
+| [DatePicker](src/meridian_ui/date_picker.gleam)       | Base     | `meridian_ui/date_picker`, themed calendars for dates, months and constrained start/end ranges, with native values and validation                                   |
+| [DateTimePicker](src/meridian_ui/date_picker.gleam)   | Base     | `meridian_ui/date_picker`, themed date/time dialogs with native bounds, step and local form values through date_picker.date_time. Applications choose the time zone |
+| [FloatLabel](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, floating native labels with explicit control IDs                                                                                               |
+| [IconField](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, leading and trailing decorative icons                                                                                                          |
+| [IftaLabel](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, permanent inset labels                                                                                                                         |
+| [InputColor](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, native colour picker and form values                                                                                                           |
+| [InputGroup](src/meridian_ui/field.gleam)             | Base     | `meridian_ui/field`, joined inputs, addons and native action buttons                                                                                                |
+| [InputMask](src/meridian_ui/input_mask.gleam)         | Base     | `meridian_ui/input_mask`, optional IMask editing engine, masked/raw values, paste and composition                                                                   |
+| [InputNumber](src/meridian_ui/field.gleam)            | Base     | `meridian_ui/field`, native numeric strings, bounds, steps and validity. Applications own currency formatting                                                       |
+| [InputOtp](src/meridian_ui/input_otp.gleam)           | Base     | `meridian_ui/input_otp`, string entry, leading zeroes, exact constraints, paste and autofill                                                                        |
+| [InputPassword](src/meridian_ui/password.gleam)       | Base     | `meridian_ui/password`, controlled reveal, retained input, constraints and disabled state. Applications own strength policies                                       |
+| [InputTags](src/meridian_ui/input_tags.gleam)         | Base     | `meridian_ui/input_tags`, deduplicated tokens, draft submission, keyboard removal and latest-model actions                                                          |
+| [InputText](src/meridian_ui/field.gleam)              | Base     | `meridian_ui/field`, native labelled input attributes                                                                                                               |
+| [KeyFilter](src/meridian_ui/key_filter.gleam)         | Base     | `meridian_ui/key_filter`, Unicode-aware native validation without deleting paste or composition                                                                     |
+| [Knob](src/meridian_ui/knob.gleam)                    | Base     | `meridian_ui/knob`, pointer dial, native range keyboard/form behaviour and forced-colour fallback                                                                   |
+| [Label](examples/catalogue/src/catalogue/forms.gleam) | Platform | Native Lustre HTML labels and for attributes                                                                                                                        |
+| [Listbox](src/meridian_ui/listbox.gleam)              | Base     | `meridian_ui/listbox`, native single/multiple selection, disabled options, constraints and repeated form values                                                     |
+| [RadioButton](src/meridian_ui/radio.gleam)            | Base     | `meridian_ui/radio`, labelled native groups, values and keyboard behaviour                                                                                          |
+| [Rating](src/meridian_ui/rating.gleam)                | Base     | `meridian_ui/rating`, named native radios, RTL keyboard navigation, optional clear and read-only display                                                            |
+| [Select](src/meridian_ui/select.gleam)                | Base     | `meridian_ui/select`, searchable native picker with keyed options and retained filtered selection                                                                   |
+| [SelectButton](src/meridian_ui/select_button.gleam)   | Base     | `meridian_ui/select_button`, native radio/checkbox groups, required selection and latest-model actions                                                              |
+| [Slider](src/meridian_ui/slider.gleam)                | Base     | `meridian_ui/slider`, scalar ranges and separately named dual native thumbs that cannot cross                                                                       |
+| [Textarea](src/meridian_ui/field.gleam)               | Base     | `meridian_ui/field`, multiline input, native CSS autosizing and manual-resize fallback                                                                              |
+| [TimePicker](src/meridian_ui/date_picker.gleam)       | Base     | `meridian_ui/date_picker`, themed time dialogs with native keyboard editing, min/max, step and form values through date_picker.time                                 |
+| [ToggleButton](src/meridian_ui/toggle_button.gleam)   | Base     | `meridian_ui/toggle_button`, controlled native button with pressed state                                                                                            |
+| [ToggleSwitch](src/meridian_ui/toggle_switch.gleam)   | Base     | `meridian_ui/toggle_switch`, labelled native checkbox, keyboard and form values                                                                                     |
+| [TreeSelect](src/meridian_ui/tree_select.gleam)       | Base     | `meridian_ui/tree_select`, inline hierarchical single/multiple selection, summary and hidden form values                                                            |
 
 ### Button (3)
 
@@ -120,11 +122,11 @@ server-side validation. Optional engines are bundled locally, not loaded from a 
 
 ### Media (3)
 
-| Component                                  | Status | Meridian coverage                                                                                   |
-| ------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------- |
-| [Carousel](src/meridian_ui/carousel.gleam) | Base   | `meridian_ui/carousel`, manual slide navigation, wrapping, announcements and retained hidden slides |
-| [Gallery](src/meridian_ui/gallery.gleam)   | Base   | `meridian_ui/gallery`, image alternatives, thumbnails, slide navigation and modal previews          |
-| [Compare](src/meridian_ui/compare.gleam)   | Base   | `meridian_ui/compare`, before/after images, descriptive text and a native keyboard range            |
+| Component                                  | Status | Meridian coverage                                                                                            |
+| ------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------ |
+| [Carousel](src/meridian_ui/carousel.gleam) | Base   | `meridian_ui/carousel`, drag/swipe and button navigation, wrapping, announcements and retained hidden slides |
+| [Gallery](src/meridian_ui/gallery.gleam)   | Base   | `meridian_ui/gallery`, image alternatives, thumbnails, drag/swipe navigation and modal previews              |
+| [Compare](src/meridian_ui/compare.gleam)   | Base   | `meridian_ui/compare`, before/after images, descriptive text and a native keyboard range                     |
 
 ### File (1)
 
@@ -176,16 +178,9 @@ server-side validation. Optional engines are bundled locally, not loaded from a 
 
 ### Code (1)
 
-| Component                                     | Status | Meridian coverage                                                                                                   |
-| --------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
-| [CodeBlock](src/meridian_ui/code_block.gleam) | Base   | `meridian_ui/code_block`, escaped Gleam source, lexical syntax colours, keyboard scrolling and exact text selection |
-
-### Date and time (2)
-
-| Component                                           | Status | Meridian coverage                                                                                                                                           |
-| --------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [TimePicker](src/meridian_ui/date_picker.gleam)     | Base   | `meridian_ui/date_picker`, time inputs with native keyboard editing, min/max, step and form values through date_picker.time                                 |
-| [DateTimePicker](src/meridian_ui/date_picker.gleam) | Base   | `meridian_ui/date_picker`, local date/time inputs with native bounds, step and form values through date_picker.date_time. Applications choose the time zone |
+| Component                                     | Status | Meridian coverage                                                                                                                             |
+| --------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [CodeBlock](src/meridian_ui/code_block.gleam) | Base   | `meridian_ui/code_block`, escaped Gleam source, lexical syntax colours, non-copying line numbers, keyboard scrolling and exact text selection |
 
 ## Verification and limits
 
@@ -198,8 +193,9 @@ retained editors, overlays and focus return, menu/tree keyboard behaviour,
 virtualisation, uploads against a local fake endpoint, chart families, calendar
 views and pointer edits, task transfers, clipboard paste and engine remounts.
 
-Native date, time and colour popup interiors follow the browser and OS. The
-library styles the controls themselves. Date/time values retain their native ISO
-strings. Virtual rows have an explicit fixed height. Carousels are manual by
+Date/time inputs keep their native ISO values, editing and form constraints.
+Mount browser interactions for Meridian-rendered calendar and time dialogs. Without
+the mount, native pickers remain available. Colour popups follow the browser and
+OS. Virtual rows have an explicit fixed height. Carousels are manual by
 default. Rich-text HTML export runs in the browser. These limits are part of the
 components' documented behaviour, not hidden catalogue-only substitutions.
