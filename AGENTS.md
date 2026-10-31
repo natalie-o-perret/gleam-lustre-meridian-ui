@@ -37,8 +37,8 @@ focused, efficient and safe to coordinate.
   content-hashed scripts, versioned stylesheets and bundle-budget checks.
 - Don't hand-edit generated engine bundles. Use `npm run build:engines` for an
   intentional engine update, and keep dependency notices complete.
-- Check narrow screens, zoom, LTR/RTL, keyboard focus, popup placement, forced
-  colours and reduced motion. Don't trade accessibility for appearance.
+- Follow the [responsive and mobile checks](docs/agent-practices/components.md#verify-responsive-and-mobile-modes),
+  not just desktop. Don't trade accessibility for appearance.
 
 ## Verify locally before pushing
 
@@ -74,16 +74,10 @@ make browser-check
 - Don't remove assertions, skip scenarios, add arbitrary sleeps or inflate
   timeouts to hide a failure. Diagnose the cause first.
 
-## Optimise CI with evidence
+## Check build and CI efficiency
 
-- Profile a completed representative run before changing job boundaries. Separate
-  setup, test, queue and end-to-end time.
-- Split independent slow work, not already-fast checks. Keep the default local
-  command complete. Run shared fallback and viewport checks once per browser.
-- Verify that split jobs cover the original cases without omissions or duplicates.
-  Update the workflow and coverage tests together when adding suites or scenarios.
-- Measure the next completed run. Report elapsed time and summed job time, not
-  just the fastest job. Single-run improvements aren't guarantees or billing data.
+Follow the [build, CI and design efficiency rules](docs/agent-practices/build-and-ci.md).
+Check compile/build time and workflow cost as well as runtime responsiveness.
 
 ## Keep collaboration safe
 

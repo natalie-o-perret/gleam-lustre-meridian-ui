@@ -25,10 +25,13 @@
 - Warm up repeated interactions and report cold-start results separately.
 - Repeat enough samples to report a useful median and p95. Include the sample
   count, worst observation, failures and any discarded samples with reasons.
-- Keep the browser build, machine, dataset, viewport, zoom, motion preference and
-  cache conditions comparable. Record them with the exact runnable command.
-- Cover Chromium, Firefox and WebKit, plus narrow screens and relevant RTL/zoom
-  cases for shared interactions. Check continuous gestures under realistic load.
+- Keep browser/build, machine, data, viewport, device scale, zoom, motion and cache
+  conditions comparable. Record them with the exact runnable command.
+- Cover Chromium, Firefox and WebKit, desktop and narrow layouts, plus relevant
+  RTL/zoom cases. Measure mobile/touch modes in portrait and landscape where
+  supported. Record emulation and pointer settings, not just viewport width.
+- Benchmark taps and continuous touch gestures where relevant, not desktop hover
+  as a substitute. Check frame pacing under realistic load and label hardware gaps.
 
 ## Use the result
 
@@ -40,5 +43,5 @@
   scrubbed evidence with enough setup to reproduce the result.
 - Investigate regressions before pushing. Don't claim a performance improvement
   from a single click, a favourable outlier or an unmeasured visual impression.
-- Keep CI duration benchmarks separate from interaction latency. Faster CI does
-  not prove that the component reacts faster.
+- Follow the [build and CI rules](build-and-ci.md) separately. Faster compilation
+  or CI doesn't prove that the component reacts faster.

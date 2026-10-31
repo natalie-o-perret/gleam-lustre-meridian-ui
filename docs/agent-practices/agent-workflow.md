@@ -4,6 +4,8 @@
 
 - Identify the requested outcome, acceptance checks and affected subdomains before
   editing. Read the existing component, callers and tests, not the whole repo.
+- Include responsive/mobile coverage and compile/build/CI cost in relevant tasks.
+  Review inefficient designs as well as whether the default demo works.
 - Locate existing patterns with targeted searches. Reuse earlier findings and
   recorded decisions instead of repeating investigations.
 - Prefer shared components, existing helpers and platform features. Don't silently
@@ -40,6 +42,8 @@
   Focused checks or another agent's summary aren't substitutes for that gate.
 - Keep validation, accessibility, error handling and performance evidence intact.
   Efficiency doesn't mean deleting checks or hiding an unfinished part.
+- Run desktop and mobile/touch checks for affected UI. Record unsupported emulation
+  and hardware gaps rather than silently reducing the matrix to narrow desktop.
 
 ## Hand off facts, not a transcript
 

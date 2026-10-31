@@ -45,3 +45,24 @@
 - A polished default screenshot is not proof of completeness. Finish styling,
   capability coverage, accessibility and interaction benchmarks before claiming
   the component is ready.
+
+## Verify responsive and mobile modes
+
+- Exercise affected components and the catalogue at desktop, tablet and phone
+  sizes, including the smallest supported width and breakpoint boundaries.
+- Check portrait and landscape, resizing, browser zoom and enlarged text. Inspect
+  clipping, overflow, wrapping, scroll ownership and controls hidden by a header.
+- Use mobile/touch emulation as well as narrow desktop viewports. Record the
+  viewport, device scale, touch/pointer capabilities and mobile-mode settings.
+  A 320px desktop window alone isn't a mobile test.
+- Use taps, coarse-pointer targets, touch scrolling and relevant drag gestures.
+  Don't require hover to discover or operate an essential action. Preserve
+  keyboard operation, visible focus, accessible names and dismissal.
+- Check menus, tooltips, dialogs and pickers near screen edges. Keep their content,
+  close controls and nested popups reachable without horizontal page scrolling.
+- Check software-keyboard resizing, input focus and safe-area behaviour where
+  relevant. Record device/browser limits rather than assuming emulation covers it.
+- Cover Chromium, Firefox and WebKit, LTR/RTL, light/dark, forced colours and
+  reduced motion where supported. Keep responsive regressions in focused tests.
+- State exactly which checks used emulation or real hardware and which remain
+  unverified. Don't claim real-device or manual screen-reader coverage from CI.
