@@ -4,6 +4,7 @@ import { expect } from "playwright/test";
 import { appearanceColours } from "./appearance-colours.mjs";
 import { appearancePresets } from "./appearance-presets.mjs";
 import { appearanceRipple } from "./appearance-ripple.mjs";
+import { appearanceShapes } from "./appearance-shapes.mjs";
 
 const require = createRequire(import.meta.url);
 
@@ -59,4 +60,5 @@ export async function appearanceChecks(page, open) {
   await appearanceColours(page, frame);
   await appearancePresets(page, open);
   await appearanceRipple(page, open);
+  await appearanceShapes(page, open);
 }

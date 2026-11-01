@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { expect } from "playwright/test";
 import { datePickers } from "./date_pickers.mjs";
 import { colourPickers } from "./colour_pickers.mjs";
+import { groupShapes } from "./group-shapes.mjs";
 
 export async function forms(page, scenario) {
   await page.waitForFunction(() => window.meridianReady);
+  await groupShapes(page);
   const form = page.locator("#primary-form");
   const secondary = page.locator("#secondary-form");
   const initial = await secondary.evaluate((el) =>
