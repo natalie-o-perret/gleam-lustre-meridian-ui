@@ -1683,6 +1683,34 @@
     overflow: hidden;
     isolation: isolate;
   }
+  :where(
+    &[data-meridian-ripples="true"]
+      :is(
+        a[href],
+        summary,
+        [role^="menuitem"],
+        [role="tab"],
+        [role="option"],
+        [role="treeitem"],
+        .meridian-select-choice > span,
+        .checkbox-mark,
+        .meridian-radio-field,
+        .meridian-switch-track,
+        .meridian-rating-choice,
+        .meridian-tree-row
+      )
+  ) {
+    position: relative;
+    isolation: isolate;
+  }
+  .meridian-ripple-clip {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+  }
   .meridian-ripple-effect {
     position: absolute;
     z-index: -1;
