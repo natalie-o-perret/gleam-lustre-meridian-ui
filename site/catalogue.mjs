@@ -343,8 +343,34 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+let navigationQuery;
 function renderNavigation() {
   const query = normalise(search.value);
+  // Keep mounted links so route changes don't cancel their feedback or focus.
+  if (query === navigationQuery) {
+    for (const link of navigation.querySelectorAll("a")) {
+      const active = link.dataset.component
+        ? link.dataset.component === current?.id
+        : !current && ["", "#/"].includes(location.hash);
+      if (active && link.getAttribute("aria-current") !== "page")
+        link.setAttribute("aria-current", "page");
+      else if (!active && link.hasAttribute("aria-current"))
+        link.removeAttribute("aria-current");
+    }
+    for (const section of navigation.querySelectorAll(".docs-nav-group")) {
+      const expanded =
+        Boolean(query) ||
+        current?.group === section.dataset.group ||
+        !collapsedNavigation.has(section.dataset.group);
+      const toggle = section.querySelector("button");
+      if (toggle.getAttribute("aria-expanded") !== String(expanded))
+        toggle.setAttribute("aria-expanded", String(expanded));
+      const list = section.querySelector("ul");
+      if (list.hidden !== !expanded) list.hidden = !expanded;
+    }
+    return;
+  }
+  navigationQuery = query;
   const matches = entries.filter((entry) =>
     normalise(`${entry.name} ${entry.group} ${entry.module ?? ""}`).includes(
       query,

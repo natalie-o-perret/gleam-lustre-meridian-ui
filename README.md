@@ -456,10 +456,13 @@ standalone previews. Icon-choice menus include
 the corresponding SVG in the options and selected value where customisable native
 selects are supported.
 
-Set `data-meridian-ripples="true"` on a themed root to enable button ripples, or
-`"false"` to disable them, including explicitly marked ripple controls. Without
-the attribute, ripples stay opt-in through `ripple.on()`. Reduced motion and forced
-colours suppress the effect in every mode.
+Set `data-meridian-ripples="true"` on a themed root to enable ripples on buttons,
+links, disclosures, menu/list/tree items, tabs and native choice/toggle faces.
+Text-entry fields keep their native editing behaviour. Ink stays clipped to the
+control without clipping its focus ring or changing its native value.
+Set the attribute to `"false"` to disable ripples, including explicitly marked
+controls. Without it, ripples stay opt-in through `ripple.on()`. Reduced motion and
+forced colours suppress the effect in every mode.
 The catalogue starts with ripple disabled, and remembers the header switch.
 
 `date_picker.view`, `date_picker.month`, `date_picker.time` and

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { expect } from "playwright/test";
 import { appearanceMobileChecks } from "./appearance-mobile.mjs";
 import { appearanceLayout } from "./appearance-layout.mjs";
+import { rippleChecks } from "./ripple-controls.mjs";
 
 export function catalogueScenarios(width = "") {
   const scenarios = [
@@ -13,6 +14,7 @@ export function catalogueScenarios(width = "") {
 }
 
 export async function viewportChecks(browser, name, base) {
+  await rippleChecks(browser, name, base);
   await appearanceMobileChecks(browser, name, base);
   await layoutChecks(browser, name, base);
   const sizes = [

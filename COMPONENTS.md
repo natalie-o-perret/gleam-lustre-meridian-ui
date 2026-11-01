@@ -153,7 +153,7 @@ server-side validation. Optional engines are bundled locally, not loaded from a 
 | [MeterGroup](src/meridian_ui/meter_group.gleam)                | Base     | `meridian_ui/meter_group`, bounded visual measurements and exact labels/totals                                                    |
 | [ProgressBar](src/meridian_ui/progress.gleam)                  | Base     | `meridian_ui/progress`, clamped percentages and unknown-duration state                                                            |
 | [ProgressSpinner](src/meridian_ui/spinner.gleam)               | Base     | `meridian_ui/spinner`, determinate and indeterminate accessible rings                                                             |
-| [Ripple](src/meridian_ui/ripple.gleam)                         | Base     | `meridian_ui/ripple`, pointer/keyboard feedback, reduced-motion/forced-colour suppression and cleanup                             |
+| [Ripple](src/meridian_ui/ripple.gleam)                         | Base     | `meridian_ui/ripple`, button/link/choice feedback, native keys, motion/forced-colour suppression and cleanup                      |
 | [ScrollTop](src/meridian_ui/scroll_top.gleam)                  | Base     | `meridian_ui/scroll_top`, page/container scrolling, reduced-motion behaviour and destination focus                                |
 | [Skeleton](src/meridian_ui/skeleton.gleam)                     | Base     | `meridian_ui/skeleton`, decorative shapes and reduced-motion loading state                                                        |
 | [StyleClass](examples/catalogue/src/catalogue/utilities.gleam) | Platform | Class attributes and controlled Lustre state without DOM mutation                                                                 |
