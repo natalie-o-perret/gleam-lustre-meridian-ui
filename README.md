@@ -415,6 +415,9 @@ HTML or source code. Compose it with `tabs.view` and ordinary buttons to build a
 multi-file example, as the catalogue does.
 Each viewer has a native expand/collapse control. With interactions mounted, its
 own toolbar copies the full source or expands/collapses function and type bodies.
+Copy appears on hover or keyboard focus, and stays visible on touch screens.
+A successful copy shows Copied in the primary colour for 3 seconds. Clipboard
+failures keep the manual selection fallback and announce an error instead.
 Gutter buttons fold individual bodies. Folding ignores braces in comments and
 strings. Source text is retained when folded.
 

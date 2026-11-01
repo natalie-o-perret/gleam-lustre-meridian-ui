@@ -3163,6 +3163,16 @@
     inline-size: 18px;
     block-size: 18px;
   }
+  .meridian-code-copy {
+    min-inline-size: 6.5rem;
+    justify-content: center;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .meridian-code-viewer:not(:hover):not(:focus-within)
+      .meridian-code-copy:not([data-copied="true"]) {
+      opacity: 0;
+    }
+  }
   .meridian-code-status {
     color: var(--muted);
     font-size: 0.75rem;

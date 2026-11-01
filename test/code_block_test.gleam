@@ -22,6 +22,9 @@ pub fn code_is_labelled_keyboard_scrollable_and_ltr_test() {
   html |> string.contains("<details") |> should.be_true
   html |> string.contains("open") |> should.be_true
   html |> string.contains("<summary") |> should.be_true
+  html |> string.contains("data-code-copy-label") |> should.be_true
+  html |> string.contains(">Copy</span>") |> should.be_true
+  html |> string.contains("role=\"status\"") |> should.be_true
 }
 
 pub fn source_is_text_not_markup_test() {

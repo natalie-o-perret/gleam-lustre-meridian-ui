@@ -1,5 +1,7 @@
+import { setupCodeCopy } from "./code_copy_ffi.mjs";
+
 export function setupCodeViewers(root, signal) {
-  const doc = root.ownerDocument;
+  const syncCopy = setupCodeCopy(root, signal);
   const seen = new WeakMap();
   const fold = (viewer, button, collapsed) => {
     const start = Number(button.dataset.codeFold);
@@ -32,7 +34,7 @@ export function setupCodeViewers(root, signal) {
   );
   root.addEventListener(
     "click",
-    async (event) => {
+    (event) => {
       const button = event.target.closest?.(
         "[data-code-fold], [data-code-action]",
       );
@@ -45,18 +47,7 @@ export function setupCodeViewers(root, signal) {
         return;
       }
       const action = button.dataset.codeAction;
-      if (action === "copy") {
-        let text = "Copied.";
-        try {
-          await doc.defaultView.navigator.clipboard.writeText(
-            viewer.dataset.codeSource,
-          );
-        } catch {
-          text = "Copy unavailable. Select and copy the code.";
-        }
-        if (!signal.aborted && viewer.isConnected)
-          viewer.querySelector(".meridian-code-status").textContent = text;
-      } else {
+      if (action !== "copy") {
         for (const toggle of viewer.querySelectorAll("[data-code-fold]"))
           fold(viewer, toggle, action === "collapse");
       }
@@ -64,6 +55,7 @@ export function setupCodeViewers(root, signal) {
     { signal },
   );
   return () => {
+    syncCopy();
     for (const viewer of root.querySelectorAll(".meridian-code-viewer")) {
       if (viewer.closest(".meridian-ui") !== root) continue;
       const key = `${viewer.querySelector("code")?.dataset.language}\n${viewer.dataset.codeSource}`;
