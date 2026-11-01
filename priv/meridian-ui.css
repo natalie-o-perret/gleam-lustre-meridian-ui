@@ -3067,6 +3067,7 @@
     border-block-start: 1px solid currentColor;
   }
   .meridian-code-viewer {
+    position: relative;
     min-inline-size: 0;
     max-inline-size: 100%;
     border: 1px solid var(--border);
@@ -3082,12 +3083,18 @@
   .meridian-code-viewer > summary::-webkit-details-marker {
     display: none;
   }
+  .meridian-code-viewer:has(> .meridian-code-tools) > summary {
+    padding-inline-end: 104px;
+  }
   .meridian-code-viewer[open] > summary .meridian-disclosure-icon {
     transform: rotate(90deg);
   }
-  .meridian-code-viewer > .meridian-code-block {
-    border: 0;
+  .meridian-code-content {
+    position: relative;
     border-block-start: 1px solid var(--border);
+  }
+  .meridian-code-content > .meridian-code-block {
+    border: 0;
     border-radius: 0;
   }
   .meridian-code-block {
@@ -3152,21 +3159,48 @@
     content: " ...";
   }
   .meridian-code-tools {
+    position: absolute;
+    inset-block-start: 4px;
+    inset-inline-end: 8px;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 8px 12px;
-    border-block-start: 1px solid var(--border);
-    background: var(--panel);
   }
-  .meridian-code-tools .meridian-icon {
+  .meridian-code-tools .meridian-icon,
+  .meridian-code-copy .meridian-icon {
     inline-size: 18px;
     block-size: 18px;
   }
+  .meridian-code-copy {
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-end: 10px;
+    z-index: 1;
+    min-inline-size: 6.5rem;
+    justify-content: center;
+    opacity: 0.75;
+  }
+  .meridian-code-copy:is(:hover, :focus-visible, [data-copied="true"]) {
+    opacity: 1;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .meridian-code-viewer:not(:hover):not(:focus-within)
+      .meridian-code-copy:not([data-copied="true"]) {
+      opacity: 0;
+    }
+  }
   .meridian-code-status {
+    position: absolute;
     color: var(--muted);
     font-size: 0.75rem;
+  }
+  .meridian-code-status:not(:empty):not(.sr-only) {
+    position: static;
+    display: block;
+    padding: 12px;
+    padding-inline-end: 132px;
+    background: var(--panel);
   }
   .meridian-code-keyword,
   .meridian-code-annotation {

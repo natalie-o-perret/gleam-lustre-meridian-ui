@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
+import { codeCopyFeedback } from "./code-copy.mjs";
 
 export async function feedbackChecks(page, open) {
+  await codeCopyFeedback(page, open);
   let frame = await open("codeblock");
   await expect(page.locator(".docs-source .meridian-code-viewer")).toHaveCount(
     1,
