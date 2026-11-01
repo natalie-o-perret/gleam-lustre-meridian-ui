@@ -34,7 +34,11 @@ export async function treeAppearance(page, open) {
         window.treeMotion.push(
           node
             .getAnimations({ subtree: true })
-            .filter((animation) => !("transitionProperty" in animation)).length,
+            .filter(
+              (animation) =>
+                !("transitionProperty" in animation) &&
+                animation.animationName !== "meridian-ripple",
+            ).length,
         );
       });
       window.treeMotionObserver.observe(node, {
@@ -65,8 +69,11 @@ export async function treeAppearance(page, open) {
           (node) =>
             node
               .getAnimations({ subtree: true })
-              .filter((animation) => !("transitionProperty" in animation))
-              .length,
+              .filter(
+                (animation) =>
+                  !("transitionProperty" in animation) &&
+                  animation.animationName !== "meridian-ripple",
+              ).length,
         ),
       )
       .toBe(0);
@@ -78,8 +85,11 @@ export async function treeAppearance(page, open) {
           (node) =>
             node
               .getAnimations({ subtree: true })
-              .filter((animation) => !("transitionProperty" in animation))
-              .length,
+              .filter(
+                (animation) =>
+                  !("transitionProperty" in animation) &&
+                  animation.animationName !== "meridian-ripple",
+              ).length,
         ),
       )
       .toBe(0);
@@ -106,7 +116,11 @@ export async function treeAppearance(page, open) {
         (node) =>
           node
             .getAnimations({ subtree: true })
-            .filter((animation) => !("transitionProperty" in animation)).length,
+            .filter(
+              (animation) =>
+                !("transitionProperty" in animation) &&
+                animation.animationName !== "meridian-ripple",
+            ).length,
       ),
       0,
       `${name}: explicit animation opt-out`,
@@ -123,8 +137,11 @@ export async function treeAppearance(page, open) {
           (node) =>
             node
               .getAnimations({ subtree: true })
-              .filter((animation) => !("transitionProperty" in animation))
-              .length,
+              .filter(
+                (animation) =>
+                  !("transitionProperty" in animation) &&
+                  animation.animationName !== "meridian-ripple",
+              ).length,
         ),
       )
       .toBe(0);

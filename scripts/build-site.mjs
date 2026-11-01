@@ -120,6 +120,11 @@ const result = await build({
   entryNames: "[dir]/[name]-[hash]",
   chunkNames: "chunks/[name]-[hash]",
 });
+await build({
+  entryPoints: ["site/catalogue.css"],
+  bundle: true,
+  outfile: `${output}/catalogue.css`,
+});
 const styles = new Map(
   await Promise.all(
     ["meridian-ui.css", "catalogue.css", "preview.css"].map(async (file) => [

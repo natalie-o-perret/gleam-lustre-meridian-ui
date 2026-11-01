@@ -11,11 +11,12 @@ export async function appearanceColours(page, frame) {
     .getByRole("combobox", { name: "Source language", exact: true })
     .focus();
   await button.click();
-  await page.locator("#style").selectOption("square");
+  await page.locator('#style label:has(input[value="square"])').click();
   await expect(page.locator(".docs-source .meridian-tab").first()).toHaveCSS(
     "border-top-left-radius",
     "2px",
   );
+  await page.locator(".docs-appearance-custom > summary").click();
   for (const [id, colour] of [
     ["primary-colour", "#228b22"],
     ["secondary-colour", "#663399"],
@@ -60,8 +61,9 @@ export async function appearanceColours(page, frame) {
     ["#228b22", "#663399"],
   );
   await button.click();
+  await page.locator(".docs-appearance-custom > summary").click();
   await page.locator("#reset-colours").click();
-  await page.locator("#style").selectOption("rounded");
+  await page.locator('#style label:has(input[value="rounded"])').click();
   await button.click();
   await expect(popup).toBeHidden();
 }

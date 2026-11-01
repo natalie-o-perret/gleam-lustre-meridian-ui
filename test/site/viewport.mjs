@@ -203,6 +203,7 @@ async function layoutChecks(browser, name, base) {
           palette,
           `${name} ${width}px ${zoom}x: palette stays inside the viewport`,
         ).toBeInViewport({ ratio: 1 });
+        await palette.locator(".docs-appearance-custom > summary").click();
         assert.ok(
           await palette
             .locator(".docs-colour-control")

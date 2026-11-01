@@ -1,5 +1,6 @@
 export const validColour = (value) =>
   typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+export const validPrimary = (value) => value === "mono" || validColour(value);
 
 const rgb = (hex) =>
   hex
@@ -50,25 +51,28 @@ export function colourTokens(colour, panel) {
 }
 
 export function applyPalette(root, primary, secondary) {
-  for (const name of [
-    "--accent",
-    "--accent-soft",
-    "--on-accent",
-    "--secondary",
-    "--secondary-soft",
-    "--on-secondary",
-  ])
-    root.style.removeProperty(name);
-  const style = root.ownerDocument.defaultView.getComputedStyle(root);
-  const panel = style.getPropertyValue("--panel").trim();
+  if (primary === "mono")
+    primary = root.dataset.theme === "dark" ? "#ffffff" : "#000000";
+  const panel =
+    validColour(primary) || validColour(secondary)
+      ? root.ownerDocument.defaultView
+          .getComputedStyle(root)
+          .getPropertyValue("--panel")
+          .trim()
+      : "";
   for (const [name, value] of [
     ["accent", primary],
     ["secondary", secondary],
   ]) {
     const tokens = colourTokens(value, panel);
-    if (!tokens) continue;
-    root.style.setProperty(`--${name}`, tokens.colour);
-    root.style.setProperty(`--${name}-soft`, tokens.soft);
-    root.style.setProperty(`--on-${name}`, tokens.on);
+    for (const [key, colour] of [
+      [`--${name}`, tokens?.colour],
+      [`--${name}-soft`, tokens?.soft],
+      [`--on-${name}`, tokens?.on],
+    ]) {
+      const previous = root.style.getPropertyValue(key);
+      if (colour && previous !== colour) root.style.setProperty(key, colour);
+      else if (!colour && previous) root.style.removeProperty(key);
+    }
   }
 }

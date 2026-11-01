@@ -433,10 +433,18 @@ duotone icons. These are CSS tokens, not separate component implementations.
 Override `--radius`, `--radius-small` or the `--icon-*` tokens for your own style.
 The catalogue's primary/accent and secondary colour controls derive readable
 foreground/background shades and sync them across previews, notices and themes.
-They show a compact colour swatch and its hex value. Open the palette button
-beside the theme toggle for colour and style settings. Icon-choice menus include
+Open the palette button beside the theme toggle for primary and surface swatches,
+segmented style choices and ripple settings. Custom primary/secondary colours and
+hex values remain under Custom colours. Preferences sync with embedded and
+standalone previews. Icon-choice menus include
 the corresponding SVG in the options and selected value where customisable native
 selects are supported.
+
+Set `data-meridian-ripples="true"` on a themed root to enable button ripples, or
+`"false"` to disable them, including explicitly marked ripple controls. Without
+the attribute, ripples stay opt-in through `ripple.on()`. Reduced motion and forced
+colours suppress the effect in every mode.
+The catalogue starts with ripple disabled, and remembers the header switch.
 
 `date_picker.view`, `date_picker.month`, `date_picker.time` and
 `date_picker.date_time` share styled controls and native min/max, step, required

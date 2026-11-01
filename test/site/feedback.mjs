@@ -78,9 +78,7 @@ export async function feedbackChecks(page, open) {
     ["fantasy", "18px 4px", "round"],
   ]) {
     await page.locator("#palette").click();
-    await page
-      .getByRole("combobox", { name: "Library style", exact: true })
-      .selectOption(style);
+    await page.locator(`#style label:has(input[value="${style}"])`).click();
     await page.locator("#palette").click();
     await expect(page.locator("body")).toHaveAttribute("data-style", style);
     await expect(frame.locator("#demo-root")).toHaveAttribute(
@@ -103,9 +101,7 @@ export async function feedbackChecks(page, open) {
     );
   }
   await page.locator("#palette").click();
-  await page
-    .getByRole("combobox", { name: "Library style", exact: true })
-    .selectOption("rounded");
+  await page.locator('#style label:has(input[value="rounded"])').click();
   await page.locator("#palette").click();
 
   frame = await open("listbox");
