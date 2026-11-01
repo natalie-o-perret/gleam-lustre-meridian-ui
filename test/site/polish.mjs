@@ -260,13 +260,16 @@ export async function polishChecks(page, open) {
     const rootHeight = await frame
       .locator("#demo-root")
       .evaluate((root) => root.getBoundingClientRect().height);
+    const minimum = await preview.evaluate((frame) =>
+      parseFloat(getComputedStyle(frame).minBlockSize),
+    );
     await expect
       .poll(() =>
         preview.evaluate((frame) => frame.getBoundingClientRect().height),
       )
-      .toBeCloseTo(Math.ceil(rootHeight), 0);
+      .toBeCloseTo(Math.max(Math.ceil(rootHeight), minimum), 0);
     assert.ok(
-      rootHeight < 200,
+      Math.max(rootHeight, minimum) < 200,
       "Short mobile previews must not reserve an empty 300px area",
     );
     const box = await preview.boundingBox();

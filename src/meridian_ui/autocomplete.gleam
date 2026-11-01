@@ -4,6 +4,7 @@ import lustre/element/html as h
 import meridian_ui/field
 
 /// Mounted suggestions use a themed listbox. Unmounted inputs keep a native datalist.
+/// Suggestions open while typing, or with ArrowUp and ArrowDown, not on focus.
 /// The caller can replace suggestions after an asynchronous request.
 pub fn view(
   id: String,

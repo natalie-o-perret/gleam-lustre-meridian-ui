@@ -132,7 +132,8 @@ export function setupAutocompletes(root, signal) {
       ? `${options.length} suggestions available. Use Up and Down to choose.`
       : "No matching suggestions.";
     popup.style.inlineSize = `${input.getBoundingClientRect().width}px`;
-    if (popup.matches(":popover-open")) positionOverlay(popup, input, view);
+    if (popup.matches(":popover-open"))
+      positionOverlay(popup, input, view, true);
   };
   const open = (input) => {
     if (!usable(input) || !ready.has(input)) return;
@@ -166,13 +167,16 @@ export function setupAutocompletes(root, signal) {
     input.setAttribute("aria-controls", popup.id);
     input.setAttribute("aria-expanded", "true");
     popup.showPopover();
-    positionOverlay(popup, input, view);
+    positionOverlay(popup, input, view, true);
   };
-  for (const type of ["focusin", "click", "input", "compositionend"])
+  for (const type of ["input", "compositionend"])
     root.addEventListener(
       type,
       (event) => {
-        if (owned(event.target) && !event.isComposing) open(event.target);
+        if (owned(event.target) && !event.isComposing) {
+          if (event.target.value.trim()) open(event.target);
+          else close();
+        }
       },
       { signal },
     );
@@ -266,7 +270,7 @@ export function setupAutocompletes(root, signal) {
         )
           return close();
         current.popup.style.inlineSize = `${bounds.width}px`;
-        positionOverlay(current.popup, current.input, view);
+        positionOverlay(current.popup, current.input, view, true);
       }
     },
     signal,

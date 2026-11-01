@@ -273,6 +273,8 @@ body.docs {
 .docs-example iframe {
   display: block;
   inline-size: 100%;
+  /* Leave room for hints without resizing single-row previews on hover. */
+  min-block-size: 8rem;
   border: 0;
   background: var(--panel);
 }

@@ -18,7 +18,7 @@ server-side validation. Optional engines are bundled locally, not loaded from a 
 
 | Component                                             | Status   | Meridian coverage                                                                                                                               |
 | ----------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| [AutoComplete](src/meridian_ui/autocomplete.gleam)    | Base     | `meridian_ui/autocomplete`, themed scrollable/filterable popup, keyboard selection, caller-updated async results and native datalist fallback   |
+| [AutoComplete](src/meridian_ui/autocomplete.gleam)    | Base     | `meridian_ui/autocomplete`, suggestions on typing or arrow keys, input-safe popups, caller-updated async results and native datalist fallback   |
 | [CascadeSelect](src/meridian_ui/cascade_select.gleam) | Base     | `meridian_ui/cascade_select`, validated hierarchies, independent level actions and enabled-leaf form values                                     |
 | [Checkbox](src/meridian_ui/checkbox.gleam)            | Base     | `meridian_ui/checkbox`, native checked, indeterminate and disabled state                                                                        |
 | [DatePicker](src/meridian_ui/date_picker.gleam)       | Base     | `meridian_ui/date_picker`, themed calendars for dates, months and single-calendar ranges, with native values and validation                     |

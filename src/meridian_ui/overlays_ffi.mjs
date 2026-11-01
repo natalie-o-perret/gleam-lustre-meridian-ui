@@ -62,7 +62,12 @@ export function watchViewport(view, reposition, signal) {
   }
 }
 
-export function positionOverlay(popup, anchor, view) {
+export function positionOverlay(
+  popup,
+  anchor,
+  view,
+  keepAnchorVisible = false,
+) {
   const context = popup.dataset?.contextX !== undefined;
   if (!anchor && !context) return;
   const area = viewportBounds(view);
@@ -71,10 +76,6 @@ export function positionOverlay(popup, anchor, view) {
   popup.style.setProperty(
     "--meridian-overlay-width",
     `${Math.max(0, area.right - area.left - 16)}px`,
-  );
-  popup.style.setProperty(
-    "--meridian-overlay-height",
-    `${Math.max(0, area.bottom - area.top - 16)}px`,
   );
   const anchorBounds = context
     ? {
@@ -88,16 +89,22 @@ export function positionOverlay(popup, anchor, view) {
     right: anchorBounds.right / scale,
     bottom: anchorBounds.bottom / scale,
   };
+  const belowTop = Math.max(area.top + 8, bounds.bottom + 6);
+  const aboveBottom = Math.min(area.bottom - 8, bounds.top - 6);
+  const below = Math.max(0, area.bottom - belowTop - 8);
+  const above = Math.max(0, aboveBottom - area.top - 8);
+  popup.style.setProperty(
+    "--meridian-overlay-height",
+    `${keepAnchorVisible && !context ? Math.max(below, above) : Math.max(0, area.bottom - area.top - 16)}px`,
+  );
   const width = popup.offsetWidth;
   const height = popup.offsetHeight;
-  const below = area.bottom - bounds.bottom;
-  const above = bounds.top - area.top;
   const top = context
     ? bounds.top
-    : below >= height + 14
-      ? bounds.bottom + 6
-      : above >= height + 14
-        ? bounds.top - height - 6
+    : below >= height || (keepAnchorVisible && below >= above)
+      ? belowTop
+      : above >= height || keepAnchorVisible
+        ? aboveBottom - height
         : area.top + (area.bottom - area.top - height) / 2;
   const rtl = !context && view.getComputedStyle(anchor).direction === "rtl";
   const left = rtl ? bounds.right - width : bounds.left;
