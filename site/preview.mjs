@@ -1,7 +1,8 @@
 import { mount } from "../examples/catalogue/build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
 import { validateProperties } from "./catalogue-properties.mjs";
 import { responsiveFrames } from "./preview-frames.mjs";
-import { applyPalette, validColour } from "./palette.mjs";
+import { applyPalette, validColour, validPrimary } from "./palette.mjs";
+import { applySurface } from "./surface-palette.mjs";
 
 const parameters = new URLSearchParams(location.search);
 const id = parameters.get("component");
@@ -11,21 +12,31 @@ const styles = ["rounded", "square", "playful", "fantasy"];
 let style = styles.includes(parameters.get("style"))
   ? parameters.get("style")
   : "rounded";
-let primary = validColour(parameters.get("primary"))
+let primary = validPrimary(parameters.get("primary"))
   ? parameters.get("primary")
   : "";
 let secondary = validColour(parameters.get("secondary"))
   ? parameters.get("secondary")
   : "";
+let surface = validColour(parameters.get("surface"))
+  ? parameters.get("surface")
+  : "";
+let ripple = parameters.get("ripple") === "true";
 const disposers = [];
 if (parent !== window) disposers.push(responsiveFrames(window));
 let properties = [];
 const settings = () => {
-  document.documentElement.dir = direction;
+  if (document.documentElement.dir !== direction)
+    document.documentElement.dir = direction;
   const root = document.getElementById("demo-root");
   if (root) {
-    root.dataset.theme = theme;
-    root.dataset.style = style;
+    for (const [name, value] of [
+      ["theme", theme],
+      ["style", style],
+      ["meridianRipples", String(ripple)],
+    ])
+      if (root.dataset[name] !== value) root.dataset[name] = value;
+    applySurface(root, surface);
     applyPalette(root, primary, secondary);
   }
 };
@@ -66,8 +77,10 @@ addEventListener("message", (event) => {
   theme = event.data.theme === "dark" ? "dark" : "light";
   direction = event.data.direction === "rtl" ? "rtl" : "ltr";
   style = styles.includes(event.data.style) ? event.data.style : "rounded";
-  primary = validColour(event.data.primary) ? event.data.primary : "";
+  primary = validPrimary(event.data.primary) ? event.data.primary : "";
   secondary = validColour(event.data.secondary) ? event.data.secondary : "";
+  surface = validColour(event.data.surface) ? event.data.surface : "";
+  ripple = event.data.ripple === true;
   settings();
   if (document.documentElement.dataset.ready)
     queueMicrotask(() =>
@@ -78,6 +91,8 @@ addEventListener("message", (event) => {
         style,
         primary,
         secondary,
+        surface,
+        ripple,
         height: Math.ceil(
           document.getElementById("demo-root").getBoundingClientRect().height,
         ),
@@ -174,6 +189,8 @@ try {
     style,
     primary,
     secondary,
+    surface,
+    ripple,
     height: height(),
   });
 } catch (error) {

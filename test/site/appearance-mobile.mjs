@@ -49,6 +49,13 @@ export async function appearanceMobileChecks(browser, name, base) {
       await button.tap();
       await expect(popup).toBeInViewport({ ratio: 1 });
       await expect(button).toHaveAttribute("aria-expanded", "true");
+      await page
+        .locator('#primary-presets label:has(input[value="#10b981"])')
+        .tap();
+      await page
+        .locator('#surface-presets label:has(input[value="#64748b"])')
+        .tap();
+      await page.locator(".docs-appearance-custom > summary").tap();
       await page.locator("#primary-colour").tap();
       const picker = page.locator(".meridian-colour-popup");
       const hex = picker.getByRole("textbox", {

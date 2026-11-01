@@ -9,8 +9,9 @@ import {
 import starterSource from "../examples/catalogue/src/getting_started.gleam";
 import { componentDocs } from "./component-docs.mjs";
 import { previewToasts } from "./preview-toasts.mjs";
-import { applyPalette, validColour } from "./palette.mjs";
-import { appearanceMenu } from "./appearance.mjs";
+import { applyPalette, validColour, validPrimary } from "./palette.mjs";
+import { applySurface } from "./surface-palette.mjs";
+import { appearanceMenu, syncAppearance } from "./appearance.mjs";
 import { mount } from "../examples/catalogue/build/dev/javascript/meridian_ui/meridian_ui/browser_ffi.mjs";
 import {
   next,
@@ -55,6 +56,8 @@ let direction = "ltr";
 let style = "rounded";
 let primary = "";
 let secondary = "";
+let surface = "";
+let ripple = false;
 let stopSource = () => {};
 let stopToasts = () => {};
 const collapsedNavigation = new Set();
@@ -67,8 +70,10 @@ try {
   if (["ltr", "rtl"].includes(saved?.direction)) direction = saved.direction;
   if (["rounded", "square", "playful", "fantasy"].includes(saved?.style))
     style = saved.style;
-  if (validColour(saved?.primary)) primary = saved.primary;
+  if (validPrimary(saved?.primary)) primary = saved.primary;
   if (validColour(saved?.secondary)) secondary = saved.secondary;
+  if (validColour(saved?.surface)) surface = saved.surface;
+  if (typeof saved?.ripple === "boolean") ripple = saved.ripple;
 } catch {
   // Preferences are optional when browser storage is unavailable.
 }
@@ -90,7 +95,7 @@ const normalise = (value) =>
 const groups = () => [...new Set(entries.map((entry) => entry.group))];
 
 function previewURL(entry) {
-  return `./preview.html?${new URLSearchParams({ component: entry.id, theme, dir: direction, style, primary, secondary, v: root.dataset.previewVersion })}`;
+  return `./preview.html?${new URLSearchParams({ component: entry.id, theme, dir: direction, style, primary, secondary, surface, ripple, v: root.dataset.previewVersion })}`;
 }
 
 function sizePreview(frame) {
@@ -160,26 +165,37 @@ visualViewport?.addEventListener("resize", resizePreview);
 
 function settings() {
   theme = is_dark(preference, systemDark) ? "dark" : "light";
-  root.dataset.theme = theme;
-  root.dataset.style = style;
+  for (const [name, value] of [
+    ["theme", theme],
+    ["style", style],
+    ["meridianRipples", String(ripple)],
+  ])
+    if (root.dataset[name] !== value) root.dataset[name] = value;
+  applySurface(root, surface);
   applyPalette(root, primary, secondary);
   const colours = getComputedStyle(root);
-  primaryControl.value = primary || colours.getPropertyValue("--accent").trim();
+  primaryControl.value = validColour(primary)
+    ? primary
+    : colours.getPropertyValue("--accent").trim();
   secondaryControl.value =
     secondary || colours.getPropertyValue("--secondary").trim();
-  document.getElementById("primary-colour-value").textContent =
-    primaryControl.value;
-  document.getElementById("secondary-colour-value").textContent =
-    secondaryControl.value;
-  styleControl.value = style;
-  document.documentElement.dir = direction;
+  for (const [id, value] of [
+    ["primary-colour-value", primaryControl.value],
+    ["secondary-colour-value", secondaryControl.value],
+  ]) {
+    const code = document.getElementById(id);
+    if (code.textContent !== value) code.textContent = value;
+  }
+  syncAppearance({ style, primary, surface, ripple });
+  if (document.documentElement.dir !== direction)
+    document.documentElement.dir = direction;
   const label = preference[0].toUpperCase() + preference.slice(1);
   const hint = `Theme: ${label}. Switch to ${next(preference)} theme`;
-  themeButton.setAttribute("aria-label", hint);
-  themeButton.dataset.tooltip = hint;
   const previous = themeButton.dataset.preference;
-  themeButton.dataset.preference = preference;
   if (previous !== preference) {
+    themeButton.setAttribute("aria-label", hint);
+    themeButton.dataset.tooltip = hint;
+    themeButton.dataset.preference = preference;
     themeButton.innerHTML = theme_markup(preference);
     if (previous && !themeMotion.matches)
       themeButton.firstElementChild.animate(
@@ -190,14 +206,30 @@ function settings() {
         { duration: 160, easing: "cubic-bezier(.2,.8,.2,1)" },
       );
   }
-  directionButton.setAttribute("aria-pressed", String(direction === "rtl"));
+  const pressed = String(direction === "rtl");
+  if (directionButton.getAttribute("aria-pressed") !== pressed)
+    directionButton.setAttribute("aria-pressed", pressed);
   const frame = main.querySelector("iframe");
   frame?.contentWindow.postMessage(
-    { type: "meridian-settings", theme, direction, style, primary, secondary },
+    {
+      type: "meridian-settings",
+      theme,
+      direction,
+      style,
+      primary,
+      secondary,
+      surface,
+      ripple,
+    },
     location.origin,
   );
   const standalone = document.getElementById("standalone-preview");
-  if (standalone && current) standalone.href = previewURL(current);
+  if (
+    standalone &&
+    current &&
+    standalone.getAttribute("href") !== previewURL(current)
+  )
+    standalone.href = previewURL(current);
 }
 
 function saveSettings() {
@@ -211,6 +243,8 @@ function saveSettings() {
         style,
         primary,
         secondary,
+        surface,
+        ripple,
       }),
     );
   } catch {
@@ -263,8 +297,8 @@ directionButton.addEventListener("click", () => {
   direction = direction === "rtl" ? "ltr" : "rtl";
   saveSettings();
 });
-styleControl.addEventListener("change", () => {
-  style = styleControl.value;
+styleControl.addEventListener("change", (event) => {
+  style = event.target.value;
   saveSettings();
 });
 primaryControl.addEventListener("change", () => {
@@ -276,7 +310,23 @@ secondaryControl.addEventListener("change", () => {
   saveSettings();
 });
 document.getElementById("reset-colours").addEventListener("click", () => {
-  primary = secondary = "";
+  primary = secondary = surface = "";
+  saveSettings();
+});
+document
+  .getElementById("primary-presets")
+  .addEventListener("change", (event) => {
+    primary = event.target.value;
+    saveSettings();
+  });
+document
+  .getElementById("surface-presets")
+  .addEventListener("change", (event) => {
+    surface = event.target.value;
+    saveSettings();
+  });
+document.getElementById("ripple").addEventListener("change", (event) => {
+  ripple = event.target.checked;
   saveSettings();
 });
 document.addEventListener("keydown", (event) => {
@@ -494,7 +544,9 @@ addEventListener("message", (event) => {
       event.data.direction !== direction ||
       event.data.style !== style ||
       event.data.primary !== primary ||
-      event.data.secondary !== secondary
+      event.data.secondary !== secondary ||
+      event.data.surface !== surface ||
+      event.data.ripple !== ripple
     ) {
       settings();
       return;

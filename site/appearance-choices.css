@@ -1,0 +1,65 @@
+.docs-swatches .meridian-select-button-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(26px, 1fr));
+  gap: 12px 10px;
+}
+.docs-swatches .meridian-select-choice {
+  justify-self: center;
+}
+.docs-swatches .meridian-select-choice > span {
+  inline-size: 26px;
+  min-block-size: 26px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--swatch) 65%, var(--ink));
+  border-radius: 50%;
+  background: var(--swatch);
+  font-size: 0;
+}
+.docs-swatches .meridian-select-choice > input:checked + span {
+  border-color: var(--swatch);
+  background: var(--swatch);
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 0 0 4px var(--muted);
+  animation: none;
+}
+.docs-palette .meridian-select-choice > input:focus-visible + span {
+  outline: 2px solid var(--ink);
+  outline-offset: 5px;
+}
+.docs-style .meridian-select-button-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--bg);
+}
+.docs-style .meridian-select-choice {
+  display: block;
+}
+.docs-style .meridian-select-choice > span {
+  justify-content: center;
+  min-block-size: 32px;
+  padding: 5px;
+  border-color: transparent;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.docs-style .meridian-select-choice > input:checked + span {
+  border-color: transparent;
+  color: var(--ink);
+  background: var(--border);
+}
+@container (max-width: 280px) {
+  .docs-style .meridian-select-button-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 140px) {
+  .docs-style .meridian-select-button-options {
+    grid-template-columns: 1fr;
+  }
+}

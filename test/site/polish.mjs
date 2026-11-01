@@ -213,11 +213,16 @@ export async function polishChecks(page, open) {
   const original = await theme.getAttribute("data-preference");
   await theme.evaluate((button) => {
     window.themeAnimations = [];
-    window.themeObserver = new MutationObserver(() =>
-      window.themeAnimations.push(
-        button.getAnimations({ subtree: true }).length,
-      ),
-    );
+    window.themeObserver = new MutationObserver((records) => {
+      if (
+        records.some((record) =>
+          [...record.addedNodes].some((node) => node.localName === "svg"),
+        )
+      )
+        window.themeAnimations.push(
+          button.querySelector("svg").getAnimations({ subtree: true }).length,
+        );
+    });
     window.themeObserver.observe(button, { childList: true });
   });
   for (let index = 0; index < 3; index++) await theme.click();

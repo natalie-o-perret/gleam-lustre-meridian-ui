@@ -1,9 +1,13 @@
+import catalogue_appearance_controls as controls
 import lustre/attribute as a
 import lustre/element
-import lustre/element/html as h
 import meridian_ui/icon
 import meridian_ui/popover
 import meridian_ui/tooltip
+
+pub fn navigation_icon() -> String {
+  icon.view(icon.Menu, []) |> element.to_string
+}
 
 pub fn markup() -> String {
   element.fragment([
@@ -26,7 +30,7 @@ pub fn markup() -> String {
       False,
       Nil,
       [a.class("docs-palette")],
-      [h.h2([], [h.text("Appearance")])],
+      [controls.view()],
     ),
   ])
   |> element.to_string

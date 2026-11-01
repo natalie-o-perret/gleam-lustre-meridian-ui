@@ -60,15 +60,6 @@
         ></button>
         <div id="palette-tools" class="docs-palette-tools">
           <div id="palette-controls" hidden>
-            <label class="docs-style" for="style"
-              >Library style
-              <select id="style" class="input">
-                <option value="rounded">Rounded</option>
-                <option value="square">Squared</option>
-                <option value="playful">Playful</option>
-                <option value="fantasy">Fantasy</option>
-              </select>
-            </label>
             <div class="docs-colours">
               <label for="primary-colour"
                 >Primary / accent<span class="docs-colour-control"
@@ -103,20 +94,20 @@
           </div>
         </div>
         <a
-          class="docs-github"
+          class="icon-button docs-github"
+          aria-label="GitHub repository"
+          data-tooltip="GitHub repository"
           href="https://github.com/natalie-o-perret/gleam-lustre-meridian-ui"
-          ><span id="github-icon" aria-hidden="true"></span> GitHub
-          <span aria-hidden="true">↗</span></a
-        >
+          ><span id="github-icon" aria-hidden="true"></span
+        ></a>
         <button
           id="open-navigation"
-          class="button docs-mobile"
+          class="icon-button docs-mobile"
           type="button"
+          aria-label="Components"
           aria-haspopup="dialog"
           aria-controls="navigation-dialog"
-        >
-          Components
-        </button>
+        ></button>
       </div>
     </header>
     <aside id="navigation-panel" class="docs-sidebar" aria-label="Catalogue">

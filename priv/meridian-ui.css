@@ -1677,7 +1677,8 @@
     display: grid;
     gap: 12px;
   }
-  [data-meridian-ripple] {
+  [data-meridian-ripple],
+  :where(&[data-meridian-ripples="true"] :is(button, [role="button"])) {
     position: relative;
     overflow: hidden;
     isolation: isolate;

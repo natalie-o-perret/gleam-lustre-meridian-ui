@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { expect } from "playwright/test";
 import { appearanceColours } from "./appearance-colours.mjs";
+import { appearancePresets } from "./appearance-presets.mjs";
+import { appearanceRipple } from "./appearance-ripple.mjs";
 
 const require = createRequire(import.meta.url);
 
@@ -18,7 +20,12 @@ export async function appearanceChecks(page, open) {
   await button.press("Enter");
   await expect(popup).toBeVisible();
   await expect(button).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator("#style")).toBeFocused();
+  await expect(page.locator('#primary-presets input[value=""]')).toBeFocused();
+  await expect(
+    page.getByRole("link", { name: "GitHub repository", exact: true }),
+  ).toHaveText("");
+  await expect(page.locator(".docs-github")).toBeVisible();
+  await expect(page.locator(".docs-github svg")).toHaveCount(1);
   await popup.press("Escape");
   await expect(popup).toBeHidden();
   await expect(button).toBeFocused();
@@ -50,4 +57,6 @@ export async function appearanceChecks(page, open) {
 
   await frame.locator(".meridian-code-block").first().focus();
   await appearanceColours(page, frame);
+  await appearancePresets(page, open);
+  await appearanceRipple(page, open);
 }
