@@ -1,0 +1,13 @@
+[
+  [10, "ChevronLeft", "Chevron left", "m15 5-7 7 7 7"],
+  [11, "ChevronRight", "Chevron right", "m9 5 7 7-7 7"],
+  [12, "ChevronUp", "Chevron up", "m5 15 7-7 7 7"],
+  [13, "ChevronDown", "Chevron down", "m5 9 7 7 7-7"],
+  [14, "First", "First", "m11 5-7 7 7 7m8-14-7 7 7 7"],
+  [15, "Last", "Last", "m5 5 7 7-7 7m8-14 7 7-7 7"],
+  [42, "ArrowLeft", "Arrow left", "M20 12H4m7-7-7 7 7 7"],
+  [43, "ArrowRight", "Arrow right", "M4 12h16m-7-7 7 7-7 7"],
+  [44, "ArrowUp", "Arrow up", "M12 20V4m-7 7 7-7 7 7"],
+  [45, "ArrowDown", "Arrow down", "M12 4v16m-7-7 7 7 7-7"],
+  [46, "ArrowUpRight", "Arrow up right", "M5 19 19 5M7 5h12v12"]
+]

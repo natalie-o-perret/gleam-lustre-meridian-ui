@@ -1,0 +1,56 @@
+[
+  [
+    164,
+    "Container",
+    "Container",
+    "M2 5h20v14H2Zm4 3v8m4-8v8m4-8v8m4-8v8M5 5V2m14 3V2M5 19v3m14-3v3"
+  ],
+  [
+    165,
+    "Kubernetes",
+    "Kubernetes",
+    "m12 2 8 5 2 9-6 6H8l-6-6 2-9Zm0 6 4 4-4 4-4-4Zm0-6v6m8-1-4 5m6 4-6-4m0 10-4-6m-4 6 4-6M2 16l6-4M4 7l4 5"
+  ],
+  [
+    166,
+    "Pod",
+    "Pod",
+    "m12 2 9 5v10l-9 5-9-5V7Zm-9 5 9 5 9-5m-9 5v10m-5-9 3 2m4-5 3-2"
+  ],
+  [
+    167,
+    "Deployment",
+    "Deployment",
+    "M3 3h12v12H3Zm6 6h12v12H9ZM3 19h3m-2-2 2 2-2 2m15-18v3m-2-2 2 2 2-2"
+  ],
+  [
+    168,
+    "Registry",
+    "Container registry",
+    "M3 3h18v18H3Zm0 6h18M6 6h1m3 0h1m3 0h1m-3 2-5 3v5l5 3 5-3v-5Zm-5 3 5 3 5-3m-5 3v5"
+  ],
+  [
+    169,
+    "Helm",
+    "Helm",
+    "M19 12a7 7 0 1 1-14 0 7 7 0 0 1 14 0Zm-5 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0M12 2v8m0 4v8M2 12h8m4 0h8M5 5l5 5m4 4 5 5M5 19l5-5m4-4 5-5"
+  ],
+  [
+    170,
+    "ServiceMesh",
+    "Service mesh",
+    "M3 3h5v5H3Zm13 0h5v5h-5ZM3 16h5v5H3Zm13 0h5v5h-5ZM8 5h8M5 8v8m3 3h8m3-11v8M8 8l8 8m-8 0 8-8"
+  ],
+  [
+    171,
+    "Ingress",
+    "Ingress",
+    "M9 3h12v18H9M2 12h15m-4-4 4 4-4 4M2 5h3m-3 14h3"
+  ],
+  [
+    172,
+    "ContainerNode",
+    "Container node",
+    "M3 3h18v18H3Zm5 4 4-2 4 2v6l-4 2-4-2Zm0 0 4 2 4-2m-4 2v6M6 18h1m3 0h8"
+  ]
+]

@@ -1,0 +1,51 @@
+[
+  [
+    137,
+    "Cpu",
+    "CPU",
+    "M6 6h12v12H6Zm3 3h6v6H9ZM9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"
+  ],
+  [
+    138,
+    "Memory",
+    "Memory",
+    "M3 5h18v13H3Zm3 3h4v6H6Zm8 0h4v6h-4ZM6 18v3m4-3v3m4-3v3m4-3v3M3 10H1m22 0h-2"
+  ],
+  [
+    139,
+    "CircuitBoard",
+    "Circuit board",
+    "M3 3h18v18H3Zm4 4h5v5H7Zm5 2h5v8h-5m-3-5v5H6m11-8V6M6 17v1m6-1v1m5-1v1"
+  ],
+  [140, "Laptop", "Laptop", "M5 4h14v12H5ZM2 16h20l-1 4H3Zm7 0v2h6v-2"],
+  [
+    141,
+    "VirtualMachine",
+    "Virtual machine",
+    "M3 3h15v12H3Zm4 5h14v13H7Zm-4 3h4m3 1h8m-8 4h5"
+  ],
+  [
+    142,
+    "Hypervisor",
+    "Hypervisor",
+    "M3 3h7v7H3Zm11 0h7v7h-7ZM6 10v4h12v-4m-6 4v3M3 17h18v4H3Zm3 2h1m10 0h1"
+  ],
+  [
+    143,
+    "ServerRack",
+    "Server rack",
+    "M4 2h16v20H4Zm0 6h16M4 14h16M7 5h1m-1 6h1m-1 7h1m6-13h3m-3 6h3m-3 7h3"
+  ],
+  [
+    144,
+    "Cluster",
+    "Compute cluster",
+    "M8 2h8v6H8Zm-6 14h8v6H2Zm12 0h8v6h-8ZM12 8v4M6 16v-4h12v4M10 19h4"
+  ],
+  [
+    145,
+    "Gpu",
+    "GPU",
+    "M3 5h18v13H3Zm8 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0m3-3h4m-4 4h4M6 18v3m4-3v3m4-3v3m4-3v3M1 5v15"
+  ]
+]

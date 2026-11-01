@@ -418,12 +418,18 @@ own toolbar copies the full source or expands/collapses function and type bodies
 Gutter buttons fold individual bodies. Folding ignores braces in comments and
 strings. Source text is retained when folded.
 
-`icon.view(icon.Home, attrs)` renders one of Meridian's 128 SVG icons.
+`icon.view(icon.Home, attrs)` renders one of Meridian's 200 SVG icons.
 Icons inherit the surrounding colour and are decorative by default. Label their
 button or link. `icon.all()`, `icon.name()` and `icon.category()` power the gallery.
 `icon.view_with` offers Auto, Outline, Soft and Duotone treatments. Auto follows the
 root's component style. The GitHub mark is official GitHub artwork, not Meridian's.
 Brand marks retain their official shape and fill.
+Infrastructure icons cover cloud, compute, storage, networking, containers and
+operations, plus security and development tools. Use `icon.S3` for S3-compatible
+object storage, `icon.LoadBalancer`, `icon.Kubernetes` or `icon.Cpu` in the same way.
+These infrastructure glyphs are Meridian illustrations, not official service logos.
+Icon data lives in `priv/icons/`, grouped by domain. Run `npm run build:icons` after
+editing it. The generated flat `Icon` API and existing glyph order stay stable.
 
 Set `data-style` on the themed root to `rounded`, `square`, `playful` or `fantasy`.
 Rounded is the default. Controls, panels and icons share the preset.

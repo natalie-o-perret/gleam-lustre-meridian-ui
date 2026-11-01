@@ -1,0 +1,26 @@
+[
+  [
+    35,
+    "Monitor",
+    "Monitor",
+    "M4 3h16q2 0 2 2v10q0 2-2 2H4q-2 0-2-2V5q0-2 2-2Zm8 14v4m-5 0h10"
+  ],
+  [
+    57,
+    "Maximize",
+    "Maximize",
+    "M3 9V5q0-2 2-2h4m6 0h4q2 0 2 2v4m0 6v4q0 2-2 2h-4m-6 0H5q-2 0-2-2v-4"
+  ],
+  [
+    58,
+    "Minimize",
+    "Minimize",
+    "M3 9h4q2 0 2-2V3m6 0v4q0 2 2 2h4m0 6h-4q-2 0-2 2v4m-6 0v-4q0-2-2-2H3"
+  ],
+  [
+    59,
+    "Grip",
+    "Grip",
+    "M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01"
+  ]
+]

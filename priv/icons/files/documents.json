@@ -1,0 +1,57 @@
+[
+  [
+    1,
+    "Folder",
+    "Folder",
+    "M3 8V6q0-2 2-2h5l2 3h7q2 0 2 2v10q0 2-2 2H5q-2 0-2-2V8Zm0 1h18"
+  ],
+  [
+    2,
+    "File",
+    "File",
+    "M7 2h7l5 5v13q0 2-2 2H7q-2 0-2-2V4q0-2 2-2Zm7 0v5q0 1 1 1h4M8 12h8m-8 4h8"
+  ],
+  [
+    65,
+    "FolderOpen",
+    "Folder open",
+    "M3 10V6q0-2 2-2h5l2 3h7q2 0 2 2v2M3 11h18l-3 10H4L2 11Z"
+  ],
+  [
+    66,
+    "FileText",
+    "File text",
+    "M7 2h7l5 5v13q0 2-2 2H7q-2 0-2-2V4q0-2 2-2Zm7 0v6h5M8 12h8m-8 4h8"
+  ],
+  [
+    67,
+    "FileCode",
+    "File code",
+    "M7 2h7l5 5v13q0 2-2 2H7q-2 0-2-2V4q0-2 2-2Zm7 0v6h5m-9 4-3 3 3 3m4-6 3 3-3 3"
+  ],
+  [
+    68,
+    "FileImage",
+    "File image",
+    "M7 2h7l5 5v13q0 2-2 2H7q-2 0-2-2V4q0-2 2-2Zm7 0v6h5M7 19l4-5 3 3 2-2 3 4M9 10h.01"
+  ],
+  [
+    69,
+    "FilePlus",
+    "File plus",
+    "M7 2h7l5 5v13q0 2-2 2H7q-2 0-2-2V4q0-2 2-2Zm7 0v6h5M12 11v7m-3-3.5h6"
+  ],
+  [70, "Archive", "Archive", "M4 3h16v5H4Zm1 5v11q0 2 2 2h10q2 0 2-2V8M9 12h6"],
+  [
+    71,
+    "Clipboard",
+    "Clipboard",
+    "M9 4H6q-2 0-2 2v14q0 2 2 2h12q2 0 2-2V6q0-2-2-2h-3M9 2h6v5H9Z"
+  ],
+  [
+    72,
+    "Attachment",
+    "Attachment",
+    "m8 13 7-7a3 3 0 0 1 4 4L9 20a5 5 0 0 1-7-7L13 2m-5 11a1 1 0 0 0 2 2l7-7"
+  ]
+]

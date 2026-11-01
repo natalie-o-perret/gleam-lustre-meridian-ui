@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:icons": "node scripts/build-icons.mjs",
+    "check:icons": "node scripts/build-icons.mjs --check",
     "test:browser": "node test/browser/run.mjs",
     "build:site": "node scripts/build-site.mjs",
     "serve:site": "node scripts/serve-site.mjs",
