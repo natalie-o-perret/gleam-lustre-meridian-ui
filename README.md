@@ -443,6 +443,9 @@ editing it. The generated flat `Icon` API and existing glyph order stay stable.
 
 Set `data-style` on the themed root to `rounded`, `square`, `playful` or `fantasy`.
 Rounded is the default. Controls, panels and icons share the preset.
+Button variants, grouped action buttons, chip remove buttons and the catalogue's
+style selector follow the selected corner shape. Colour swatches and native radio
+controls stay circular. Grouped controls keep their joined inner edges square.
 Square uses crisp corners and strokes.
 Playful uses softer shapes and tinted icons. Fantasy adds asymmetric corners and
 duotone icons. These are CSS tokens, not separate component implementations.

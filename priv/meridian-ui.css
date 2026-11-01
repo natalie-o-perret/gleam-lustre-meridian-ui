@@ -484,12 +484,12 @@
     border-inline-start: 1px solid var(--border);
   }
   .meridian-input-group > :first-child {
-    border-start-start-radius: 8px;
-    border-end-start-radius: 8px;
+    border-start-start-radius: inherit;
+    border-end-start-radius: inherit;
   }
   .meridian-input-group > :last-child {
-    border-start-end-radius: 8px;
-    border-end-end-radius: 8px;
+    border-start-end-radius: inherit;
+    border-end-end-radius: inherit;
   }
   .meridian-input-group:focus-within {
     border-color: var(--accent);
@@ -3446,7 +3446,7 @@
     min-height: 24px;
     margin-inline-end: -4px;
     padding: 2px;
-    border-radius: 50%;
+    border-radius: var(--radius-small, 8px);
     color: inherit;
   }
   .meridian-divider {
