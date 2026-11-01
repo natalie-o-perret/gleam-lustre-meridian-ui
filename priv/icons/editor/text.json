@@ -1,0 +1,19 @@
+[
+  [114, "Bold", "Bold", "M6 3h7a5 5 0 0 1 0 10H6Zm0 10h8a4 4 0 0 1 0 8H6Z"],
+  [115, "Italic", "Italic", "M10 3h10M4 21h10M15 3 9 21"],
+  [116, "Underline", "Underline", "M6 3v8a6 6 0 0 0 12 0V3M4 21h16"],
+  [
+    117,
+    "Strikethrough",
+    "Strikethrough",
+    "M18 6q-1-3-6-3-7 0-6 5 0 2 6 4M4 12h16m-8 0q6 1 6 5 0 4-6 4-5 0-6-3"
+  ],
+  [
+    118,
+    "Paragraph",
+    "Paragraph",
+    "M13 3H9a5 5 0 0 0 0 10h4Zm0 0v18m5-18v18M13 3h8"
+  ],
+  [119, "Heading", "Heading", "M5 4v16M19 4v16M5 12h14"],
+  [127, "AlignLeft", "Align left", "M3 4h18M3 9h12M3 14h18M3 19h12"]
+]

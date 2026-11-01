@@ -2,6 +2,7 @@
 
 check: format-check
 	gleam format --check src test examples/catalogue/src
+	npm run check:icons
 	gleam check
 	gleam test
 	node --test test/*_test.mjs

@@ -7,12 +7,12 @@ import meridian_ui/icon
 import meridian_ui/tooltip
 
 pub fn every_icon_has_a_unique_name_and_decorative_svg_test() {
-  icon.all() |> list.length |> should.equal(128)
+  icon.all() |> list.length |> should.equal(200)
   icon.all()
   |> list.map(icon.name)
   |> list.unique
   |> list.length
-  |> should.equal(128)
+  |> should.equal(200)
   list.each(icon.all(), fn(glyph) {
     let html = icon.view(glyph, [a.class("test-icon")]) |> element.to_string
     html
@@ -26,6 +26,16 @@ pub fn every_icon_has_a_unique_name_and_decorative_svg_test() {
     html |> string.contains("<path") |> should.be_true
     html |> string.contains("test-icon") |> should.be_true
   })
+}
+
+pub fn infrastructure_icons_have_searchable_categories_test() {
+  icon.name(icon.S3) |> should.equal("S3 object storage")
+  icon.category(icon.S3) |> should.equal("storage")
+  icon.category(icon.Cpu) |> should.equal("compute")
+  icon.category(icon.CloudRegion) |> should.equal("cloud")
+  icon.category(icon.LoadBalancer) |> should.equal("networking")
+  icon.category(icon.Kubernetes) |> should.equal("containers")
+  icon.category(icon.Metrics) |> should.equal("operations")
 }
 
 pub fn empty_tooltips_do_not_emit_a_hover_target_test() {

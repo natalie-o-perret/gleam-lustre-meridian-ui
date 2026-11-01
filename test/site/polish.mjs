@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
+import { infrastructureIcons } from "./icons.mjs";
 
 export async function polishChecks(page, open) {
   let frame = await open("keyfilter");
@@ -180,7 +181,7 @@ export async function polishChecks(page, open) {
   );
 
   frame = await open("icons");
-  await expect(frame.locator(".demo-icon-grid svg")).toHaveCount(128);
+  await expect(frame.locator(".demo-icon-grid svg")).toHaveCount(200);
   assert.deepEqual(
     await frame.locator(".demo-icon-grid path").evaluateAll((paths) =>
       paths.flatMap((path) => {
@@ -206,6 +207,7 @@ export async function polishChecks(page, open) {
     [],
     "Icons must have visible paths within their viewboxes",
   );
+  await infrastructureIcons(page, frame);
   frame = await open("dock");
   await expect(frame.locator(".meridian-dock svg")).toHaveCount(3);
 

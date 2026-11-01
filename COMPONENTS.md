@@ -186,9 +186,9 @@ server-side validation. Optional engines are bundled locally, not loaded from a 
 
 ### Visual (1)
 
-| Component                           | Status | Meridian coverage                                                                                                                  |
-| ----------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| [Icons](src/meridian_ui/icon.gleam) | Base   | `meridian_ui/icon`, 128 SVG icons including the official GitHub mark, searchable categories, synced styles and per-icon treatments |
+| Component                           | Status | Meridian coverage                                                                                                                                              |
+| ----------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Icons](src/meridian_ui/icon.gleam) | Base   | `meridian_ui/icon`, 200 SVG icons including S3/cloud infrastructure and the official GitHub mark, searchable categories, synced styles and per-icon treatments |
 
 ## Verification and limits
 

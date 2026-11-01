@@ -1,0 +1,56 @@
+[
+  [
+    155,
+    "Network",
+    "Network",
+    "M9 2h6v6H9Zm-7 14h6v6H2Zm14 0h6v6h-6ZM12 8v4M5 16v-4h14v4m-7-4v10"
+  ],
+  [
+    156,
+    "Router",
+    "Router",
+    "M3 13h18v8H3Zm3 4h1m3 0h1m3 0h3M5 13V7m14 6V7M8 4a7 7 0 0 1 8 0M10 7a4 4 0 0 1 4 0"
+  ],
+  [
+    157,
+    "NetworkSwitch",
+    "Network switch",
+    "M2 8h20v12H2Zm3 5h3v3H5Zm6 0h3v3h-3Zm6 0h2m-2 3h2M7 8V4m10 4V4M4 4h16"
+  ],
+  [
+    158,
+    "LoadBalancer",
+    "Load balancer",
+    "M9 2h6v5H9Zm-7 15h6v5H2Zm14 0h6v5h-6ZM12 7v4M5 17v-6h14v6m-17-3 3 3 3-3m8 0 3 3 3-3"
+  ],
+  [
+    159,
+    "Firewall",
+    "Firewall",
+    "M3 3h18v18H3Zm0 6h18M3 15h18M9 3v6m6 0v6m-6 0v6m9-18v6M6 9v6m12 0v6"
+  ],
+  [
+    160,
+    "Dns",
+    "DNS",
+    "M3 2h18v7H3Zm0 13h18v7H3ZM6 5h1m3 0h7M6 18h1m3 0h7M7 9v3h10V9m-5 3v3"
+  ],
+  [
+    161,
+    "Subnet",
+    "Subnet",
+    "M2 3h20v18H2Zm0 6h20M10 9v12M5 6h1m3 0h1m3 0h1M5 13h2v4H5Zm8 0h6v4h-6"
+  ],
+  [
+    162,
+    "IpAddress",
+    "IP address",
+    "M2 5h20v14H2Zm4 4v6m4-6v6m0-6h4v3h-4m7 3h1M7 22v-3m10 3v-3"
+  ],
+  [
+    163,
+    "Vpn",
+    "VPN",
+    "M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6Zm-4 8h8v7H8Zm2 0V8a2 2 0 0 1 4 0v2"
+  ]
+]
