@@ -413,11 +413,14 @@ with syntax colours, line numbers, a left-to-right code layout and keyboard
 scrolling. Line numbers stay out of selected and copied text. It does not evaluate
 HTML or source code. Compose it with `tabs.view` and ordinary buttons to build a
 multi-file example, as the catalogue does.
-Each viewer has a native expand/collapse control. With interactions mounted, its
-own toolbar copies the full source or expands/collapses function and type bodies.
-Copy appears on hover or keyboard focus, and stays visible on touch screens.
-A successful copy shows Copied in the primary colour for 3 seconds. Clipboard
-failures keep the manual selection fallback and announce an error instead.
+Each viewer has a native expand/collapse control. With interactions mounted,
+header buttons expand/collapse function and type bodies. Copy uses the full source.
+Copy floats over the code's top-right corner, with a clipboard icon. It appears
+on code-view hover or keyboard focus, and stays available on touch screens. It is
+slightly transparent until hovered or focused. Folding controls sit in the header.
+A successful copy shows Copied in the button for 3 seconds, using the primary
+colour. Its status announcement is screen-reader-only. Clipboard failures keep
+visible manual-copy instructions instead.
 Gutter buttons fold individual bodies. Folding ignores braces in comments and
 strings. Source text is retained when folded.
 

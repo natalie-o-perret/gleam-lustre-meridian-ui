@@ -22,6 +22,7 @@ test("copy feedback expires at 3000ms and a repeat copy resets the expiry", asyn
   t.mock.timers.tick(1);
   assert.equal(fixture.label.textContent, "Copy");
   assert.equal(fixture.status.textContent, "");
+  assert.equal(fixture.statusClasses.size, 0);
   assert.equal(fixture.classes.size, 0);
   assert.equal(fixture.button.dataset.copied, undefined);
 });

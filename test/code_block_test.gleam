@@ -9,6 +9,7 @@ pub fn code_is_labelled_keyboard_scrollable_and_ltr_test() {
     code_block.view("Example source", "pub fn main() { Nil }", [a.id("source")])
     |> element.to_string
   html |> string.contains("meridian-code-block") |> should.be_true
+  html |> string.contains("meridian-code-content") |> should.be_true
   html |> string.contains("aria-label=\"Example source\"") |> should.be_true
   html |> string.contains("tabindex=\"0\"") |> should.be_true
   html |> string.contains("dir=\"ltr\"") |> should.be_true

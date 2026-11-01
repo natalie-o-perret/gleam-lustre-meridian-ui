@@ -6,33 +6,33 @@ import meridian_ui/icon
 import meridian_ui/tooltip
 
 pub fn view(label, foldable) {
-  h.div(
+  case foldable {
+    False -> element.none()
+    True ->
+      h.div(
+        [
+          a.class("meridian-code-tools"),
+          a.role("group"),
+          a.aria_label(label <> " actions"),
+        ],
+        [
+          action("collapse", "Collapse all code blocks", icon.Minimize),
+          action("expand", "Expand all code blocks", icon.Maximize),
+        ],
+      )
+  }
+}
+
+pub fn copy() {
+  button.view(
     [
-      a.class("meridian-code-tools"),
-      a.role("group"),
-      a.aria_label(label <> " actions"),
+      a.class("meridian-code-copy"),
+      a.data("code-action", "copy"),
+      a.aria_label("Copy code"),
     ],
     [
-      button.view(
-        [
-          a.class("meridian-code-copy"),
-          a.data("code-action", "copy"),
-          a.aria_label("Copy code"),
-        ],
-        [
-          icon.view(icon.Copy, []),
-          h.span([a.data("code-copy-label", "")], [h.text("Copy")]),
-        ],
-      ),
-      case foldable {
-        True -> action("collapse", "Collapse all code blocks", icon.Minimize)
-        False -> element.none()
-      },
-      case foldable {
-        True -> action("expand", "Expand all code blocks", icon.Maximize)
-        False -> element.none()
-      },
-      h.span([a.class("meridian-code-status"), a.role("status")], []),
+      icon.view(icon.Clipboard, []),
+      h.span([a.data("code-copy-label", "")], [h.text("Copy")]),
     ],
   )
 }

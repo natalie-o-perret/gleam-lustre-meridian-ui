@@ -3,7 +3,17 @@ import { setupCodeCopy } from "../src/meridian_ui/code_copy_ffi.mjs";
 export function codeCopyFixture(writeText = async () => {}) {
   const controller = new AbortController();
   const label = { textContent: "Copy" };
-  const status = { textContent: "" };
+  const statusClasses = new Set();
+  const status = {
+    textContent: "",
+    classList: {
+      toggle(name, enabled) {
+        if (enabled) statusClasses.add(name);
+        else statusClasses.delete(name);
+      },
+      remove: (name) => statusClasses.delete(name),
+    },
+  };
   const classes = new Set();
   let click;
   const root = {
@@ -53,6 +63,7 @@ export function codeCopyFixture(writeText = async () => {}) {
     button,
     label,
     status,
+    statusClasses,
     classes,
     sync,
     click: () => click({ target: button }),

@@ -45,7 +45,11 @@ pub fn view_language(
     [
       disclosure.summary(label, []),
       code_tools.view(label, list.any(lines, fn(line) { line.2 != "" })),
-      code_source.view(label, language, source, lines, attrs),
+      h.div([a.class("meridian-code-content"), a.dir("ltr")], [
+        code_tools.copy(),
+        h.span([a.class("meridian-code-status"), a.role("status")], []),
+        code_source.view(label, language, source, lines, attrs),
+      ]),
     ],
   )
 }

@@ -10,7 +10,9 @@ export function setupCodeCopy(root, signal) {
       button.classList.remove("primary-button");
       button.querySelector("[data-code-copy-label]").textContent = "Copy";
     }
-    viewer.querySelector(".meridian-code-status").textContent = "";
+    const status = viewer.querySelector(".meridian-code-status");
+    status.textContent = "";
+    status.classList.remove("sr-only");
   };
   signal.addEventListener(
     "abort",
@@ -46,6 +48,7 @@ export function setupCodeCopy(root, signal) {
       if (signal.aborted || !viewer.isConnected || active.get(viewer) !== state)
         return;
       const status = viewer.querySelector(".meridian-code-status");
+      status.classList.toggle("sr-only", success);
       if (!success) {
         active.delete(viewer);
         status.textContent = "Copy unavailable. Select and copy the code.";

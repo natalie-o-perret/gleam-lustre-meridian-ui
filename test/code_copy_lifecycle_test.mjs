@@ -48,4 +48,5 @@ test("disposal cancels success expiry, and disabled copy controls do nothing", a
   t.mock.timers.tick(3000);
   assert.equal(fixture.label.textContent, "Disposed");
   assert.equal(fixture.status.textContent, "");
+  assert.equal(fixture.statusClasses.size, 0);
 });

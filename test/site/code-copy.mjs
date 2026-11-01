@@ -1,26 +1,13 @@
 import assert from "node:assert/strict";
 import { expect } from "playwright/test";
+import { codeCopyLayout } from "./code-copy-layout.mjs";
 
 export async function codeCopyFeedback(page, open) {
   const frame = await open("codeblock");
   const viewer = frame.locator(".meridian-code-viewer");
   const copy = viewer.getByRole("button", { name: "Copy code", exact: true });
-  await viewer.scrollIntoViewIfNeeded();
-  await page.locator("#main").focus();
-  await page.mouse.move(0, 0);
-  const hover = await frame.evaluate(
-    () => matchMedia("(hover: hover) and (pointer: fine)").matches,
-  );
-  await expect(copy).toHaveCSS("opacity", hover ? "0" : "1");
-  if (hover) {
-    await viewer.hover();
-    await expect(copy).toHaveCSS("opacity", "1");
-    await page.mouse.move(0, 0);
-  }
-  await viewer.locator("summary").focus();
-  await viewer.locator("summary").press("Tab");
-  await expect(copy).toBeFocused();
-  await expect(copy).toHaveCSS("opacity", "1");
+  const status = viewer.getByRole("status");
+  const hover = await codeCopyLayout(page, viewer, copy);
   await frame.evaluate(() => {
     window.codeCopyOriginal = navigator.clipboard.writeText;
     navigator.clipboard.writeText = async (text) => {
@@ -32,7 +19,9 @@ export async function codeCopyFeedback(page, open) {
     else await copy.tap();
     await expect(copy).toHaveText("Copied");
     await expect(copy).toHaveClass(/primary-button/);
-    await expect(viewer.getByRole("status")).toHaveText("Copied.");
+    await expect(status).toHaveText("Copied.");
+    await expect(status).toHaveClass(/sr-only/);
+    await expect(status).toHaveCSS("clip-path", "inset(50%)");
     assert.equal(
       await frame.evaluate(() => window.codeCopyValue),
       await viewer.getAttribute("data-code-source"),
@@ -62,6 +51,19 @@ export async function codeCopyFeedback(page, open) {
     await page.locator("#main").focus();
     await page.mouse.move(0, 0);
     await expect(copy).toHaveCSS("opacity", "1");
+    await frame.evaluate(() => {
+      navigator.clipboard.writeText = async () => {
+        throw new Error("Clipboard denied");
+      };
+    });
+    if (hover) await copy.click();
+    else await copy.tap();
+    await expect(status).toHaveText(
+      "Copy unavailable. Select and copy the code.",
+    );
+    await expect(status).not.toHaveClass(/sr-only/);
+    await expect(status).toBeVisible();
+    await expect(copy).toHaveText("Copy");
   } finally {
     await frame.evaluate(() => {
       navigator.clipboard.writeText = window.codeCopyOriginal;
