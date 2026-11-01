@@ -11,6 +11,7 @@
 }
 .docs-colour-control {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   min-inline-size: 0;

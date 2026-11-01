@@ -22,18 +22,25 @@ export async function appearanceLayout(page, label) {
     .poll(
       () =>
         controls.evaluateAll((controls) =>
-          controls.every((control) => {
+          controls.flatMap((control) => {
             const range = document.createRange();
             range.selectNodeContents(control.querySelector("code"));
-            return (
-              range.getClientRects().length === 1 &&
-              control.scrollWidth <= control.clientWidth + 1
-            );
+            const rects = range.getClientRects().length;
+            return rects === 1 && control.scrollWidth <= control.clientWidth + 1
+              ? []
+              : [
+                  {
+                    value: control.querySelector("code").textContent,
+                    rects,
+                    width: control.clientWidth,
+                    content: control.scrollWidth,
+                  },
+                ];
           }),
         ),
       { message: `${label}: readable palette hex values` },
     )
-    .toBeTruthy();
+    .toEqual([]);
   await palette.press("Escape");
   await expect(palette).toBeHidden();
 }
