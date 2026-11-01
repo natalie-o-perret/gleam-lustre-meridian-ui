@@ -239,8 +239,12 @@ in form submission. Use the latest model when processing actions and submission.
 autofill survive. `key_filter.pattern` adds validation without deleting invalid
 text or interfering with composition. `autocomplete` retains native datalists as
 its fallback. Mount interactions for a themed, scrollable popup with filtering,
-arrow-key selection and Escape dismissal. Replace suggestions in your model when
-async results arrive. Input values and form submission stay native.
+arrow-key selection and Escape dismissal. Focusing or clicking the field leaves
+suggestions closed. Typing opens matches, clearing the field closes them, and
+ArrowUp or ArrowDown can explicitly browse all suggestions. Lists shrink to the
+available space above or below the field instead of covering it. Replace
+suggestions in your model when async results arrive. Input values and form
+submission stay native.
 
 `cascade_select` consumes validated `hierarchy.Node` values and only submits an
 enabled leaf. Changing a parent truncates stale descendants. Date pickers retain

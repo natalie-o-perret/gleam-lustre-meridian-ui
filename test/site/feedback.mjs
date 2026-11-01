@@ -351,16 +351,16 @@ export async function feedbackChecks(page, open) {
   }
   await position.selectOption("top-right");
   await expect(stack).toHaveAttribute("data-toast-position", "top-right");
+  const notice = stack.locator("[data-meridian-toast]");
+  await expect(notice).toHaveCount(1);
+  await notice.hover();
   await timeout.fill("800");
   await timeout.press("Tab");
   await expect(frame.locator("[data-meridian-toast]")).toHaveAttribute(
     "data-timeout",
     "800",
   );
-  const notice = stack.locator("[data-meridian-toast]");
-  await expect(notice).toHaveCount(1);
   await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
-  await notice.hover();
   await expect
     .poll(() => notice.evaluate((node) => node.matches(":hover")))
     .toBe(true);

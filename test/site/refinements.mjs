@@ -3,9 +3,13 @@ import { expect } from "playwright/test";
 import { treeAppearance } from "./tree-appearance.mjs";
 import { editorChecks } from "./editor.mjs";
 import { appearanceChecks } from "./appearance.mjs";
+import { tooltipLayout } from "./tooltip-layout.mjs";
+import { autocompleteLayout } from "./autocomplete-layout.mjs";
 
 export async function refinements(page, open) {
   await editorChecks(page, open);
+  await tooltipLayout(page, open);
+  await autocompleteLayout(page, open);
   const iconFrame = await open("iconfield");
   const iconChoice = page
     .getByRole("form", { name: "IconField preview properties", exact: true })
@@ -34,8 +38,9 @@ export async function refinements(page, open) {
     name: "Suggestions",
     exact: true,
   });
-  await expect(suggestions.getByRole("option")).toHaveCount(20);
+  await expect(suggestions).toHaveCount(0);
   await input.press("ArrowDown");
+  await expect(suggestions.getByRole("option")).toHaveCount(20);
   await input.press("End");
   await expect(input).toBeFocused();
   await expect(suggestions.getByRole("option").last()).toHaveAttribute(
@@ -75,10 +80,14 @@ export async function refinements(page, open) {
   await suggestions.getByRole("option").click();
   await expect(input).toHaveValue("New language");
   await input.fill("");
+  await expect(suggestions).toHaveCount(0);
+  await input.press("ArrowDown");
   await expect(suggestions).toBeVisible();
   await page.locator(".docs-component-heading h1").click();
   await expect(suggestions).toHaveCount(0);
   await input.click();
+  await expect(suggestions).toHaveCount(0);
+  await input.press("ArrowDown");
   await expect(suggestions).toBeVisible();
   await page.locator(".docs-source").scrollIntoViewIfNeeded();
   await expect(suggestions).toHaveCount(0);
@@ -103,6 +112,10 @@ export async function refinements(page, open) {
     frame.getByRole("listbox", { name: "Suggestions", exact: true }),
   ).toHaveCount(0);
   await pageNumber.fill("");
+  await expect(
+    frame.getByRole("listbox", { name: "Suggestions", exact: true }),
+  ).toHaveCount(0);
+  await pageNumber.press("ArrowDown");
   await expect(
     frame.getByRole("listbox", { name: "Suggestions", exact: true }),
   ).toBeVisible();
